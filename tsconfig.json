@@ -9,7 +9,7 @@
     "outDir": "build",
     "resolveJsonModule": true,
     "strict": true,
-    "target": "es2017"
+    "target": "ESNext"
   },
   "include": ["src/**/*"]
 }

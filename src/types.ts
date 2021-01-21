@@ -1,10 +1,10 @@
-import { Message, MessageEmbed } from 'discord.js'
+import { Message, MessageEmbedOptions } from 'discord.js'
 
 export type CommandProps = (
   message: Message,
   args: string[],
 ) => Promise<{
   content: Message['content']
-  embed?: MessageEmbed
+  embed?: MessageEmbedOptions
   isSyntaxError?: boolean
 }>

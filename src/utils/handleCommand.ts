@@ -41,7 +41,7 @@ const handleCommand: (message: Message) => Promise<void> = async message => {
   try {
     guildStatus[guildId] = 'processing'
     const commandResult = await commands[commandName](message, args.slice(1))
-    const responseMessage = await message.channel.send(commandResult.content)
+    const responseMessage = await message.channel.send(commandResult.content, { embed: commandResult.embed })
     loggerHook.send(
       '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT (**PROCESSING_TIMEms**)'
         .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
