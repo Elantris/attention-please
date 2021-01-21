@@ -1,0 +1,10 @@
+// ! cSpell: disable
+
+const config = {
+  DISCORD: {
+    TOKEN: '',
+    LOGGER_HOOK: ['', ''],
+  },
+}
+
+export default config
