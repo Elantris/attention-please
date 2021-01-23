@@ -1,13 +1,7 @@
 import { DMChannel, Message } from 'discord.js'
+import { ReactionStatusProps } from '../types'
 
-type ReactionStatusProps = {
-  [UserID: string]: {
-    name: string
-    emoji: string[]
-  }
-}
-
-const getMessageReactionStatus: (message: Message) => Promise<ReactionStatusProps> = async message => {
+const getReactionStatus: (message: Message) => Promise<ReactionStatusProps> = async message => {
   const channel = message.channel
   if (channel instanceof DMChannel) {
     return {}
@@ -48,4 +42,4 @@ const getMessageReactionStatus: (message: Message) => Promise<ReactionStatusProp
   return reactionStatus
 }
 
-export default getMessageReactionStatus
+export default getReactionStatus

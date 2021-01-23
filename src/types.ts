@@ -8,3 +8,10 @@ export type CommandProps = (
   embed?: MessageEmbedOptions
   isSyntaxError?: boolean
 }>
+
+export type ReactionStatusProps = {
+  [UserID: string]: {
+    name: string
+    emoji: string[]
+  }
+}
