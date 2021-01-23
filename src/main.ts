@@ -3,6 +3,7 @@ import moment from 'moment'
 import config from './config'
 import handleCommand from './utils/handleCommand'
 import { loggerHook } from './utils/hooks'
+import remindCronjob from './utils/remindCronJob'
 
 const client = new Client({
   ws: {
@@ -29,5 +30,9 @@ client.on('ready', () => {
       .replace('PREPARING_TIME', `${readyAt - startedAt}`),
   )
 })
+
+client.setInterval(async () => {
+  await remindCronjob(client)
+}, 60000)
 
 client.login(config.DISCORD.TOKEN)
