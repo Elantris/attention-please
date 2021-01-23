@@ -6,25 +6,27 @@ import { loggerHook } from './utils/hooks'
 
 const client = new Client({
   ws: {
-    intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILD_PRESENCES', 'GUILD_MEMBERS'],
+    intents: [
+      'GUILDS',
+      'GUILD_MEMBERS',
+      'GUILD_EMOJIS',
+      'GUILD_PRESENCES',
+      'GUILD_MESSAGES',
+      'GUILD_MESSAGE_REACTIONS',
+    ],
   },
 })
 
-client.on('message', async message => {
-  if (message.author.bot || !message.guild || !message.content.startsWith('ar!')) {
-    return
-  }
+client.on('message', handleCommand)
 
-  handleCommand(message)
-})
-
-const start = Date.now()
+const startedAt = Date.now()
 client.on('ready', () => {
+  const readyAt = Date.now()
   loggerHook.send(
     '[`TIME`] USER_TAG is online! (**PREPARING_TIMEms**)'
-      .replace('TIME', moment().format('HH:mm:ss'))
+      .replace('TIME', moment(readyAt).format('HH:mm:ss'))
       .replace('USER_TAG', client.user?.tag || '')
-      .replace('PREPARING_TIME', `${Date.now() - start}`),
+      .replace('PREPARING_TIME', `${readyAt - startedAt}`),
   )
 })
 

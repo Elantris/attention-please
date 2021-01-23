@@ -16,7 +16,7 @@ readdirSync(join(__dirname, '..', 'commands'))
   })
 
 const handleCommand: (message: Message) => Promise<void> = async message => {
-  if (!message.guild) {
+  if (message.author.bot || !message.guild || !message.content.startsWith('ar!')) {
     return
   }
 
@@ -41,13 +41,19 @@ const handleCommand: (message: Message) => Promise<void> = async message => {
   try {
     guildStatus[guildId] = 'processing'
     const commandResult = await commands[commandName](message, args.slice(1))
+    if (!commandResult.content) {
+      throw new Error('No result content.')
+    }
     const responseMessage = await message.channel.send(commandResult.content, { embed: commandResult.embed })
     loggerHook.send(
-      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT (**PROCESSING_TIMEms**)'
+      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT\n[`RESPONSE_TIME`] RESPONSE_CONTENT (**PROCESSING_TIMEms**)'
         .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
         .replace('GUILD_ID', guildId)
         .replace('MESSAGE_CONTENT', message.content)
+        .replace('RESPONSE_TIME', moment(responseMessage.createdTimestamp).format('HH:mm:ss'))
+        .replace('RESPONSE_CONTENT', responseMessage.content)
         .replace('PROCESSING_TIME', `${responseMessage.createdTimestamp - message.createdTimestamp}`),
+      { embeds: commandResult.embed ? [commandResult.embed] : undefined },
     )
     if (commandResult.isSyntaxError) {
       delete guildStatus[guildId]
