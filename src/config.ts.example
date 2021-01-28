@@ -5,6 +5,15 @@ const config = {
     TOKEN: '',
     LOGGER_HOOK: ['', ''],
   },
+  FIREBASE: {
+    apiKey: '',
+    authDomain: '',
+    databaseURL: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: '',
+  },
 }
 
 export default config

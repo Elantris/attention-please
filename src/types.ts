@@ -15,3 +15,12 @@ export type ReactionStatusProps = {
     emoji: string[]
   }
 }
+
+export type RemindJobProps = {
+  remindAt: number
+  guildId: string
+  channelId: string
+  messageId: string
+  responseChannelId: string
+  retryTimes: number
+}

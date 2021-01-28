@@ -22,6 +22,7 @@
   "homepage": "https://github.com/Elantris/attention-please#readme",
   "dependencies": {
     "discord.js": "^12.5.1",
+    "firebase": "^8.2.4",
     "moment": "^2.29.1",
     "ramda": "^0.27.1"
   },

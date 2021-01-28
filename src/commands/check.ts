@@ -33,12 +33,13 @@ const commandCheck: CommandProps = async (message, args) => {
   const { allMembersCount, reactedMembersCount, absentMemberLists } = getAbsentMemberLists(reactionStatus)
 
   return {
-    content: `:bar_chart: 簽到率：**PERCENTAGE%**，(REACTED_MEMBERS / ALL_MEMBERS)`
+    content: `:bar_chart: 已讀人數：**PERCENTAGE%**，(REACTED_MEMBERS / ALL_MEMBERS)`
       .replace('PERCENTAGE', ((reactedMembersCount * 100) / allMembersCount).toFixed(2))
       .replace('REACTED_MEMBERS', `${reactedMembersCount}`)
       .replace('ALL_MEMBERS', `${allMembersCount}`),
     embed: {
       title: `Message ID: \`${targetMessage.id}\``,
+      description: '未讀名單',
       url: targetMessage.url,
       fields: absentMemberLists,
     },

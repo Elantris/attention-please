@@ -1,9 +1,13 @@
 import moment from 'moment'
 import { CommandProps } from '../types'
+import database, { cache } from '../utils/database'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
-import { remindJobQueue } from '../utils/remindCronJob'
 
 const commandRemind: CommandProps = async (message, args) => {
+  if (!message.guild) {
+    return { content: ':question:' }
+  }
+
   if (args.length < 2) {
     return {
       content: ':x: 少了幾個參數！這者指令需要訊息ID、時間：`ar!remind [Message ID] [TIME]`',
@@ -11,7 +15,7 @@ const commandRemind: CommandProps = async (message, args) => {
     }
   }
 
-  const remindAt = moment(args.slice(1).join(' '))
+  const remindAt = moment(args.slice(1).join(' ')).utcOffset(cache.settings[message.guild.id]?.timezone || 0)
   if (!remindAt.isValid()) {
     return {
       content: `:x: 機器人不認識這個時間格式`,
@@ -32,19 +36,20 @@ const commandRemind: CommandProps = async (message, args) => {
     }
   }
 
+  const remindJobQueue = cache.remind_jobs
   const duplicatedRemindJobId = Object.keys(remindJobQueue).find(jobId => remindJobQueue[jobId].messageId === args[0])
 
-  remindJobQueue[message.id] = {
+  await database.ref(`/remind_jobs/${message.id}`).set({
     remindAt: remindAt.toDate().getTime(),
     guildId: targetMessage.guild.id,
     channelId: targetMessage.channel.id,
     messageId: targetMessage.id,
     responseChannelId: message.channel.id,
     retryTimes: 0,
-  }
+  })
 
   if (duplicatedRemindJobId) {
-    delete remindJobQueue[duplicatedRemindJobId]
+    await database.ref(`/remind_jobs/${duplicatedRemindJobId}`).remove()
     return {
       content: ':alarm_clock: `MESSAGE_ID` 的結算時間改為 `REMIND_AT`'
         .replace('MESSAGE_ID', targetMessage.id)
