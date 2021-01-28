@@ -1,25 +1,25 @@
 {
-  "name": "announcement-reminder",
+  "name": "attention-please",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "start": "npm run build && node build/main.js",
-    "pm2": "pm2 start build/main.js --name announcement-reminder && pm2 monit",
+    "pm2": "pm2 start build/main.js --name attention-please && pm2 monit",
     "build": "rm -rf ./build/* && ./node_modules/.bin/tsc",
-    "restart": "pm2 stop announcement-reminder && pm2 reset announcement-reminder && pm2 start announcement-reminder && pm2 monit"
+    "restart": "pm2 stop attention-please && pm2 reset attention-please && pm2 start attention-please && pm2 monit"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Elantris/announcement-reminder.git"
+    "url": "git+https://github.com/Elantris/attention-please.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Elantris/announcement-reminder/issues"
+    "url": "https://github.com/Elantris/attention-please/issues"
   },
-  "homepage": "https://github.com/Elantris/announcement-reminder#readme",
+  "homepage": "https://github.com/Elantris/attention-please#readme",
   "dependencies": {
     "discord.js": "^12.5.1",
     "moment": "^2.29.1",
