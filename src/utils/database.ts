@@ -11,7 +11,9 @@ const cache: {
   }
   settings: {
     [GuildID: string]: {
+      [key: string]: any
       timezone: number
+      prefix: string
     }
   }
 } = {
@@ -38,8 +40,6 @@ database.ref('/remind_jobs').on('child_removed', removeCache)
 database.ref('/settings').on('child_added', updateCache)
 database.ref('/settings').on('child_changed', updateCache)
 database.ref('/settings').on('child_removed', removeCache)
-
-
 
 export { cache }
 export default database

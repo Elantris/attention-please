@@ -60,7 +60,7 @@ const remindCronjob: (client: Client) => Promise<void> = async client => {
         database.ref(`/remind_jobs/${jobId}`).remove()
         continue
       }
-      remindJobQueue[jobId].retryTimes += 1
+      await database.ref(`/remind_jobs/${jobId}/retryTimes`).set(remindJobQueue[jobId].retryTimes + 1)
     }
   }
 }

@@ -3,6 +3,7 @@ import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
 import { CommandProps } from '../types'
+import { cache } from './database'
 import { loggerHook } from './hooks'
 
 const guildStatus: { [GuildID: string]: 'processing' | 'cooling-down' | 'muted' } = {}
@@ -16,17 +17,27 @@ readdirSync(join(__dirname, '..', 'commands'))
   })
 
 const handleCommand: (message: Message) => Promise<void> = async message => {
-  if (message.author.bot || !message.guild || !message.content.startsWith('ar!')) {
-    return
-  }
-
-  const args = message.content.replace(/\s+/g, ' ').split(' ')
-  const commandName = args[0].slice(3)
-  if (!commandName || !commands[commandName]) {
+  if (message.author.bot || !message.guild) {
     return
   }
 
   const guildId = message.guild.id
+  const prefix = cache.settings[guildId]?.prefix || 'ap!'
+  const mentionBotPattern = new RegExp(`<@!{0,1}${message.client.user?.id}>`)
+  if (mentionBotPattern.test(message.content)) {
+    message.channel.send(':gear: `GUILD_ID` 指令前綴：`PREFIX`'.replace('GUILD_ID', guildId).replace('PREFIX', prefix))
+    return
+  }
+  if (!message.content.startsWith(prefix)) {
+    return
+  }
+
+  const args = message.content.replace(/\s+/g, ' ').split(' ')
+  const commandName = args[0].slice(prefix.length)
+  if (!commandName || !commands[commandName]) {
+    return
+  }
+
   if (guildStatus[guildId]) {
     if (guildStatus[guildId] === 'processing') {
       message.channel.send(':star2: 指令處理中，你需要再等一等...')
@@ -40,7 +51,10 @@ const handleCommand: (message: Message) => Promise<void> = async message => {
 
   try {
     guildStatus[guildId] = 'processing'
-    const commandResult = await commands[commandName](message, args.slice(1))
+    const commandResult = await commands[commandName](message, {
+      guildId,
+      args: args.slice(1),
+    })
     if (!commandResult.content) {
       throw new Error('No result content.')
     }

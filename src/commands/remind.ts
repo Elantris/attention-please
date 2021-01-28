@@ -3,11 +3,7 @@ import { CommandProps } from '../types'
 import database, { cache } from '../utils/database'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
 
-const commandRemind: CommandProps = async (message, args) => {
-  if (!message.guild) {
-    return { content: ':question:' }
-  }
-
+const commandRemind: CommandProps = async (message, { guildId, args }) => {
   if (args.length < 2) {
     return {
       content: ':x: 少了幾個參數！這者指令需要訊息ID、時間：`ar!remind [Message ID] [TIME]`',
@@ -15,7 +11,7 @@ const commandRemind: CommandProps = async (message, args) => {
     }
   }
 
-  const remindAt = moment(args.slice(1).join(' ')).utcOffset(cache.settings[message.guild.id]?.timezone || 0)
+  const remindAt = moment(args.slice(1).join(' ')).utcOffset(cache.settings[guildId]?.timezone || 0)
   if (!remindAt.isValid()) {
     return {
       content: `:x: 機器人不認識這個時間格式`,

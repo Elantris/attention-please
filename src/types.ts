@@ -2,7 +2,10 @@ import { Message, MessageEmbedOptions } from 'discord.js'
 
 export type CommandProps = (
   message: Message,
-  args: string[],
+  options: {
+    guildId: string
+    args: string[]
+  },
 ) => Promise<{
   content: Message['content']
   embed?: MessageEmbedOptions

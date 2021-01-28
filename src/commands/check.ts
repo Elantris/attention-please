@@ -4,11 +4,7 @@ import fetchGuildMessage from '../utils/fetchGuildMessage'
 import getAbsentMemberLists from '../utils/getAbsentMemberLists'
 import getReactionStatus from '../utils/getReactionStatus'
 
-const commandCheck: CommandProps = async (message, args) => {
-  if (!message.guild || !message.client.user) {
-    return { content: ':question:' }
-  }
-
+const commandCheck: CommandProps = async (message, { args }) => {
   const targetMessageId = args[0]
   if (!targetMessageId) {
     return {
