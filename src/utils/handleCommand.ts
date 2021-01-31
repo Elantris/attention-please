@@ -25,7 +25,7 @@ const handleCommand: (message: Message) => Promise<void> = async message => {
   const prefix = cache.settings[guildId]?.prefix || 'ap!'
   const mentionBotPattern = new RegExp(`<@!{0,1}${message.client.user?.id}>`)
   if (mentionBotPattern.test(message.content)) {
-    message.channel.send(':gear: `GUILD_ID` 指令前綴：`PREFIX`'.replace('GUILD_ID', guildId).replace('PREFIX', prefix))
+    message.channel.send(':gear: 目前伺服器指令前綴：`PREFIX`'.replace('PREFIX', prefix))
     return
   }
   if (!message.content.startsWith(prefix)) {

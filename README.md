@@ -44,3 +44,11 @@ ap!settings            # list all settings
 ap!settings prefix     # show certain settings item value
 ap!settings timezone 8 # set the value 
 ```
+
+### Help
+Show current command prefix and the link to README.
+
+Examples:
+```
+ap!help
+```

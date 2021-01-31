@@ -2,20 +2,28 @@ import { CommandProps } from '../types'
 import database, { cache } from '../utils/database'
 
 const settingsItems = ['prefix', 'timezone']
+const defaultValues: {
+  [key: string]: string
+} = {
+  prefix: 'ap!',
+  timezone: '0',
+}
 
 const commandSettings: CommandProps = async (message, { guildId, args }) => {
   if (args.length === 0) {
     return {
-      content: ':gear: `GUILD_ID` 全部設定：\nVALUE'.replace('GUILD_ID', guildId).replace(
-        'VALUE',
-        settingsItems
-          .map(settingsItem => {
-            const value = cache.settings[guildId]?.[settingsItem] || ''
-            return '**SETTING_ITEM**: `VALUE`'.replace('SETTING_ITEM', settingsItem).replace('VALUE', value)
-          })
-          .filter(v => v)
-          .join('\n'),
-      ),
+      content: ':gear: `GUILD_ID` 全部設定：\nALL_SETTINGS'
+        .replace('GUILD_ID', guildId)
+        .replace(
+          'ALL_SETTINGS',
+          settingsItems
+            .map(settingsItem =>
+              '**SETTING_ITEM**: `VALUE`'
+                .replace('SETTING_ITEM', settingsItem)
+                .replace('VALUE', cache.settings[guildId]?.[settingsItem] || `${defaultValues[settingsItem]} (預設)`),
+            )
+            .join('\n'),
+        ),
     }
   }
 
