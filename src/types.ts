@@ -12,13 +12,6 @@ export type CommandProps = (
   isSyntaxError?: boolean
 }>
 
-export type ReactionStatusProps = {
-  [UserID: string]: {
-    name: string
-    emoji: string[]
-  }
-}
-
 export type RemindJobProps = {
   remindAt: number
   guildId: string

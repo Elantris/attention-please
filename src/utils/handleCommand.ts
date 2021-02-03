@@ -60,11 +60,10 @@ const handleCommand: (message: Message) => Promise<void> = async message => {
     }
     const responseMessage = await message.channel.send(commandResult.content, { embed: commandResult.embed })
     loggerHook.send(
-      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT\n[`RESPONSE_TIME`] RESPONSE_CONTENT (**PROCESSING_TIMEms**)'
+      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT\nRESPONSE_CONTENT (**PROCESSING_TIMEms**)'
         .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
         .replace('GUILD_ID', guildId)
         .replace('MESSAGE_CONTENT', message.content)
-        .replace('RESPONSE_TIME', moment(responseMessage.createdTimestamp).format('HH:mm:ss'))
         .replace('RESPONSE_CONTENT', responseMessage.content)
         .replace('PROCESSING_TIME', `${responseMessage.createdTimestamp - message.createdTimestamp}`),
       { embeds: commandResult.embed ? [commandResult.embed] : undefined },

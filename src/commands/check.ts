@@ -1,7 +1,6 @@
 import { DMChannel } from 'discord.js'
 import { CommandProps } from '../types'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
-import getAbsentMemberLists from '../utils/getAbsentMemberLists'
 import getReactionStatus from '../utils/getReactionStatus'
 
 const commandCheck: CommandProps = async (message, { args }) => {
@@ -19,26 +18,9 @@ const commandCheck: CommandProps = async (message, { args }) => {
       content: ':question: 找不到這則訊息，也許是這隻機器人沒有權限看到它？',
     }
   }
-  const reactionStatus = await getReactionStatus(targetMessage)
-  if (Object.keys(reactionStatus).length === 0) {
-    return {
-      content: ':question: 沒有人需要看到這則訊息，似乎沒有標記到活人',
-    }
-  }
-
-  const { allMembersCount, reactedMembersCount, absentMemberLists } = getAbsentMemberLists(reactionStatus)
 
   return {
-    content: `:bar_chart: 已讀人數：**PERCENTAGE%**，(REACTED_MEMBERS / ALL_MEMBERS)`
-      .replace('PERCENTAGE', ((reactedMembersCount * 100) / allMembersCount).toFixed(2))
-      .replace('REACTED_MEMBERS', `${reactedMembersCount}`)
-      .replace('ALL_MEMBERS', `${allMembersCount}`),
-    embed: {
-      title: `Message ID: \`${targetMessage.id}\``,
-      description: '未讀名單',
-      url: targetMessage.url,
-      fields: absentMemberLists,
-    },
+    content: await getReactionStatus(targetMessage),
   }
 }
 
