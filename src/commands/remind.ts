@@ -6,7 +6,7 @@ import fetchGuildMessage from '../utils/fetchGuildMessage'
 const commandRemind: CommandProps = async (message, { guildId, args }) => {
   if (args.length < 2) {
     return {
-      content: ':x: 少了幾個參數！這者指令需要訊息ID、時間：`ar!remind [Message ID] [TIME]`',
+      content: ':x: 少了幾個參數！這者指令需要訊息ID、時間：`ap!remind [Message ID] [TIME]`',
       isSyntaxError: true,
     }
   }
@@ -20,7 +20,7 @@ const commandRemind: CommandProps = async (message, { guildId, args }) => {
   }
   if (remindAt.isBefore()) {
     return {
-      content: ':x: 提醒的時間必須設定在未來',
+      content: ':x: REMIND_AT 提醒的時間必須設定在未來'.replace('REMIND_AT', remindAt.format('YYYY-MM-DD HH:mm')),
       isSyntaxError: true,
     }
   }
