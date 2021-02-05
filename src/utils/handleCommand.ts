@@ -58,9 +58,11 @@ const handleCommand: (message: Message) => Promise<void> = async message => {
     if (!commandResult.content) {
       throw new Error('No result content.')
     }
-    const responseMessage = await message.channel.send(commandResult.content, { embed: commandResult.embed })
+    const responseMessage = await message.channel.send(commandResult.content, {
+      embed: commandResult.embed,
+    })
     loggerHook.send(
-      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT\nRESPONSE_CONTENT (**PROCESSING_TIMEms**)'
+      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT\n(**PROCESSING_TIME**ms) RESPONSE_CONTENT'
         .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
         .replace('GUILD_ID', guildId)
         .replace('MESSAGE_CONTENT', message.content)
@@ -75,7 +77,7 @@ const handleCommand: (message: Message) => Promise<void> = async message => {
   } catch (error) {
     const responseMessage = await message.channel.send(':fire: 好像發生了點問題，工程師正在努力搶修！')
     loggerHook.send(
-      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT (**PROCESSING_TIMEms**)\n```ERROR```'
+      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT\n(**PROCESSING_TIME**ms) ```ERROR```'
         .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
         .replace('GUILD_ID', guildId)
         .replace('MESSAGE_CONTENT', message.content)

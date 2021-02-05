@@ -1,9 +1,12 @@
-import firebase from 'firebase'
+import admin, { ServiceAccount } from 'firebase-admin'
 import config from '../config'
 import { RemindJobProps } from '../types'
 
-firebase.initializeApp(config.FIREBASE)
-const database = firebase.database()
+admin.initializeApp({
+  credential: admin.credential.cert(config.FIREBASE.serviceAccount as ServiceAccount),
+  databaseURL: config.FIREBASE.databaseURL,
+})
+const database = admin.database()
 
 const cache: {
   remind_jobs: {
@@ -21,13 +24,13 @@ const cache: {
   settings: {},
 }
 
-const updateCache = (snapshot: firebase.database.DataSnapshot) => {
+const updateCache = (snapshot: admin.database.DataSnapshot) => {
   const key = snapshot.ref.parent?.key as keyof typeof cache | null | undefined
   if (key && snapshot.key) {
     cache[key][snapshot.key] = snapshot.val()
   }
 }
-const removeCache = (snapshot: firebase.database.DataSnapshot) => {
+const removeCache = (snapshot: admin.database.DataSnapshot) => {
   const key = snapshot.ref.parent?.key as keyof typeof cache | null | undefined
   if (key && snapshot.key) {
     delete cache[key][snapshot.key]

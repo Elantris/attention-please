@@ -24,7 +24,7 @@ const startedAt = Date.now()
 client.on('ready', () => {
   const readyAt = Date.now()
   loggerHook.send(
-    '[`TIME`] USER_TAG is online! (**PREPARING_TIMEms**)'
+    '[`TIME`] USER_TAG is online! (**PREPARING_TIME**ms)'
       .replace('TIME', moment(readyAt).format('HH:mm:ss'))
       .replace('USER_TAG', client.user?.tag || '')
       .replace('PREPARING_TIME', `${readyAt - startedAt}`),

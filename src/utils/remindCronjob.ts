@@ -27,9 +27,7 @@ const remindCronjob: (client: Client) => Promise<void> = async client => {
       }
 
       const targetMessage = await targetChannel.messages.fetch(remindJobQueue[jobId].messageId)
-      const responseMessage = await responseChannel.send({
-        content: await getReactionStatus(targetMessage),
-      })
+      const responseMessage = await responseChannel.send(await getReactionStatus(targetMessage))
       loggerHook.send(
         '[`TIME`] `GUILD_ID` `MESSAGE_ID` is reminded at [`REMIND_AT`]\nRESPONSE_CONTENT'
           .replace('TIME', moment(responseMessage.createdTimestamp).format('HH:mm:ss'))
