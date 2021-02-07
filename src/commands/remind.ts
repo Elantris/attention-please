@@ -6,7 +6,7 @@ import fetchGuildMessage from '../utils/fetchGuildMessage'
 const commandRemind: CommandProps = async (message, { guildId, args }) => {
   if (args.length < 2) {
     return {
-      content: ':x: 少了幾個參數！這者指令需要訊息ID、時間：`ap!remind [Message ID] [TIME]`',
+      content: ':x: 少了幾個參數！這個指令需要訊息ID、時間：`ap!remind [Message ID] [TIME]`',
       isSyntaxError: true,
     }
   }
@@ -14,13 +14,16 @@ const commandRemind: CommandProps = async (message, { guildId, args }) => {
   const remindAt = moment(args.slice(1).join(' ')).utcOffset(cache.settings[guildId]?.timezone || 0)
   if (!remindAt.isValid()) {
     return {
-      content: `:x: 機器人不認識這個時間格式`,
+      content: ':x: 機器人不認識這個時間格式',
       isSyntaxError: true,
     }
   }
   if (remindAt.isBefore()) {
     return {
-      content: ':x: REMIND_AT 提醒的時間必須設定在未來'.replace('REMIND_AT', remindAt.format('YYYY-MM-DD HH:mm')),
+      content: ':x: 機器人認為你輸入的時間 REMIND_AT 不是在未來'.replace(
+        'REMIND_AT',
+        remindAt.format('YYYY-MM-DD HH:mm'),
+      ),
       isSyntaxError: true,
     }
   }

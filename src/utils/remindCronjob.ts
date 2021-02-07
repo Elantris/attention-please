@@ -29,11 +29,11 @@ const remindCronjob: (client: Client) => Promise<void> = async client => {
       const targetMessage = await targetChannel.messages.fetch(remindJobQueue[jobId].messageId)
       const responseMessage = await responseChannel.send(await getReactionStatus(targetMessage))
       loggerHook.send(
-        '[`TIME`] `GUILD_ID` `MESSAGE_ID` is reminded at [`REMIND_AT`]\nRESPONSE_CONTENT'
+        '[`TIME`] `GUILD_ID` `MESSAGE_ID` is reminded at `REMIND_AT`\nRESPONSE_CONTENT'
           .replace('TIME', moment(responseMessage.createdTimestamp).format('HH:mm:ss'))
           .replace('GUILD_ID', remindJobQueue[jobId].guildId)
           .replace('MESSAGE_ID', remindJobQueue[jobId].messageId)
-          .replace('REMIND_AT', moment(remindJobQueue[jobId].remindAt).format('HH:mm:ss'))
+          .replace('REMIND_AT', moment(remindJobQueue[jobId].remindAt).format('YYYY-MM-DD HH:mm:ss'))
           .replace('RESPONSE_CONTENT', responseMessage.content),
       )
       database.ref(`/remind_jobs/${jobId}`).remove()

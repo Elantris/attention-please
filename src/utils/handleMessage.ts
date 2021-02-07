@@ -1,4 +1,4 @@
-import { Message } from 'discord.js'
+import { Message, MessageEmbedOptions } from 'discord.js'
 import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
@@ -25,7 +25,7 @@ const handleCommand: (message: Message) => Promise<void> = async message => {
   const prefix = cache.settings[guildId]?.prefix || 'ap!'
   const mentionBotPattern = new RegExp(`<@!{0,1}${message.client.user?.id}>`)
   if (mentionBotPattern.test(message.content)) {
-    message.channel.send(':gear: 目前伺服器指令前綴：`PREFIX`'.replace('PREFIX', prefix))
+    message.channel.send(':gear: 目前指令前綴：`PREFIX`'.replace('PREFIX', prefix))
     return
   }
   if (!message.content.startsWith(prefix)) {
@@ -51,46 +51,54 @@ const handleCommand: (message: Message) => Promise<void> = async message => {
 
   try {
     guildStatus[guildId] = 'processing'
-    const commandResult = await commands[commandName](message, {
-      guildId,
-      args: args.slice(1),
-    })
+    const commandResult = await commands[commandName](message, { guildId, args: args.slice(1) })
     if (!commandResult.content) {
       throw new Error('No result content.')
     }
-    const responseMessage = await message.channel.send(commandResult.content, {
-      embed: commandResult.embed,
-    })
-    loggerHook.send(
-      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT\n(**PROCESSING_TIME**ms) RESPONSE_CONTENT'
-        .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
-        .replace('GUILD_ID', guildId)
-        .replace('MESSAGE_CONTENT', message.content)
-        .replace('RESPONSE_CONTENT', responseMessage.content)
-        .replace('PROCESSING_TIME', `${responseMessage.createdTimestamp - message.createdTimestamp}`),
-      { embeds: commandResult.embed ? [commandResult.embed] : undefined },
-    )
+    await sendResponse(message, commandResult)
     if (commandResult.isSyntaxError) {
       delete guildStatus[guildId]
       return
     }
   } catch (error) {
-    const responseMessage = await message.channel.send(':fire: 好像發生了點問題，工程師正在努力搶修！')
-    loggerHook.send(
-      '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT\n(**PROCESSING_TIME**ms) ```ERROR```'
-        .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
-        .replace('GUILD_ID', guildId)
-        .replace('MESSAGE_CONTENT', message.content)
-        .replace('PROCESSING_TIME', `${responseMessage.createdTimestamp - message.createdTimestamp}`)
-        .replace('ERROR', `${error}`),
-    )
+    await sendResponse(message, { content: ':fire: 好像發生了點問題，工程師正在努力搶修！', error })
     delete guildStatus[guildId]
     return
   }
 
+  guildStatus[guildId] = 'cooling-down'
   setTimeout(() => {
     delete guildStatus[guildId]
   }, 5000)
+}
+
+const sendResponse = async (
+  message: Message,
+  options: { content: string; embed?: MessageEmbedOptions; error?: Error },
+) => {
+  const responseMessage = await message.channel.send(options)
+
+  const embeds: MessageEmbedOptions[] = []
+  options.embed &&
+    embeds.push({
+      ...options.embed,
+      color: 0xcc5de8,
+    })
+  options.error &&
+    embeds.push({
+      color: 0xff6b6b,
+      description: '```ERROR```'.replace('ERROR', options.error.stack || ''),
+    })
+
+  loggerHook.send(
+    '[`TIME`] `GUILD_ID`: MESSAGE_CONTENT\n(**PROCESSING_TIME**ms) RESPONSE_CONTENT'
+      .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
+      .replace('GUILD_ID', `${message.guild?.id}`)
+      .replace('MESSAGE_CONTENT', message.content)
+      .replace('PROCESSING_TIME', `${responseMessage.createdTimestamp - message.createdTimestamp}`)
+      .replace('RESPONSE_CONTENT', responseMessage.content),
+    { embeds },
+  )
 }
 
 export default handleCommand

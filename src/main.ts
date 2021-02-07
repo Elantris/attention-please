@@ -1,10 +1,11 @@
 import { Client } from 'discord.js'
 import moment from 'moment'
 import config from './config'
-import handleCommand from './utils/handleCommand'
+import handleCommand from './utils/handleMessage'
 import { loggerHook } from './utils/hooks'
 import remindCronjob from './utils/remindCronJob'
 
+const startedAt = Date.now()
 const client = new Client({
   ws: {
     intents: [
@@ -20,7 +21,6 @@ const client = new Client({
 
 client.on('message', handleCommand)
 
-const startedAt = Date.now()
 client.on('ready', () => {
   const readyAt = Date.now()
   loggerHook.send(

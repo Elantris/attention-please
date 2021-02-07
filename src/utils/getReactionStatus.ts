@@ -47,10 +47,10 @@ const getReactionStatus: (message: Message) => Promise<string> = async message =
   const reactedMembersCount = Object.keys(reactionStatus).filter(userId => reactionStatus[userId].emoji.length).length
   const absentMemberIds = Object.keys(reactionStatus).filter(userId => reactionStatus[userId].emoji.length === 0)
 
-  return ':bar_chart: 已讀人數：**PERCENTAGE%**，(REACTED_MEMBERS / ALL_MEMBERS)\nMESSAGE_URL\nMENTIONS'
-    .replace('PERCENTAGE', `${((reactedMembersCount * 100) / allMembersCount).toFixed(2)}`)
+  return ':bar_chart: 已讀人數：REACTED_MEMBERS / ALL_MEMBERS (**PERCENTAGE%**)\nMESSAGE_URL\nMENTIONS'
     .replace('REACTED_MEMBERS', `${reactedMembersCount}`)
     .replace('ALL_MEMBERS', `${allMembersCount}`)
+    .replace('PERCENTAGE', `${((reactedMembersCount * 100) / allMembersCount).toFixed(2)}`)
     .replace('MESSAGE_URL', message.url)
     .replace('MENTIONS', absentMemberIds.map(userId => `<@!${userId}>`).join(' '))
 }

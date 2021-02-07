@@ -2,11 +2,12 @@
 A Discord bot for finding who did not react to the announcement.
 
 
-## Invite Link
-https://discord.com (/) api/oauth2/authorize?client_id=801820692500054087&permissions=0&scope=bot
+## Invite Links
+- Join eeBots Support: https://discord.gg (/) Ctwz4BB
+- Invite Attention Please: https://discord.com (/) api/oauth2/authorize?client_id=801820692500054087&permissions=0&scope=bot
 
 
-## Command
+## Commands
 
 ### Check
 List members did not react to the target message. Make sure the bot and all mentioned members have the right permissions to see and react to the target message.
