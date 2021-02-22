@@ -79,11 +79,7 @@ const sendResponse = async (
   const responseMessage = await message.channel.send(options)
 
   const embeds: MessageEmbedOptions[] = []
-  options.embed &&
-    embeds.push({
-      ...options.embed,
-      color: 0xcc5de8,
-    })
+  options.embed && embeds.push(options.embed)
   options.error &&
     embeds.push({
       color: 0xff6b6b,
