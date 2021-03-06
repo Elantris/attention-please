@@ -21,6 +21,7 @@ const client = new Client({
 client.on('message', handleCommand)
 
 client.on('ready', () => {
+  client.user?.setActivity('Updated at 2021.03.07 | https://discord.gg/Ctwz4BB')
   loggerHook.send(
     '[`TIME`] USER_TAG is online!'
       .replace('TIME', moment().format('HH:mm:ss'))
