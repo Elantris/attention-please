@@ -5,7 +5,6 @@ import handleCommand from './utils/handleMessage'
 import { loggerHook } from './utils/hooks'
 import remindCronjob from './utils/remindCronJob'
 
-const startedAt = Date.now()
 const client = new Client({
   ws: {
     intents: [
@@ -22,12 +21,10 @@ const client = new Client({
 client.on('message', handleCommand)
 
 client.on('ready', () => {
-  const readyAt = Date.now()
   loggerHook.send(
-    '[`TIME`] USER_TAG is online! (**PREPARING_TIME**ms)'
-      .replace('TIME', moment(readyAt).format('HH:mm:ss'))
-      .replace('USER_TAG', client.user?.tag || '')
-      .replace('PREPARING_TIME', `${readyAt - startedAt}`),
+    '[`TIME`] USER_TAG is online!'
+      .replace('TIME', moment().format('HH:mm:ss'))
+      .replace('USER_TAG', client.user?.tag || ''),
   )
 })
 

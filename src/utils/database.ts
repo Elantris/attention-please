@@ -9,7 +9,7 @@ admin.initializeApp({
 const database = admin.database()
 
 const cache: {
-  remind_jobs: {
+  remindJobs: {
     [JobID: string]: RemindJobProps
   }
   settings: {
@@ -20,7 +20,7 @@ const cache: {
     }
   }
 } = {
-  remind_jobs: {},
+  remindJobs: {},
   settings: {},
 }
 
@@ -37,9 +37,9 @@ const removeCache = (snapshot: admin.database.DataSnapshot) => {
   }
 }
 
-database.ref('/remind_jobs').on('child_added', updateCache)
-database.ref('/remind_jobs').on('child_changed', updateCache)
-database.ref('/remind_jobs').on('child_removed', removeCache)
+database.ref('/remindJobs').on('child_added', updateCache)
+database.ref('/remindJobs').on('child_changed', updateCache)
+database.ref('/remindJobs').on('child_removed', removeCache)
 database.ref('/settings').on('child_added', updateCache)
 database.ref('/settings').on('child_changed', updateCache)
 database.ref('/settings').on('child_removed', removeCache)

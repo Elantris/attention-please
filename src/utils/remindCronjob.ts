@@ -5,7 +5,7 @@ import getReactionStatus from './getReactionStatus'
 import { loggerHook } from './hooks'
 
 const remindCronjob: (client: Client) => Promise<void> = async client => {
-  const remindJobQueue = cache.remind_jobs
+  const remindJobQueue = cache.remindJobs
   const now = Date.now()
 
   for (const jobId in remindJobQueue) {
@@ -18,11 +18,11 @@ const remindCronjob: (client: Client) => Promise<void> = async client => {
       const responseChannel = await client.channels.fetch(remindJobQueue[jobId].responseChannelId)
       if (
         !targetChannel.isText() ||
-        targetChannel instanceof DMChannel ||
         !responseChannel.isText() ||
+        targetChannel instanceof DMChannel ||
         responseChannel instanceof DMChannel
       ) {
-        database.ref(`/remind_jobs/${jobId}`).remove()
+        database.ref(`/remindJobs/${jobId}`).remove()
         continue
       }
 
@@ -36,13 +36,13 @@ const remindCronjob: (client: Client) => Promise<void> = async client => {
           .replace('REMIND_AT', moment(remindJobQueue[jobId].remindAt).format('YYYY-MM-DD HH:mm:ss'))
           .replace('RESPONSE_CONTENT', responseMessage.content),
       )
-      database.ref(`/remind_jobs/${jobId}`).remove()
+      database.ref(`/remindJobs/${jobId}`).remove()
     } catch {
       if (remindJobQueue[jobId].retryTimes > 3) {
-        database.ref(`/remind_jobs/${jobId}`).remove()
+        database.ref(`/remindJobs/${jobId}`).remove()
         continue
       }
-      await database.ref(`/remind_jobs/${jobId}/retryTimes`).set(remindJobQueue[jobId].retryTimes + 1)
+      await database.ref(`/remindJobs/${jobId}/retryTimes`).set(remindJobQueue[jobId].retryTimes + 1)
     }
   }
 }

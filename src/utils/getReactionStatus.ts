@@ -1,11 +1,11 @@
 import { DMChannel, Message } from 'discord.js'
 
 const getReactionStatus: (message: Message) => Promise<string> = async message => {
-  const channel = message.channel
-  if (channel instanceof DMChannel) {
-    return ':question:'
+  if (message.channel instanceof DMChannel) {
+    return ''
   }
 
+  const channel = message.channel
   const reactionStatus: {
     [UserID: string]: {
       name: string
@@ -47,7 +47,7 @@ const getReactionStatus: (message: Message) => Promise<string> = async message =
   const reactedMembersCount = Object.keys(reactionStatus).filter(userId => reactionStatus[userId].emoji.length).length
   const absentMemberIds = Object.keys(reactionStatus).filter(userId => reactionStatus[userId].emoji.length === 0)
 
-  return ':bar_chart: 已讀人數：REACTED_MEMBERS / ALL_MEMBERS (**PERCENTAGE%**)\nMESSAGE_URL\nMENTIONS'
+  return ':bar_chart: 已簽到：REACTED_MEMBERS / ALL_MEMBERS (**PERCENTAGE%**)\nMESSAGE_URL\nMENTIONS'
     .replace('REACTED_MEMBERS', `${reactedMembersCount}`)
     .replace('ALL_MEMBERS', `${allMembersCount}`)
     .replace('PERCENTAGE', `${((reactedMembersCount * 100) / allMembersCount).toFixed(2)}`)
