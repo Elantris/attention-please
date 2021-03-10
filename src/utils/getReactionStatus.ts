@@ -95,14 +95,14 @@ const getReactionStatus: (message: Message) => Promise<CommandResponseProps> = a
             fields: [
               ...(showAbsent
                 ? absentMembers
-                    .reduce((accumulator, member, index) => {
+                    .reduce<string[][]>((accumulator, member, index) => {
                       const page = Math.floor(index / 50)
                       if (index % 50 === 0) {
                         accumulator[page] = []
                       }
                       accumulator[page].push(member.name)
                       return accumulator
-                    }, [] as string[][])
+                    }, [])
                     .map((memberNames, index) => ({
                       name: `:warning: 未簽到 第 ${index + 1} 頁`,
                       value: memberNames.join('、'),
@@ -110,14 +110,14 @@ const getReactionStatus: (message: Message) => Promise<CommandResponseProps> = a
                 : []),
               ...(showReacted
                 ? reactedMembers
-                    .reduce((accumulator, member, index) => {
+                    .reduce<string[][]>((accumulator, member, index) => {
                       const page = Math.floor(index / 50)
                       if (index % 50 === 0) {
                         accumulator[page] = []
                       }
                       accumulator[page].push(member.name)
                       return accumulator
-                    }, [] as string[][])
+                    }, [])
                     .map((memberNames, index) => ({
                       name: `:white_check_mark: 簽到 第 ${index + 1} 頁`,
                       value: memberNames.join('、'),

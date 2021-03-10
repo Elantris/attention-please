@@ -7,7 +7,8 @@
     "start": "npm run build && node build/main.js",
     "pm2": "pm2 start build/main.js --name attention-please && pm2 monit",
     "build": "rm -rf ./build/* && ./node_modules/.bin/tsc",
-    "restart": "pm2 stop attention-please && pm2 reset attention-please && pm2 start attention-please && pm2 monit"
+    "restart": "pm2 stop attention-please && pm2 reset attention-please && pm2 start attention-please && pm2 monit",
+    "dev": "NODE_ENV=development ts-node src/main.ts"
   },
   "repository": {
     "type": "git",
