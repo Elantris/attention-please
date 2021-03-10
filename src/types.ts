@@ -6,11 +6,13 @@ export type CommandProps = (
     guildId: string
     args: string[]
   },
-) => Promise<{
+) => Promise<CommandResponseProps>
+
+export type CommandResponseProps = {
   content: Message['content']
   embed?: MessageEmbedOptions
   isSyntaxError?: boolean
-}>
+}
 
 export type RemindJobProps = {
   remindAt: number

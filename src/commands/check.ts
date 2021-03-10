@@ -18,9 +18,7 @@ const commandCheck: CommandProps = async (message, { args }) => {
     }
   }
 
-  return {
-    content: await getReactionStatus(targetMessage),
-  }
+  return await getReactionStatus(targetMessage)
 }
 
 export default commandCheck

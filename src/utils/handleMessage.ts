@@ -86,16 +86,15 @@ const sendResponse = async (
 
   const responseMessage = await message.channel.send({
     content: options.content,
-    embed: options.embed,
+    embed: options.embed
+      ? {
+          title: '加入開發群組',
+          url: 'https://discord.gg/Ctwz4BB',
+          color: 0xff922b,
+          ...options.embed,
+        }
+      : undefined,
   })
-
-  const embeds: MessageEmbedOptions[] = []
-  options.embed && embeds.push(options.embed)
-  options.error &&
-    embeds.push({
-      color: 0xff6b6b,
-      description: '```ERROR```'.replace('ERROR', options.error.stack || ''),
-    })
 
   loggerHook.send(
     '[`TIME`] MESSAGE_CONTENT\n(**PROCESSING_TIME**ms) RESPONSE_CONTENT'
@@ -107,7 +106,7 @@ const sendResponse = async (
       embeds: [
         {
           ...options.embed,
-          color: options.error ? 0xff6b6b : 0xc92a2a,
+          color: options.error ? 0xff6b6b : options.embed?.color || 0xff922b,
           fields: [
             ...(options.embed?.fields || []),
             {

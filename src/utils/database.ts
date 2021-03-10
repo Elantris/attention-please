@@ -9,14 +9,18 @@ admin.initializeApp({
 const database = admin.database()
 
 const cache: {
+  [key: string]: any
   remindJobs: {
     [JobID: string]: RemindJobProps
   }
   settings: {
     [GuildID: string]: {
-      [key: string]: any
-      timezone: number
+      [key: string]: any | undefined
       prefix: string
+      timezone: number
+      showReacted: boolean
+      showAbsent: boolean
+      mentionAbsent: boolean
     }
   }
 } = {
@@ -25,14 +29,14 @@ const cache: {
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {
-  const key = snapshot.ref.parent?.key as keyof typeof cache | null | undefined
-  if (key && snapshot.key) {
+  const key = snapshot.ref.parent?.key
+  if (key && cache[key] && snapshot.key) {
     cache[key][snapshot.key] = snapshot.val()
   }
 }
 const removeCache = (snapshot: admin.database.DataSnapshot) => {
-  const key = snapshot.ref.parent?.key as keyof typeof cache | null | undefined
-  if (key && snapshot.key) {
+  const key = snapshot.ref.parent?.key
+  if (key && cache[key] && snapshot.key) {
     delete cache[key][snapshot.key]
   }
 }
