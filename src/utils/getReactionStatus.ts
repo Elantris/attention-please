@@ -1,8 +1,8 @@
 import { DMChannel, Message, Util } from 'discord.js'
-import { CommandResponseProps } from '../types'
+import { ResultProps } from '../types'
 import { cache } from './database'
 
-const getReactionStatus: (message: Message) => Promise<CommandResponseProps> = async message => {
+const getReactionStatus: (message: Message) => Promise<ResultProps> = async message => {
   if (message.channel instanceof DMChannel || !message.guild) {
     return {
       content: '',

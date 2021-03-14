@@ -2,6 +2,7 @@ import { Client, DMChannel } from 'discord.js'
 import moment from 'moment'
 import database, { cache } from './database'
 import getReactionStatus from './getReactionStatus'
+import { sendLog } from './handleMessage'
 import { loggerHook } from './hooks'
 
 const remindCronjob: (client: Client) => Promise<void> = async client => {
@@ -22,19 +23,21 @@ const remindCronjob: (client: Client) => Promise<void> = async client => {
         targetChannel instanceof DMChannel ||
         responseChannel instanceof DMChannel
       ) {
-        database.ref(`/remindJobs/${jobId}`).remove()
-        continue
+        throw new Error('Invalid channels')
       }
 
       const targetMessage = await targetChannel.messages.fetch(remindJobQueue[jobId].messageId)
       const responseMessage = await responseChannel.send(await getReactionStatus(targetMessage))
+
       loggerHook.send(
-        '[`TIME`] `GUILD_ID` `MESSAGE_ID` is reminded at `REMIND_AT`\nRESPONSE_CONTENT'
+        '[`TIME`] `JOB_ID`: `GUILD_ID`/`CHANNEL_ID` [`REMIND_AT`]\nRESPONSE_CONTENT'
           .replace('TIME', moment(responseMessage.createdTimestamp).format('HH:mm:ss'))
+          .replace('JOB_ID', jobId)
           .replace('GUILD_ID', remindJobQueue[jobId].guildId)
-          .replace('MESSAGE_ID', remindJobQueue[jobId].messageId)
+          .replace('CHANNEL_ID', remindJobQueue[jobId].channelId)
           .replace('REMIND_AT', moment(remindJobQueue[jobId].remindAt).format('YYYY-MM-DD HH:mm:ss'))
           .replace('RESPONSE_CONTENT', responseMessage.content),
+        { embeds: responseMessage.embeds },
       )
       database.ref(`/remindJobs/${jobId}`).remove()
     } catch {

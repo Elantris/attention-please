@@ -11,7 +11,7 @@ const commandRemind: CommandProps = async (message, { guildId, args }) => {
     }
   }
 
-  const remindAt = moment(args.slice(2).join(' ')).utcOffset(cache.settings[guildId]?.timezone || 0)
+  const remindAt = moment(args.slice(2).join(' ')).utcOffset(cache.settings[guildId]?.timezone || 8)
   if (!remindAt.isValid()) {
     return {
       content: ':x: 機器人不認識這個時間格式',
@@ -28,10 +28,10 @@ const commandRemind: CommandProps = async (message, { guildId, args }) => {
     }
   }
 
-  const targetMessage = await fetchGuildMessage(message, args[1])
+  const { targetMessage, reason } = await fetchGuildMessage(message, args[1])
   if (!targetMessage || !targetMessage.guild) {
     return {
-      content: ':question: 找不到這則訊息，也許是這隻機器人沒有權限看到它？',
+      content: reason || ':question:',
     }
   }
 

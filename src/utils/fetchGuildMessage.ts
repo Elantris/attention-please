@@ -1,12 +1,21 @@
 import { Message } from 'discord.js'
 
-const messageLinkRegex = new RegExp(/https:\/\/\S*\/channels\/\d{18}\/\d{18}\/\d{18}/g)
-const messageWithChannelIdRegex = new RegExp(/\d{18}\-\d{18}/g)
-const messageIdRegex = new RegExp(/\d{18}/g)
+const messageLinkRegex = new RegExp(/https:\/\/\S*\/channels\/\d+\/\d+\/\d+/g)
+const messageWithChannelIdRegex = new RegExp(/\d+\-\d+/g)
+const messageIdRegex = new RegExp(/\d+/g)
 
-const fetchGuildMessage: (message: Message, search: string) => Promise<Message | null> = async (message, search) => {
-  if (!message.guild || !message.client.user) {
-    return null
+const fetchGuildMessage: (
+  message: Message,
+  search: string,
+) => Promise<{
+  targetMessage: Message | null
+  reason?: string
+}> = async (message, search) => {
+  if (!message.guild) {
+    return {
+      targetMessage: null,
+      reason: ':x: 目標訊息必須在群組內',
+    }
   }
 
   const options: {
@@ -27,7 +36,10 @@ const fetchGuildMessage: (message: Message, search: string) => Promise<Message |
   }
 
   if (!options.messageId) {
-    return null
+    return {
+      targetMessage: null,
+      reason: ':x: 目標訊息格式錯誤，請參考說明文件裡支援的訊息格式',
+    }
   }
 
   const guildChannels = message.guild.channels.cache
@@ -35,17 +47,22 @@ const fetchGuildMessage: (message: Message, search: string) => Promise<Message |
     .filter(channel => !options.channelId || channel.id === options.channelId)
 
   for (const channel of guildChannels) {
-    if (!channel.isText() || !channel.members.has(message.client.user.id)) {
+    if (!channel.isText()) {
       continue
     }
 
     try {
       const targetMessage = await channel.messages.fetch(options.messageId)
-      return targetMessage
+      return {
+        targetMessage,
+      }
     } catch {}
   }
 
-  return null
+  return {
+    targetMessage: null,
+    reason: ':question: 找不到這則訊息，也許是這隻機器人沒有權限看到它？',
+  }
 }
 
 export default fetchGuildMessage

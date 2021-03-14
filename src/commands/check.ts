@@ -11,10 +11,10 @@ const commandCheck: CommandProps = async (message, { args }) => {
     }
   }
 
-  const targetMessage = await fetchGuildMessage(message, args[1])
-  if (!targetMessage || targetMessage.channel instanceof DMChannel) {
+  const { targetMessage, reason } = await fetchGuildMessage(message, args[1])
+  if (!targetMessage) {
     return {
-      content: ':question: 找不到這則訊息，也許是這隻機器人沒有權限看到它？',
+      content: reason || ':question:',
     }
   }
 

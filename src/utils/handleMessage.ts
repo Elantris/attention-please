@@ -1,8 +1,8 @@
-import { DMChannel, Message, MessageEmbedOptions } from 'discord.js'
+import { DMChannel, Message } from 'discord.js'
 import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
-import { CommandProps } from '../types'
+import { CommandProps, ResultProps } from '../types'
 import { cache } from './database'
 import { loggerHook } from './hooks'
 
@@ -16,8 +16,14 @@ readdirSync(join(__dirname, '..', 'commands'))
     commands[commandName] = require(join(__dirname, '..', 'commands', commandName)).default
   })
 
-const handleMessage: (message: Message) => Promise<void> = async message => {
-  if (message.author.bot || !message.guild) {
+const handleMessage = async (message: Message) => {
+  if (
+    message.author.bot ||
+    cache.banned[message.author.id] ||
+    !message.guild ||
+    cache.banned[message.guild.id] ||
+    message instanceof DMChannel
+  ) {
     return
   }
 
@@ -51,8 +57,8 @@ const handleMessage: (message: Message) => Promise<void> = async message => {
 
   try {
     guildStatus[guildId] = 'processing'
-    const commandResult = await commands[commandName](message, { guildId, args: args.slice(0) })
-    if (!commandResult.content) {
+    const commandResult = await commands[commandName](message, { guildId, args })
+    if (!commandResult.content && !commandResult.embed) {
       throw new Error('No result content.')
     }
     await sendResponse(message, commandResult)
@@ -72,56 +78,57 @@ const handleMessage: (message: Message) => Promise<void> = async message => {
   }, 5000)
 }
 
-const sendResponse = async (
-  message: Message,
-  options: {
-    content: string
-    embed?: MessageEmbedOptions
-    error?: Error
-  },
-) => {
+const sendResponse = async (message: Message, result: ResultProps) => {
+  try {
+    const responseMessage = await message.channel.send(result.content, {
+      embed: result.embed
+        ? {
+            title: '加入開發群組',
+            url: 'https://discord.gg/Ctwz4BB',
+            color: 0xff922b,
+            ...result.embed,
+          }
+        : undefined,
+    })
+    sendLog(message, responseMessage, result)
+  } catch (error) {
+    sendLog(message, null, { error })
+  }
+}
+
+export const sendLog = (message: Message, responseMessage: Message | null, result: ResultProps) => {
   if (message.channel instanceof DMChannel) {
     return
   }
 
-  const responseMessage = await message.channel.send({
-    content: options.content,
-    embed: options.embed
-      ? {
-          title: '加入開發群組',
-          url: 'https://discord.gg/Ctwz4BB',
-          color: 0xff922b,
-          ...options.embed,
-        }
-      : undefined,
-  })
-
-  loggerHook.send(
-    '[`TIME`] MESSAGE_CONTENT\n(**PROCESSING_TIME**ms) RESPONSE_CONTENT'
-      .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
-      .replace('MESSAGE_CONTENT', message.content)
-      .replace('PROCESSING_TIME', `${responseMessage.createdTimestamp - message.createdTimestamp}`)
-      .replace('RESPONSE_CONTENT', responseMessage.content),
-    {
-      embeds: [
-        {
-          ...options.embed,
-          color: options.error ? 0xff6b6b : options.embed?.color || 0xff922b,
-          fields: [
-            ...(options.embed?.fields || []),
-            {
-              name: 'Status',
-              value: options.error ? '```ERROR```'.replace('ERROR', `${options.error.stack}`) : 'SUCCESS',
+  loggerHook
+    .send(
+      '[`TIME`] MESSAGE_CONTENT\nRESPONSE_CONTENT'
+        .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
+        .replace('MESSAGE_CONTENT', message.content)
+        .replace('RESPONSE_CONTENT', responseMessage?.content || ''),
+      {
+        embeds: [
+          ...(responseMessage?.embeds || []),
+          {
+            color: result.error ? 0xff6b6b : undefined,
+            fields: [
+              {
+                name: 'Status',
+                value: result.error ? '```ERROR```'.replace('ERROR', `${result.error.stack}`) : 'SUCCESS',
+              },
+              { name: 'Guild', value: `${message.guild?.id}\n${message.guild?.name}`, inline: true },
+              { name: 'Channel', value: `${message.channel.id}\n${message.channel.name}`, inline: true },
+              { name: 'User', value: `${message.author.id}\n${message.author.tag}`, inline: true },
+            ],
+            footer: {
+              text: `${(responseMessage?.createdTimestamp || Date.now()) - message.createdTimestamp} ms`,
             },
-            { name: 'Guild', value: `${message.guild?.id}\n${message.guild?.name}`, inline: true },
-            { name: 'Channel', value: `${message.channel.id}\n${message.channel.name}`, inline: true },
-            { name: 'User', value: `${message.author.id}\n${message.author.tag}`, inline: true },
-          ],
-          footer: { text: `${responseMessage.createdTimestamp - message.createdTimestamp} ms` },
-        },
-      ],
-    },
-  )
+          },
+        ],
+      },
+    )
+    .catch()
 }
 
 export default handleMessage

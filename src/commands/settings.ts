@@ -7,7 +7,7 @@ const defaultSettings: {
   [key: string]: string | number | boolean
 } = {
   prefix: 'ap!',
-  timezone: 0,
+  timezone: 8,
   showReacted: false,
   showAbsent: true,
   mentionAbsent: false,

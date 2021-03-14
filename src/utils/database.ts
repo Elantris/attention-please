@@ -8,8 +8,11 @@ admin.initializeApp({
 })
 const database = admin.database()
 
-const cache: {
+export const cache: {
   [key: string]: any
+  banned: {
+    [ID: string]: number
+  }
   remindJobs: {
     [JobID: string]: RemindJobProps
   }
@@ -24,6 +27,7 @@ const cache: {
     }
   }
 } = {
+  banned: {},
   remindJobs: {},
   settings: {},
 }
@@ -41,6 +45,9 @@ const removeCache = (snapshot: admin.database.DataSnapshot) => {
   }
 }
 
+database.ref('/banned').on('child_added', updateCache)
+database.ref('/banned').on('child_changed', updateCache)
+database.ref('/banned').on('child_removed', removeCache)
 database.ref('/remindJobs').on('child_added', updateCache)
 database.ref('/remindJobs').on('child_changed', updateCache)
 database.ref('/remindJobs').on('child_removed', removeCache)
@@ -48,5 +55,4 @@ database.ref('/settings').on('child_added', updateCache)
 database.ref('/settings').on('child_changed', updateCache)
 database.ref('/settings').on('child_removed', removeCache)
 
-export { cache }
 export default database
