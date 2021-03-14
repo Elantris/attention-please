@@ -1,9 +1,5 @@
 import { Message } from 'discord.js'
 
-const messageLinkRegex = new RegExp(/https:\/\/\S*\/channels\/\d+\/\d+\/\d+/g)
-const messageWithChannelIdRegex = new RegExp(/\d+\-\d+/g)
-const messageIdRegex = new RegExp(/\d+/g)
-
 const fetchGuildMessage: (
   message: Message,
   search: string,
@@ -23,15 +19,18 @@ const fetchGuildMessage: (
     messageId?: string
   } = {}
 
-  if (messageLinkRegex.test(search)) {
+  if (/^https:\/\/\S*\/channels\/\d+\/\d+\/\d+$/.test(search)) {
+    // full message link
     const [channelId, messageId] = search.split('/').slice(-2)
     options.channelId = channelId
     options.messageId = messageId
-  } else if (messageWithChannelIdRegex.test(search)) {
+  } else if (/^\d+\-\d+$/.test(search)) {
+    // channel id - message id
     const [channelId, messageId] = search.split('-')
     options.channelId = channelId
     options.messageId = messageId
-  } else if (messageIdRegex.test(search)) {
+  } else if (/^\d+$/.test(search)) {
+    // message id
     options.messageId = search
   }
 

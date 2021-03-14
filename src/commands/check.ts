@@ -1,4 +1,3 @@
-import { DMChannel } from 'discord.js'
 import { CommandProps } from '../types'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
 import getReactionStatus from '../utils/getReactionStatus'
