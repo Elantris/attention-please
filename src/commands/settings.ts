@@ -8,9 +8,20 @@ const defaultSettings: {
 } = {
   prefix: 'ap!',
   timezone: 8,
+  delay: 1440,
   showReacted: false,
   showAbsent: true,
   mentionAbsent: false,
+}
+const settingKeyName: {
+  [key: string]: string
+} = {
+  prefix: '指令前綴',
+  timezone: '時區',
+  delay: '延遲分鐘數',
+  showReacted: '顯示已簽到名單',
+  showAbsent: '顯示未簽到名單',
+  mentionAbsent: '標記未簽到成員',
 }
 
 const commandSettings: CommandProps = async (message, { guildId, args }) => {
@@ -22,8 +33,9 @@ const commandSettings: CommandProps = async (message, { guildId, args }) => {
       content: ':gear: `GUILD_ID` 全部設定'.replace('GUILD_ID', guildId),
       embed: {
         fields: Object.keys(defaultSettings).map(key => ({
-          name: key,
+          name: `${settingKeyName[key]} \`${key}\``,
           value: cache.settings[guildId]?.[key] ?? `${defaultSettings[key]} (預設)`,
+          inline: true,
         })),
       },
     }

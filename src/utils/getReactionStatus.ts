@@ -1,8 +1,8 @@
-import { DMChannel, Message, Util } from 'discord.js'
-import { ResultProps } from '../types'
+import { DMChannel, EmbedFieldData, Message, Util } from 'discord.js'
+import { CommandResultProps } from '../types'
 import { cache } from './database'
 
-const getReactionStatus: (message: Message) => Promise<ResultProps> = async message => {
+const getReactionStatus: (message: Message) => Promise<CommandResultProps> = async message => {
   if (message.channel instanceof DMChannel || !message.guild) {
     return {
       content: '',
@@ -81,51 +81,53 @@ const getReactionStatus: (message: Message) => Promise<ResultProps> = async mess
   const showAbsent = cache.settings[message.guild.id]?.showAbsent ?? true
   const mentionAbsent = !!cache.settings[message.guild.id]?.mentionAbsent
 
+  const fields: EmbedFieldData[] = []
+  if (showAbsent) {
+    fields.push(
+      ...absentMembers
+        .reduce<string[][]>((accumulator, member, index) => {
+          const page = Math.floor(index / 50)
+          if (index % 50 === 0) {
+            accumulator[page] = []
+          }
+          accumulator[page].push(member.name)
+          return accumulator
+        }, [])
+        .map((memberNames, index) => ({
+          name: `:warning: 未簽到 第 ${index + 1} 頁`,
+          value: memberNames.join('、'),
+        })),
+    )
+  }
+  if (showReacted) {
+    fields.push(
+      ...reactedMembers
+        .reduce<string[][]>((accumulator, member, index) => {
+          const page = Math.floor(index / 50)
+          if (index % 50 === 0) {
+            accumulator[page] = []
+          }
+          accumulator[page].push(member.name)
+          return accumulator
+        }, [])
+        .map((memberNames, index) => ({
+          name: `:white_check_mark: 簽到 第 ${index + 1} 頁`,
+          value: memberNames.join('、'),
+        })),
+    )
+  }
+
   return {
-    content: ':bar_chart: 已簽到：REACTED_MEMBERS / ALL_MEMBERS (**PERCENTAGE%**)\nMESSAGE_URL\nMENTIONS'
+    content: ':bar_chart: 已簽到：REACTED_MEMBERS / ALL_MEMBERS (**PERCENTAGE%**)\nMENTIONS'
       .replace('REACTED_MEMBERS', `${reactedMembers.length}`)
       .replace('ALL_MEMBERS', `${allMembersCount}`)
       .replace('PERCENTAGE', `${((reactedMembers.length * 100) / allMembersCount).toFixed(2)}`)
-      .replace('MESSAGE_URL', message.url)
       .replace('MENTIONS', mentionAbsent ? absentMembers.map(member => `<@!${member.id}>`).join(' ') : '')
       .trim(),
-    embed:
-      showReacted || showAbsent
-        ? {
-            fields: [
-              ...(showAbsent
-                ? absentMembers
-                    .reduce<string[][]>((accumulator, member, index) => {
-                      const page = Math.floor(index / 50)
-                      if (index % 50 === 0) {
-                        accumulator[page] = []
-                      }
-                      accumulator[page].push(member.name)
-                      return accumulator
-                    }, [])
-                    .map((memberNames, index) => ({
-                      name: `:warning: 未簽到 第 ${index + 1} 頁`,
-                      value: memberNames.join('、'),
-                    }))
-                : []),
-              ...(showReacted
-                ? reactedMembers
-                    .reduce<string[][]>((accumulator, member, index) => {
-                      const page = Math.floor(index / 50)
-                      if (index % 50 === 0) {
-                        accumulator[page] = []
-                      }
-                      accumulator[page].push(member.name)
-                      return accumulator
-                    }, [])
-                    .map((memberNames, index) => ({
-                      name: `:white_check_mark: 簽到 第 ${index + 1} 頁`,
-                      value: memberNames.join('、'),
-                    }))
-                : []),
-            ],
-          }
-        : undefined,
+    embed: {
+      description: '結算目標：[訊息連結](MESSAGE_URL)'.replace('MESSAGE_URL', message.url),
+      fields,
+    },
   }
 }
 

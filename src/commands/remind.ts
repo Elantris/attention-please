@@ -2,28 +2,23 @@ import moment from 'moment'
 import { CommandProps } from '../types'
 import database, { cache } from '../utils/database'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
+import getReactionStatus from '../utils/getReactionStatus'
 
 const commandRemind: CommandProps = async (message, { guildId, args }) => {
-  if (args.length < 3) {
+  if (!args[1]) {
     return {
-      content: ':x: 少了幾個參數！這個指令需要訊息ID、時間：`ap!remind [Message ID] [TIME]`',
+      content: ':x: 要結算哪一則訊息呢？指定訊息 ID 或訊息連結',
       isSyntaxError: true,
     }
   }
 
-  const remindAt = moment(args.slice(2).join(' ')).utcOffset(cache.settings[guildId]?.timezone || 8)
+  const remindAt = args[2]
+    ? moment(args.slice(2).join(' '))
+    : moment().add(cache.settings[guildId]?.delay || 1440, 'minutes')
+  remindAt.utcOffset(cache.settings[guildId]?.timezone || 8)
   if (!remindAt.isValid()) {
     return {
-      content: ':x: 機器人不認識這個時間格式',
-      isSyntaxError: true,
-    }
-  }
-  if (remindAt.isBefore()) {
-    return {
-      content: ':x: 機器人認為你輸入的時間 REMIND_AT 已經過了'.replace(
-        'REMIND_AT',
-        remindAt.format('YYYY-MM-DD HH:mm'),
-      ),
+      content: ':x: 指定的時間好像怪怪的，再試其他格式看看',
       isSyntaxError: true,
     }
   }
@@ -33,6 +28,10 @@ const commandRemind: CommandProps = async (message, { guildId, args }) => {
     return {
       content: reason || ':question:',
     }
+  }
+
+  if (remindAt.isBefore()) {
+    return await getReactionStatus(targetMessage)
   }
 
   const remindJobQueue = cache.remindJobs
@@ -47,10 +46,11 @@ const commandRemind: CommandProps = async (message, { guildId, args }) => {
     messageId: targetMessage.id,
     responseChannelId: message.channel.id,
     retryTimes: 0,
+    isTest: process.env.NODE_ENV === 'development',
   })
 
   if (duplicatedRemindJobId) {
-    await database.ref(`/remind_jobs/${duplicatedRemindJobId}`).remove()
+    await database.ref(`/remindJobs/${duplicatedRemindJobId}`).remove()
     return {
       content: ':alarm_clock: `MESSAGE_ID` 的結算時間改為 `REMIND_AT`'
         .replace('MESSAGE_ID', targetMessage.id)

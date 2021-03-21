@@ -2,7 +2,7 @@ import { DMChannel, Message } from 'discord.js'
 import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
-import { CommandProps, ResultProps } from '../types'
+import { CommandProps, CommandResultProps } from '../types'
 import { cache } from './database'
 import { loggerHook } from './hooks'
 
@@ -78,28 +78,23 @@ const handleMessage = async (message: Message) => {
   }, 5000)
 }
 
-const sendResponse = async (message: Message, result: ResultProps) => {
-  try {
-    const responseMessage = await message.channel.send(result.content, {
+export const sendResponse = async (message: Message, result: CommandResultProps) => {
+  if (message.channel instanceof DMChannel) {
+    return
+  }
+
+  const responseMessage: Message | null = await message.channel
+    .send(result.content, {
       embed: result.embed
         ? {
-            title: '加入開發群組',
+            title: '加入 eeBots Support（公告、更新）',
             url: 'https://discord.gg/Ctwz4BB',
             color: 0xff922b,
             ...result.embed,
           }
         : undefined,
     })
-    sendLog(message, responseMessage, result)
-  } catch (error) {
-    sendLog(message, null, { error })
-  }
-}
-
-export const sendLog = (message: Message, responseMessage: Message | null, result: ResultProps) => {
-  if (message.channel instanceof DMChannel) {
-    return
-  }
+    .catch()
 
   loggerHook
     .send(
@@ -121,9 +116,7 @@ export const sendLog = (message: Message, responseMessage: Message | null, resul
               { name: 'Channel', value: `${message.channel.id}\n${message.channel.name}`, inline: true },
               { name: 'User', value: `${message.author.id}\n${message.author.tag}`, inline: true },
             ],
-            footer: {
-              text: `${(responseMessage?.createdTimestamp || Date.now()) - message.createdTimestamp} ms`,
-            },
+            footer: { text: `${(responseMessage?.createdTimestamp || Date.now()) - message.createdTimestamp} ms` },
           },
         ],
       },

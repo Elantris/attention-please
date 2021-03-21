@@ -6,9 +6,9 @@ export type CommandProps = (
     guildId: string
     args: string[]
   },
-) => Promise<ResultProps>
+) => Promise<CommandResultProps>
 
-export type ResultProps = {
+export type CommandResultProps = {
   content?: Message['content']
   embed?: MessageEmbedOptions
   isSyntaxError?: boolean
@@ -22,4 +22,5 @@ export type RemindJobProps = {
   messageId: string
   responseChannelId: string
   retryTimes: number
+  isTest: boolean
 }

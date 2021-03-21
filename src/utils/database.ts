@@ -18,9 +18,10 @@ export const cache: {
   }
   settings: {
     [GuildID: string]: {
-      [key: string]: any | undefined
+      [key: string]: any
       prefix: string
       timezone: number
+      delay: number
       showReacted: boolean
       showAbsent: boolean
       mentionAbsent: boolean
