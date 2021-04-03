@@ -4,6 +4,7 @@ import moment from 'moment'
 import { join } from 'path'
 import { CommandProps, CommandResultProps } from '../types'
 import { cache } from './database'
+import getHint from './getHint'
 import { loggerHook } from './hooks'
 
 const guildStatus: { [GuildID: string]: 'processing' | 'cooling-down' | 'muted' } = {}
@@ -89,6 +90,7 @@ export const sendResponse = async (message: Message, result: CommandResultProps)
         title: '加入 eeBots Support（公告、更新）',
         url: 'https://discord.gg/Ctwz4BB',
         color: 0xff922b,
+        footer: { text: getHint() },
         ...result.embed,
       },
     })

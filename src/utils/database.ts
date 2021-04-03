@@ -27,10 +27,14 @@ export const cache: {
       mentionAbsent: boolean
     }
   }
+  hints: {
+    [key in string]?: string
+  }
 } = {
   banned: {},
   remindJobs: {},
   settings: {},
+  hints: {},
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {
@@ -55,5 +59,8 @@ database.ref('/remindJobs').on('child_removed', removeCache)
 database.ref('/settings').on('child_added', updateCache)
 database.ref('/settings').on('child_changed', updateCache)
 database.ref('/settings').on('child_removed', removeCache)
+database.ref('/hints').on('child_added', updateCache)
+database.ref('/hints').on('child_changed', updateCache)
+database.ref('/hints').on('child_removed', removeCache)
 
 export default database

@@ -7,7 +7,7 @@ export type CommandProps = (options: {
 }) => Promise<CommandResultProps>
 
 export type CommandResultProps = {
-  content?: Message['content']
+  content: string
   embed?: MessageEmbedOptions
   isSyntaxError?: boolean
   error?: Error
