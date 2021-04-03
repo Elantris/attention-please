@@ -4,7 +4,7 @@ import database, { cache } from '../utils/database'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
 import getReactionStatus from '../utils/getReactionStatus'
 
-const commandRemind: CommandProps = async (message, { guildId, args }) => {
+const commandRemind: CommandProps = async ({ message, guildId, args }) => {
   if (!args[1]) {
     return {
       content: ':x: 要結算哪一則訊息呢？指定訊息 ID 或訊息連結',
@@ -36,7 +36,7 @@ const commandRemind: CommandProps = async (message, { guildId, args }) => {
 
   const remindJobQueue = cache.remindJobs
   const duplicatedRemindJobId = Object.keys(remindJobQueue).find(
-    jobId => remindJobQueue[jobId].messageId === targetMessage.id,
+    jobId => remindJobQueue[jobId]?.messageId === targetMessage.id,
   )
 
   await database.ref(`/remindJobs/${message.id}`).set({

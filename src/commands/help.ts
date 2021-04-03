@@ -1,11 +1,11 @@
 import { CommandProps } from '../types'
 import { cache } from '../utils/database'
 
-const commandHelp: CommandProps = async (message, { guildId, args }) => {
+const commandHelp: CommandProps = async ({ guildId }) => {
   return {
-    content: ':question: Attention Please\n指令前綴：`PREFIX`\n說明文件：<GITHUB>\n開發群組：DISCORD'
+    content: ':question: Attention Please\n指令前綴：`PREFIX`\n說明文件：<MANUAL>\n開發群組：DISCORD'
       .replace('PREFIX', cache.settings[guildId]?.prefix || 'ap!')
-      .replace('GITHUB', 'https://github.com/Elantris/attention-please')
+      .replace('MANUAL', 'https://hackmd.io/@eelayntris/attention-please')
       .replace('DISCORD', 'https://discord.gg/Ctwz4BB'),
   }
 }

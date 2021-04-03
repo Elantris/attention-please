@@ -24,7 +24,7 @@ const settingKeyName: {
   mentionAbsent: '標記未簽到成員',
 }
 
-const commandSettings: CommandProps = async (message, { guildId, args }) => {
+const commandSettings: CommandProps = async ({ guildId, args }) => {
   const settingKey = args[1]
   const settingValues = args[2]
 

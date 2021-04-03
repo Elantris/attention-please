@@ -2,7 +2,7 @@ import { CommandProps } from '../types'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
 import getReactionStatus from '../utils/getReactionStatus'
 
-const commandCheck: CommandProps = async (message, { args }) => {
+const commandCheck: CommandProps = async ({ message, args }) => {
   if (!args[1]) {
     return {
       content: ':x: 請用訊息 ID 或訊息連結指定要簽到的訊息',

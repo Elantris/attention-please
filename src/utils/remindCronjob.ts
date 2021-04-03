@@ -4,17 +4,17 @@ import getReactionStatus from './getReactionStatus'
 import { sendResponse } from './handleMessage'
 
 const remindCronjob: (client: Client) => Promise<void> = async client => {
-  const jobs = cache.remindJobs
   const now = Date.now()
 
-  for (const jobId in jobs) {
-    if (jobId === '_' || jobs[jobId].remindAt > now || jobs[jobId].isTest) {
+  for (const jobId in cache.remindJobs) {
+    const remindJob = cache.remindJobs[jobId]
+    if (jobId === '_' || !remindJob || remindJob.isTest || remindJob.remindAt > now) {
       continue
     }
 
     try {
-      const targetChannel = await client.channels.fetch(jobs[jobId].channelId)
-      const responseChannel = await client.channels.fetch(jobs[jobId].responseChannelId)
+      const targetChannel = await client.channels.fetch(remindJob.channelId)
+      const responseChannel = await client.channels.fetch(remindJob.responseChannelId)
       if (
         !targetChannel.isText() ||
         !responseChannel.isText() ||
@@ -23,17 +23,17 @@ const remindCronjob: (client: Client) => Promise<void> = async client => {
       ) {
         throw new Error('Invalid channels')
       }
-      const targetMessage = await targetChannel.messages.fetch(jobs[jobId].messageId)
+      const targetMessage = await targetChannel.messages.fetch(remindJob.messageId)
       const commandMessage = await responseChannel.messages.fetch(jobId)
 
       await sendResponse(commandMessage, await getReactionStatus(targetMessage))
       database.ref(`/remindJobs/${jobId}`).remove()
     } catch {
-      if (jobs[jobId].retryTimes > 3) {
+      if (remindJob.retryTimes > 3) {
         database.ref(`/remindJobs/${jobId}`).remove()
         continue
       }
-      await database.ref(`/remindJobs/${jobId}/retryTimes`).set(jobs[jobId].retryTimes + 1)
+      await database.ref(`/remindJobs/${jobId}/retryTimes`).set(remindJob.retryTimes + 1)
     }
   }
 }

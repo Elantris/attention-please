@@ -1,4 +1,4 @@
-import { DMChannel, Message } from 'discord.js'
+import { DMChannel, Message, Util } from 'discord.js'
 import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
@@ -57,7 +57,7 @@ const handleMessage = async (message: Message) => {
 
   try {
     guildStatus[guildId] = 'processing'
-    const commandResult = await commands[commandName](message, { guildId, args })
+    const commandResult = await commands[commandName]({ message, guildId, args })
     if (!commandResult.content && !commandResult.embed) {
       throw new Error('No result content.')
     }
@@ -83,18 +83,16 @@ export const sendResponse = async (message: Message, result: CommandResultProps)
     return
   }
 
-  const responseMessage: Message | null = await message.channel
+  const responseMessage = await message.channel
     .send(result.content, {
-      embed: result.embed
-        ? {
-            title: '加入 eeBots Support（公告、更新）',
-            url: 'https://discord.gg/Ctwz4BB',
-            color: 0xff922b,
-            ...result.embed,
-          }
-        : undefined,
+      embed: {
+        title: '加入 eeBots Support（公告、更新）',
+        url: 'https://discord.gg/Ctwz4BB',
+        color: 0xff922b,
+        ...result.embed,
+      },
     })
-    .catch()
+    .catch(() => null)
 
   loggerHook
     .send(
@@ -112,16 +110,28 @@ export const sendResponse = async (message: Message, result: CommandResultProps)
                 name: 'Status',
                 value: result.error ? '```ERROR```'.replace('ERROR', `${result.error.stack}`) : 'SUCCESS',
               },
-              { name: 'Guild', value: `${message.guild?.id}\n${message.guild?.name}`, inline: true },
-              { name: 'Channel', value: `${message.channel.id}\n${message.channel.name}`, inline: true },
-              { name: 'User', value: `${message.author.id}\n${message.author.tag}`, inline: true },
+              {
+                name: 'Guild',
+                value: `${message.guild?.id}\n${Util.escapeMarkdown(message.guild?.name || '')}`,
+                inline: true,
+              },
+              {
+                name: 'Channel',
+                value: `${message.channel.id}\n${Util.escapeMarkdown(message.channel.name)}`,
+                inline: true,
+              },
+              {
+                name: 'User',
+                value: `${message.author.id}\n${Util.escapeMarkdown(message.author.tag)}`,
+                inline: true,
+              },
             ],
             footer: { text: `${(responseMessage?.createdTimestamp || Date.now()) - message.createdTimestamp} ms` },
           },
         ],
       },
     )
-    .catch()
+    .catch(() => {})
 }
 
 export default handleMessage

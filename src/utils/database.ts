@@ -11,13 +11,13 @@ const database = admin.database()
 export const cache: {
   [key: string]: any
   banned: {
-    [ID: string]: number
+    [ID in string]?: number
   }
   remindJobs: {
-    [JobID: string]: RemindJobProps
+    [JobID in string]?: RemindJobProps
   }
   settings: {
-    [GuildID: string]: {
+    [GuildID in string]?: {
       [key: string]: any
       prefix: string
       timezone: number
