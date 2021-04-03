@@ -90,7 +90,7 @@ export const sendResponse = async (message: Message, result: CommandResultProps)
         title: '加入 eeBots Support（公告、更新）',
         url: 'https://discord.gg/Ctwz4BB',
         color: 0xff922b,
-        footer: { text: getHint() },
+        footer: { text: `💡 ${getHint()}` },
         ...result.embed,
       },
     })
