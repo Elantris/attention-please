@@ -32,7 +32,7 @@ const handleMessage = async (message: Message) => {
   const prefix = cache.settings[guildId]?.prefix || 'ap!'
   const mentionBotPattern = new RegExp(`<@!{0,1}${message.client.user?.id}>`)
   if (mentionBotPattern.test(message.content)) {
-    message.channel.send(':gear: 指令前綴：`PREFIX`'.replace('PREFIX', prefix))
+    message.channel.send(':gear: 指令前綴：`PREFIX`'.replace('PREFIX', Util.escapeMarkdown(prefix)))
     return
   }
   if (!message.content.startsWith(prefix)) {
@@ -110,7 +110,7 @@ export const sendResponse = async (message: Message, result: CommandResultProps)
             fields: [
               {
                 name: 'Status',
-                value: result.error ? '```ERROR```'.replace('ERROR', `${result.error.stack}`) : 'SUCCESS',
+                value: result.error ? '```ERROR```'.replace('ERROR', `${result.error}`) : 'SUCCESS',
               },
               {
                 name: 'Guild',

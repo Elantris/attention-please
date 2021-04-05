@@ -1,4 +1,3 @@
-import { Util } from 'discord.js'
 import { cache } from './database'
 
 const getHint: (key?: string) => string = key => {
@@ -10,7 +9,7 @@ const getHint: (key?: string) => string = key => {
   const pick = Math.floor(Math.random() * allHints.length)
   const hint = allHints[pick] || ''
 
-  return Util.escapeMarkdown(hint)
+  return hint
 }
 
 export default getHint

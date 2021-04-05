@@ -5,7 +5,7 @@ const commandHint: CommandProps = async ({ args }) => {
   const key = args[1]
 
   return {
-    content: ':bulb: 開發者的自言自語',
+    content: ':bulb: Attention Please 提示',
     embed: {
       footer: { text: `💡 ${getHint(key)}` },
     },

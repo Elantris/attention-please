@@ -33,7 +33,7 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
     )
     .each(member => {
       reactionStatus[member.id] = {
-        name: Util.escapeMarkdown(member.displayName).slice(0, 16),
+        name: Util.escapeMarkdown(member.displayName.slice(0, 16)),
         emoji: [],
       }
     })
@@ -94,7 +94,7 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
           return accumulator
         }, [])
         .map((memberNames, index) => ({
-          name: `:warning: 未簽到 第 ${index + 1} 頁`,
+          name: `:warning: 未簽到名單 第 ${index + 1} 頁`,
           value: memberNames.join('、'),
         })),
     )
@@ -111,7 +111,7 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
           return accumulator
         }, [])
         .map((memberNames, index) => ({
-          name: `:white_check_mark: 簽到 第 ${index + 1} 頁`,
+          name: `:white_check_mark: 簽到名單 第 ${index + 1} 頁`,
           value: memberNames.join('、'),
         })),
     )
