@@ -68,7 +68,7 @@ const handleMessage = async (message: Message) => {
       return
     }
   } catch (error) {
-    await sendResponse(message, { content: ':fire: 好像發生了點問題，工程師正在努力搶修！', error })
+    await sendResponse(message, { content: ':fire: 好像發生了點問題，如果重試後狀況沒有改善請加入開發群組回報', error })
     delete guildStatus[guildId]
     return
   }
@@ -128,7 +128,9 @@ export const sendResponse = async (message: Message, result: CommandResultProps)
                 inline: true,
               },
             ],
-            footer: { text: `${(responseMessage?.createdTimestamp || Date.now()) - message.createdTimestamp} ms` },
+            footer: {
+              text: `${(responseMessage?.createdTimestamp || Date.now()) - message.createdTimestamp} ms`,
+            },
           },
         ],
       },

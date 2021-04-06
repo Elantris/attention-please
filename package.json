@@ -1,7 +1,7 @@
 {
   "name": "attention-please",
   "version": "1.0.0",
-  "description": "",
+  "description": "A discord bot for finding who did not react to the announcement.",
   "main": "index.js",
   "scripts": {
     "start": "npm run build && node build/main.js",

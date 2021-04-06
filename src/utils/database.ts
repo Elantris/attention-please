@@ -1,6 +1,6 @@
 import admin, { ServiceAccount } from 'firebase-admin'
 import config from '../config'
-import { RemindJobProps } from '../types'
+import { CheckJobProps } from '../types'
 
 admin.initializeApp({
   credential: admin.credential.cert(config.FIREBASE.serviceAccount as ServiceAccount),
@@ -13,8 +13,8 @@ export const cache: {
   banned: {
     [ID in string]?: number
   }
-  remindJobs: {
-    [JobID in string]?: RemindJobProps
+  checkJobs: {
+    [JobID in string]?: CheckJobProps
   }
   settings: {
     [GuildID in string]?: {
@@ -32,13 +32,14 @@ export const cache: {
   }
 } = {
   banned: {},
-  remindJobs: {},
+  checkJobs: {},
   settings: {},
   hints: {},
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {
   const key = snapshot.ref.parent?.key
+
   if (key && cache[key] && snapshot.key) {
     cache[key][snapshot.key] = snapshot.val()
   }
@@ -53,9 +54,9 @@ const removeCache = (snapshot: admin.database.DataSnapshot) => {
 database.ref('/banned').on('child_added', updateCache)
 database.ref('/banned').on('child_changed', updateCache)
 database.ref('/banned').on('child_removed', removeCache)
-database.ref('/remindJobs').on('child_added', updateCache)
-database.ref('/remindJobs').on('child_changed', updateCache)
-database.ref('/remindJobs').on('child_removed', removeCache)
+database.ref('/checkJobs').on('child_added', updateCache)
+database.ref('/checkJobs').on('child_changed', updateCache)
+database.ref('/checkJobs').on('child_removed', removeCache)
 database.ref('/settings').on('child_added', updateCache)
 database.ref('/settings').on('child_changed', updateCache)
 database.ref('/settings').on('child_removed', removeCache)

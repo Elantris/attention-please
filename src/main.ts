@@ -3,14 +3,14 @@ import moment from 'moment'
 import config from './config'
 import handleCommand from './utils/handleMessage'
 import { loggerHook } from './utils/hooks'
-import remindCronjob from './utils/remindCronJob'
+import remindCronjob from './utils/checkCronjob'
 
 const client = new Client()
 
 client.on('message', handleCommand)
 
 client.on('ready', () => {
-  client.user?.setActivity('Version 2021.04.03 | https://discord.gg/Ctwz4BB')
+  client.user?.setActivity('Version 2021.04.07 | https://discord.gg/Ctwz4BB')
   loggerHook.send(
     '[`TIME`] USER_TAG'.replace('TIME', moment().format('HH:mm:ss')).replace('USER_TAG', client.user?.tag || ''),
   )
