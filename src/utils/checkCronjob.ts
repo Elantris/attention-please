@@ -3,12 +3,10 @@ import database, { cache } from './database'
 import getReactionStatus from './getReactionStatus'
 import { sendResponse } from './handleMessage'
 
-const checkCronjob: (client: Client) => Promise<void> = async client => {
-  const now = Date.now()
-
+const checkCronjob = async (client: Client, now: number) => {
   for (const jobId in cache.checkJobs) {
     const checkJob = cache.checkJobs[jobId]
-    if (jobId === '_' || !checkJob || checkJob.checkAt > now || checkJob.client !== client.user?.tag) {
+    if (jobId === '_' || !checkJob || checkJob.checkAt > now || checkJob.clientId !== client.user?.id) {
       continue
     }
 
@@ -27,13 +25,13 @@ const checkCronjob: (client: Client) => Promise<void> = async client => {
       const commandMessage = await responseChannel.messages.fetch(jobId)
 
       await sendResponse(commandMessage, await getReactionStatus(targetMessage))
-      database.ref(`/checkJobs/${jobId}`).remove()
+      await database.ref(`/checkJobs/${jobId}`).remove()
     } catch {
       if (checkJob.retryTimes > 3) {
-        database.ref(`/checkJobs/${jobId}`).remove()
-        continue
+        await database.ref(`/checkJobs/${jobId}`).remove()
+      } else {
+        await database.ref(`/checkJobs/${jobId}/retryTimes`).set(checkJob.retryTimes + 1)
       }
-      await database.ref(`/checkJobs/${jobId}/retryTimes`).set(checkJob.retryTimes + 1)
     }
   }
 }

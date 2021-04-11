@@ -41,7 +41,7 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
         messageId: targetMessage.id,
         responseChannelId: message.channel.id,
         retryTimes: 0,
-        client: message.client.user?.tag || '',
+        clientId: message.client.user?.id || '',
       }
       await database.ref(`/checkJobs/${message.id}`).set(updates)
 

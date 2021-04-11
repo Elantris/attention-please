@@ -1,6 +1,6 @@
 import admin, { ServiceAccount } from 'firebase-admin'
 import config from '../config'
-import { CheckJobProps } from '../types'
+import { CheckJobProps, RemindJobProps } from '../types'
 
 admin.initializeApp({
   credential: admin.credential.cert(config.FIREBASE.serviceAccount as ServiceAccount),
@@ -16,15 +16,18 @@ export const cache: {
   checkJobs: {
     [JobID in string]?: CheckJobProps
   }
+  remindJobs: {
+    [JobID in string]?: RemindJobProps
+  }
   settings: {
     [GuildID in string]?: {
       [key: string]: any
       prefix: string
       timezone: number
-      delay: number
       showReacted: boolean
       showAbsent: boolean
       mentionAbsent: boolean
+      allowRemind: boolean
     }
   }
   hints: {
@@ -33,6 +36,7 @@ export const cache: {
 } = {
   banned: {},
   checkJobs: {},
+  remindJobs: {},
   settings: {},
   hints: {},
 }
@@ -57,6 +61,9 @@ database.ref('/banned').on('child_removed', removeCache)
 database.ref('/checkJobs').on('child_added', updateCache)
 database.ref('/checkJobs').on('child_changed', updateCache)
 database.ref('/checkJobs').on('child_removed', removeCache)
+database.ref('/remindJobs').on('child_added', updateCache)
+database.ref('/remindJobs').on('child_changed', updateCache)
+database.ref('/remindJobs').on('child_removed', removeCache)
 database.ref('/settings').on('child_added', updateCache)
 database.ref('/settings').on('child_changed', updateCache)
 database.ref('/settings').on('child_removed', removeCache)

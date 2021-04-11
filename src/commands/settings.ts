@@ -8,20 +8,20 @@ const defaultSettings: {
 } = {
   prefix: 'ap!',
   timezone: 8,
-  delay: 1440,
   showReacted: false,
   showAbsent: true,
   mentionAbsent: false,
+  allowRemind: false
 }
 const settingKeyName: {
   [key: string]: string
 } = {
   prefix: '指令前綴',
   timezone: '時區',
-  delay: '延遲分鐘數',
   showReacted: '顯示已簽到名單',
   showAbsent: '顯示未簽到名單',
   mentionAbsent: '標記未簽到成員',
+  allowRemind: '啟用提醒功能'
 }
 
 const commandSettings: CommandProps = async ({ guildId, args }) => {

@@ -14,11 +14,22 @@ export type CommandResultProps = {
 }
 
 export type CheckJobProps = {
+  clientId: string
   checkAt: number
   guildId: string
   channelId: string
   messageId: string
   responseChannelId: string
   retryTimes: number
-  client: string
+}
+
+export type RemindJobProps = {
+  clientId: string
+  createdAt: number
+  remindAt: number
+  userId: string
+  guildId: string
+  channelId: string
+  messageId: string
+  retryTimes: number
 }
