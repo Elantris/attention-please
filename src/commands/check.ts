@@ -33,8 +33,8 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
       }
     }
 
-    if (checkAt.isAfter()) {
-      const updates: CheckJobProps = {
+    if (checkAt.isAfter(message.createdTimestamp)) {
+      const job: CheckJobProps = {
         checkAt: checkAt.toDate().getTime(),
         guildId: targetMessage.guild.id,
         channelId: targetMessage.channel.id,
@@ -43,7 +43,7 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
         retryTimes: 0,
         clientId: message.client.user?.id || '',
       }
-      await database.ref(`/checkJobs/${message.id}`).set(updates)
+      await database.ref(`/checkJobs/${message.id}`).set(job)
 
       const duplicatedJobId = Object.keys(cache.checkJobs).find(
         jobId => cache.checkJobs[jobId]?.messageId === targetMessage.id,

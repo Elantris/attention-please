@@ -25,7 +25,7 @@ export const handleReactionAdd = async (
   }
 
   const jobId = `${options.userId}_${options.messageId}`
-  const updates: RemindJobProps = {
+  const job: RemindJobProps = {
     clientId,
     createdAt: Date.now(),
     remindAt: moment().add(remindTime, 'minutes').toDate().getTime(),
@@ -35,7 +35,7 @@ export const handleReactionAdd = async (
     messageId: options.messageId,
     retryTimes: 0,
   }
-  await database.ref(`/remindJobs/${jobId}`).set(updates)
+  await database.ref(`/remindJobs/${jobId}`).set(job)
 }
 
 export const handleReactionRemove = async (options: {
