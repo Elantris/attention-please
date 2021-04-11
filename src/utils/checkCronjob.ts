@@ -21,11 +21,12 @@ const checkCronjob = async (client: Client, now: number) => {
       ) {
         throw new Error('Invalid channels')
       }
+
       const targetMessage = await targetChannel.messages.fetch(checkJob.messageId)
       const commandMessage = await responseChannel.messages.fetch(jobId)
+      await database.ref(`/checkJobs/${jobId}`).remove()
 
       await sendResponse(commandMessage, await getReactionStatus(targetMessage))
-      await database.ref(`/checkJobs/${jobId}`).remove()
     } catch {
       if (checkJob.retryTimes > 3) {
         await database.ref(`/checkJobs/${jobId}`).remove()

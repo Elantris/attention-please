@@ -1,6 +1,8 @@
+import { Client } from 'discord.js'
 import moment from 'moment'
 import { RemindJobProps } from '../types'
 import database, { cache } from './database'
+import { sendLog } from './handleMessage'
 
 const remindTimeMap: {
   [Emoji in string]?: number
@@ -10,7 +12,7 @@ const remindTimeMap: {
 }
 
 export const handleReactionAdd = async (
-  clientId: string,
+  client: Client,
   options: {
     userId: string
     guildId: string
@@ -19,6 +21,7 @@ export const handleReactionAdd = async (
     emoji: string
   },
 ) => {
+  const now = Date.now()
   const remindTime = remindTimeMap[options.emoji]
   if (!cache.settings[options.guildId]?.allowRemind || !remindTime) {
     return
@@ -26,8 +29,8 @@ export const handleReactionAdd = async (
 
   const jobId = `${options.userId}_${options.messageId}`
   const job: RemindJobProps = {
-    clientId,
-    createdAt: Date.now(),
+    clientId: client.user?.id || '',
+    createdAt: now,
     remindAt: moment().add(remindTime, 'minutes').toDate().getTime(),
     userId: options.userId,
     guildId: options.guildId,
@@ -36,18 +39,36 @@ export const handleReactionAdd = async (
     retryTimes: 0,
   }
   await database.ref(`/remindJobs/${jobId}`).set(job)
+
+  sendLog(client, {
+    content: '[`TIME`] `JOB_ID` created'.replace('TIME', moment(now).format('HH:MM:ss')).replace('JOB_ID', jobId),
+    guildId: options.guildId,
+    channelId: options.channelId,
+    userId: options.userId,
+  })
 }
 
-export const handleReactionRemove = async (options: {
-  userId: string
-  guildId: string
-  messageId: string
-  emoji: string
-}) => {
+export const handleReactionRemove = async (
+  client: Client,
+  options: {
+    userId: string
+    guildId: string
+    channelId: string
+    messageId: string
+    emoji: string
+  },
+) => {
+  const now = Date.now()
   const jobId = `${options.userId}_${options.messageId}`
   if (!remindTimeMap[options.emoji] || !cache.remindJobs[jobId]) {
     return
   }
-
   await database.ref(`/remindJobs/${jobId}`).remove()
+
+  sendLog(client, {
+    content: '[`TIME`] `JOB_ID` removed'.replace('TIME', moment(now).format('HH:MM:ss')).replace('JOB_ID', jobId),
+    guildId: options.guildId,
+    channelId: options.channelId,
+    userId: options.userId,
+  })
 }

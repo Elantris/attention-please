@@ -2,7 +2,7 @@ import { Client } from 'discord.js'
 import moment from 'moment'
 import config from './config'
 import checkCronjob from './utils/checkCronjob'
-import handleMessage from './utils/handleMessage'
+import handleMessage, { sendLog } from './utils/handleMessage'
 import { handleReactionAdd, handleReactionRemove } from './utils/handleReaction'
 import { loggerHook } from './utils/hooks'
 import remindCronJob from './utils/remindCronJob'
@@ -13,7 +13,7 @@ client.on('message', handleMessage)
 client.on('raw', packet => {
   try {
     if (packet.t === 'MESSAGE_REACTION_ADD') {
-      handleReactionAdd(client.user?.id || '', {
+      handleReactionAdd(client, {
         userId: packet.d.user_id,
         guildId: packet.d.guild_id,
         channelId: packet.d.channel_id,
@@ -21,14 +21,17 @@ client.on('raw', packet => {
         emoji: packet.d.emoji.name,
       })
     } else if (packet.t === 'MESSAGE_REACTION_REMOVE') {
-      handleReactionRemove({
+      handleReactionRemove(client, {
         userId: packet.d.user_id,
         guildId: packet.d.guild_id,
+        channelId: packet.d.channel_id,
         messageId: packet.d.message_id,
         emoji: packet.d.emoji.name,
       })
     }
-  } catch {}
+  } catch (error) {
+    sendLog(client, { error })
+  }
 })
 
 client.on('ready', () => {

@@ -1,4 +1,4 @@
-import { DMChannel, Message, Util } from 'discord.js'
+import { Client, DMChannel, Message, MessageEmbed, NewsChannel, TextChannel, Util } from 'discord.js'
 import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
@@ -79,12 +79,8 @@ const handleMessage = async (message: Message) => {
   }, 5000)
 }
 
-export const sendResponse = async (message: Message, result: CommandResultProps) => {
-  if (message.channel instanceof DMChannel) {
-    return
-  }
-
-  const responseMessage = await message.channel
+export const sendResponse = async (commandMessage: Message, result: CommandResultProps) => {
+  const responseMessage = await commandMessage.channel
     .send(result.content, {
       embed: {
         title: '加入 eeBots Support（公告、更新）',
@@ -96,45 +92,73 @@ export const sendResponse = async (message: Message, result: CommandResultProps)
     })
     .catch(() => null)
 
+  sendLog(commandMessage.client, {
+    content: '[`TIME`] COMMAND_CONTENT\nRESPONSE_CONTENT'
+      .replace('TIME', moment(commandMessage.createdTimestamp).format('HH:mm:ss'))
+      .replace('COMMAND_CONTENT', commandMessage.content)
+      .replace('RESPONSE_CONTENT', responseMessage?.content || '')
+      .trim(),
+    embeds: responseMessage?.embeds,
+    error: result.error,
+    guildId: commandMessage.guild?.id,
+    channelId: commandMessage.channel.id,
+    userId: commandMessage.author.id,
+    processTime: responseMessage?.createdTimestamp
+      ? responseMessage?.createdTimestamp - commandMessage.createdTimestamp
+      : undefined,
+  })
+}
+
+export const sendLog = async (
+  client: Client,
+  options: {
+    content?: string
+    embeds?: MessageEmbed[]
+    error?: Error
+    guildId?: string
+    channelId?: string
+    userId?: string
+    processTime?: number
+  },
+) => {
+  const guild = client.guilds.cache.get(options.guildId || '')
+  const channel = client.channels.cache.get(options.channelId || '')
+  const user = client.users.cache.get(options.userId || '')
+
   loggerHook
-    .send(
-      '[`TIME`] MESSAGE_CONTENT\nRESPONSE_CONTENT'
-        .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
-        .replace('MESSAGE_CONTENT', message.content)
-        .replace('RESPONSE_CONTENT', responseMessage?.content || ''),
-      {
-        embeds: [
-          ...(responseMessage?.embeds || []),
-          {
-            color: result.error ? 0xff6b6b : undefined,
-            fields: [
-              {
-                name: 'Status',
-                value: result.error ? '```ERROR```'.replace('ERROR', `${result.error}`) : 'SUCCESS',
-              },
-              {
-                name: 'Guild',
-                value: `${message.guild?.id}\n${Util.escapeMarkdown(message.guild?.name || '')}`,
-                inline: true,
-              },
-              {
-                name: 'Channel',
-                value: `${message.channel.id}\n${Util.escapeMarkdown(message.channel.name)}`,
-                inline: true,
-              },
-              {
-                name: 'User',
-                value: `${message.author.id}\n${Util.escapeMarkdown(message.author.tag)}`,
-                inline: true,
-              },
-            ],
-            footer: {
-              text: `${(responseMessage?.createdTimestamp || Date.now()) - message.createdTimestamp} ms`,
+    .send(options.content, {
+      embeds: [
+        ...(options.embeds || []),
+        {
+          color: options.error ? 0xff6b6b : undefined,
+          fields: [
+            {
+              name: 'Status',
+              value: options.error ? '```ERROR```'.replace('ERROR', `${options.error}`) : 'SUCCESS',
             },
-          },
-        ],
-      },
-    )
+            {
+              name: 'Guild',
+              value: guild ? `${guild.id}\n${Util.escapeMarkdown(guild.name)}` : '--',
+              inline: true,
+            },
+            {
+              name: 'Channel',
+              value:
+                channel instanceof TextChannel || channel instanceof NewsChannel
+                  ? `${channel.id}\n${Util.escapeMarkdown(channel.name)}`
+                  : '--',
+              inline: true,
+            },
+            {
+              name: 'User',
+              value: user ? `${user.id}\n${Util.escapeMarkdown(user.tag)}` : '--',
+              inline: true,
+            },
+          ],
+          footer: options.processTime ? `${options.processTime} ms` : undefined,
+        },
+      ],
+    })
     .catch(() => {})
 }
 
