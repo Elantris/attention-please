@@ -18,11 +18,13 @@ export const handleReactionAdd = async (
     guildId: string
     channelId: string
     messageId: string
-    emoji: string
+    emoji: { id: string | null; name: string }
   },
 ) => {
   const now = Date.now()
-  const remindTime = remindTimeMap[options.emoji]
+  const emoji = options.emoji.id ? `<:${options.emoji.name}:${options.emoji.id}>` : options.emoji.name
+  const remindTime = cache.remindSettings[options.userId]?.[emoji] || remindTimeMap[emoji]
+
   if (!cache.settings[options.guildId]?.allowRemind || !remindTime) {
     return
   }

@@ -18,7 +18,7 @@ client.on('raw', packet => {
         guildId: packet.d.guild_id,
         channelId: packet.d.channel_id,
         messageId: packet.d.message_id,
-        emoji: packet.d.emoji.name,
+        emoji: packet.d.emoji,
       })
     } else if (packet.t === 'MESSAGE_REACTION_REMOVE') {
       handleReactionRemove(client, {
@@ -26,7 +26,7 @@ client.on('raw', packet => {
         guildId: packet.d.guild_id,
         channelId: packet.d.channel_id,
         messageId: packet.d.message_id,
-        emoji: packet.d.emoji.name,
+        emoji: packet.d.emoji,
       })
     }
   } catch (error) {
@@ -43,6 +43,9 @@ client.on('ready', () => {
 
 let intervalLock = false
 client.setInterval(async () => {
+  if (intervalLock) {
+    return
+  }
   intervalLock = true
   const now = Date.now()
   await checkCronjob(client, now)
