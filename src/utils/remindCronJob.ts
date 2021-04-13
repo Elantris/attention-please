@@ -1,6 +1,6 @@
 import { Client, NewsChannel, TextChannel } from 'discord.js'
 import moment from 'moment'
-import database, { cache } from './database'
+import cache, { database } from './cache'
 import { sendLog } from './handleMessage'
 
 const remindCronJob = async (client: Client, now: number) => {

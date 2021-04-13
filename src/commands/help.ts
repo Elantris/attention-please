@@ -1,5 +1,5 @@
 import { CommandProps } from '../types'
-import { cache } from '../utils/database'
+import cache from '../utils/cache'
 
 const commandHelp: CommandProps = async ({ guildId }) => {
   return {

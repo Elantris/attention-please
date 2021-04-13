@@ -1,5 +1,5 @@
 import { Client, DMChannel } from 'discord.js'
-import database, { cache } from './database'
+import cache, { database } from './cache'
 import getReactionStatus from './getReactionStatus'
 import { sendResponse } from './handleMessage'
 

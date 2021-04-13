@@ -8,7 +8,7 @@ admin.initializeApp({
 })
 const database = admin.database()
 
-export const cache: {
+const cache: {
   [key: string]: any
   banned: {
     [ID in string]?: number
@@ -16,8 +16,16 @@ export const cache: {
   checkJobs: {
     [JobID in string]?: CheckJobProps
   }
+  hints: {
+    [key in string]?: string
+  }
   remindJobs: {
     [JobID in string]?: RemindJobProps
+  }
+  remindSettings: {
+    [UserId in string]?: {
+      [emoji in string]: number
+    }
   }
   settings: {
     [GuildID in string]?: {
@@ -30,20 +38,17 @@ export const cache: {
       allowRemind: boolean
     }
   }
-  hints: {
-    [key in string]?: string
-  }
 } = {
   banned: {},
   checkJobs: {},
-  remindJobs: {},
-  settings: {},
   hints: {},
+  remindJobs: {},
+  remindSettings: {},
+  settings: {},
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {
   const key = snapshot.ref.parent?.key
-
   if (key && cache[key] && snapshot.key) {
     cache[key][snapshot.key] = snapshot.val()
   }
@@ -55,20 +60,24 @@ const removeCache = (snapshot: admin.database.DataSnapshot) => {
   }
 }
 
-database.ref('/banned').on('child_added', updateCache)
-database.ref('/banned').on('child_changed', updateCache)
-database.ref('/banned').on('child_removed', removeCache)
-database.ref('/checkJobs').on('child_added', updateCache)
-database.ref('/checkJobs').on('child_changed', updateCache)
-database.ref('/checkJobs').on('child_removed', removeCache)
+// database.ref('/banned').on('child_added', updateCache)
+// database.ref('/banned').on('child_changed', updateCache)
+// database.ref('/banned').on('child_removed', removeCache)
+// database.ref('/checkJobs').on('child_added', updateCache)
+// database.ref('/checkJobs').on('child_changed', updateCache)
+// database.ref('/checkJobs').on('child_removed', removeCache)
+// database.ref('/hints').on('child_added', updateCache)
+// database.ref('/hints').on('child_changed', updateCache)
+// database.ref('/hints').on('child_removed', removeCache)
 database.ref('/remindJobs').on('child_added', updateCache)
 database.ref('/remindJobs').on('child_changed', updateCache)
 database.ref('/remindJobs').on('child_removed', removeCache)
+database.ref('/remindSettings').on('child_added', updateCache)
+database.ref('/remindSettings').on('child_changed', updateCache)
+database.ref('/remindSettings').on('child_removed', removeCache)
 database.ref('/settings').on('child_added', updateCache)
 database.ref('/settings').on('child_changed', updateCache)
 database.ref('/settings').on('child_removed', removeCache)
-database.ref('/hints').on('child_added', updateCache)
-database.ref('/hints').on('child_changed', updateCache)
-database.ref('/hints').on('child_removed', removeCache)
 
-export default database
+export { database }
+export default cache

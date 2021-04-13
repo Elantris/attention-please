@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { CheckJobProps, CommandProps } from '../types'
-import database, { cache } from '../utils/database'
+import cache, { database } from '../utils/cache'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
 import getReactionStatus from '../utils/getReactionStatus'
 

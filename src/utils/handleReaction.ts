@@ -1,7 +1,7 @@
 import { Client } from 'discord.js'
 import moment from 'moment'
 import { RemindJobProps } from '../types'
-import database, { cache } from './database'
+import cache, { database } from './cache'
 import { sendLog } from './handleMessage'
 
 const remindTimeMap: {

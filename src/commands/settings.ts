@@ -1,5 +1,5 @@
 import { CommandProps } from '../types'
-import database, { cache } from '../utils/database'
+import cache, { database } from '../utils/cache'
 
 const parseBoolean = (value: string) => !(value === 'false' || value === '0' || value === 'off')
 

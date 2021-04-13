@@ -3,7 +3,7 @@ import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
 import { CommandProps, CommandResultProps } from '../types'
-import { cache } from './database'
+import cache from './cache'
 import getHint from './getHint'
 import { loggerHook } from './hooks'
 

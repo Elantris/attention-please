@@ -1,4 +1,4 @@
-import { cache } from './database'
+import cache from './cache'
 
 const getHint: (key?: string) => string = key => {
   if (key && cache.hints[key]) {
