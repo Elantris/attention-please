@@ -37,7 +37,7 @@ export const handleReactionAdd = async (
       await message.delete()
       sendLog(client, {
         content: '[`TIME`] Delete message `MESSAGE_ID`'
-          .replace('TIME', moment(now).format('HH:MM:ss'))
+          .replace('TIME', moment(now).format('HH:mm:ss'))
           .replace('MESSAGE_ID', message.id),
         userId: options.userId,
         color: 0xffc078,
@@ -56,7 +56,7 @@ export const handleReactionAdd = async (
   const job: RemindJobProps = {
     clientId: client.user?.id || '',
     createdAt: now,
-    remindAt: moment().add(remindTime, 'minutes').toDate().getTime(),
+    remindAt: moment(now).add(remindTime, 'minutes').toDate().getTime(),
     userId: options.userId,
     guildId: options.guildId,
     channelId: options.channelId,
@@ -66,7 +66,7 @@ export const handleReactionAdd = async (
   await database.ref(`/remindJobs/${jobId}`).set(job)
 
   sendLog(client, {
-    content: '[`TIME`] Create job `JOB_ID`'.replace('TIME', moment(now).format('HH:MM:ss')).replace('JOB_ID', jobId),
+    content: '[`TIME`] Create job `JOB_ID`'.replace('TIME', moment(now).format('HH:mm:ss')).replace('JOB_ID', jobId),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
@@ -92,7 +92,7 @@ export const handleReactionRemove = async (
   await database.ref(`/remindJobs/${jobId}`).remove()
 
   sendLog(client, {
-    content: '[`TIME`] Remove job `JOB_ID`'.replace('TIME', moment(now).format('HH:MM:ss')).replace('JOB_ID', jobId),
+    content: '[`TIME`] Remove job `JOB_ID`'.replace('TIME', moment(now).format('HH:mm:ss')).replace('JOB_ID', jobId),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
