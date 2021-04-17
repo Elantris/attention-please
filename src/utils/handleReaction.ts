@@ -1,10 +1,10 @@
-import { Client } from 'discord.js'
+import { Client, DMChannel } from 'discord.js'
 import moment from 'moment'
 import { RemindJobProps } from '../types'
 import cache, { database } from './cache'
 import { sendLog } from './handleMessage'
 
-const remindTimeMap: {
+export const remindTimeMap: {
   [Emoji in string]?: number
 } = {
   '⏰': 20,
@@ -15,7 +15,7 @@ export const handleReactionAdd = async (
   client: Client,
   options: {
     userId: string
-    guildId: string
+    guildId?: string
     channelId: string
     messageId: string
     emoji: { id: string | null; name: string }
@@ -23,8 +23,30 @@ export const handleReactionAdd = async (
 ) => {
   const now = Date.now()
   const emoji = options.emoji.id ? `<:${options.emoji.name}:${options.emoji.id}>` : options.emoji.name
-  const remindTime = cache.remindSettings[options.userId]?.[emoji] || remindTimeMap[emoji]
 
+  if (!options.guildId) {
+    if (emoji !== '✅') {
+      return
+    }
+    const channel = await client.channels.fetch(options.channelId)
+    if (!(channel instanceof DMChannel)) {
+      return
+    }
+    const message = await channel.messages.fetch(options.messageId)
+    if (message.author.id === client.user?.id) {
+      await message.delete()
+      sendLog(client, {
+        content: '[`TIME`] Delete message `MESSAGE_ID`'
+          .replace('TIME', moment(now).format('HH:MM:ss'))
+          .replace('MESSAGE_ID', message.id),
+        userId: options.userId,
+      })
+    }
+
+    return
+  }
+
+  const remindTime = cache.remindSettings[options.userId]?.[emoji] || remindTimeMap[emoji]
   if (!cache.settings[options.guildId]?.allowRemind || !remindTime) {
     return
   }
@@ -33,7 +55,7 @@ export const handleReactionAdd = async (
   const job: RemindJobProps = {
     clientId: client.user?.id || '',
     createdAt: now,
-    remindAt: moment().add(remindTime, 'minutes').toDate().getTime(),
+    remindAt: moment().add(remindTime, 'seconds').toDate().getTime(),
     userId: options.userId,
     guildId: options.guildId,
     channelId: options.channelId,
@@ -43,7 +65,7 @@ export const handleReactionAdd = async (
   await database.ref(`/remindJobs/${jobId}`).set(job)
 
   sendLog(client, {
-    content: '[`TIME`] `JOB_ID` created'.replace('TIME', moment(now).format('HH:MM:ss')).replace('JOB_ID', jobId),
+    content: '[`TIME`] Create job `JOB_ID`'.replace('TIME', moment(now).format('HH:MM:ss')).replace('JOB_ID', jobId),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
@@ -68,7 +90,7 @@ export const handleReactionRemove = async (
   await database.ref(`/remindJobs/${jobId}`).remove()
 
   sendLog(client, {
-    content: '[`TIME`] `JOB_ID` removed'.replace('TIME', moment(now).format('HH:MM:ss')).replace('JOB_ID', jobId),
+    content: '[`TIME`] Remove job `JOB_ID`'.replace('TIME', moment(now).format('HH:MM:ss')).replace('JOB_ID', jobId),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,

@@ -19,26 +19,30 @@ const remindCronJob = async (client: Client, now: number) => {
       }
       const message = await channel.messages.fetch(remindJob.messageId)
 
-      await user.send(
-        '`TIME` GUILD_NAME / CHANNEL_NAME / **MEMBER_NAME**\nMESSAGE_URL\nMESSAGE_CONTENT'
+      const remindMessage = await user.send(
+        'MEMBER_NAME `TIME` (GUILD_NAME / CHANNEL_NAME)\nMESSAGE_CONTENT\nMESSAGE_URL'
+          .replace('MEMBER_NAME', Util.escapeMarkdown(message.member?.displayName || ''))
           .replace('TIME', moment(message.createdTimestamp).format('YYYY-MM-DD HH:mm'))
           .replace('GUILD_NAME', Util.escapeMarkdown(guild.name))
           .replace('CHANNEL_NAME', Util.escapeMarkdown(channel.name))
-          .replace('MEMBER_NAME', Util.escapeMarkdown(message.member?.displayName || ''))
+          .replace('MESSAGE_CONTENT', message.content)
           .replace(
             'MESSAGE_URL',
             `https://discord.com/channels/${remindJob.guildId}/${remindJob.channelId}/${remindJob.messageId}`,
-          )
-          .replace('MESSAGE_CONTENT', message.content),
+          ),
       )
-      await database.ref(`/remindJobs/${jobId}`).remove()
 
       sendLog(client, {
-        content: '[`TIME`] `JOB_ID` sent'.replace('TIME', moment(now).format('HH:MM:ss')).replace('JOB_ID', jobId),
+        content: '[`TIME`] Execute job `JOB_ID`'
+          .replace('TIME', moment(now).format('HH:MM:ss'))
+          .replace('JOB_ID', jobId),
         guildId: remindJob.guildId,
         channelId: remindJob.channelId,
         userId: remindJob.userId,
       })
+
+      await remindMessage.react('✅').catch(() => {})
+      await database.ref(`/remindJobs/${jobId}`).remove()
     } catch {
       if (remindJob.retryTimes > 3) {
         await database.ref(`/remindJobs/${jobId}`).remove()
