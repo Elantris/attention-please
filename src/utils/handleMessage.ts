@@ -96,7 +96,7 @@ export const sendResponse = async (commandMessage: Message, result: CommandResul
     content: '[`TIME`] COMMAND_CONTENT\nRESPONSE_CONTENT'
       .replace('TIME', moment(commandMessage.createdTimestamp).format('HH:mm:ss'))
       .replace('COMMAND_CONTENT', commandMessage.content)
-      .replace('RESPONSE_CONTENT', responseMessage?.content || '')
+      .replace('RESPONSE_CONTENT', responseMessage?.content || 'Error: send response failed')
       .trim(),
     embeds: responseMessage?.embeds,
     error: result.error,

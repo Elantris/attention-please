@@ -12,6 +12,9 @@ const client = new Client()
 client.on('message', handleMessage)
 client.on('raw', packet => {
   try {
+    if (packet.d.user_id === client.user?.id) {
+      return
+    }
     if (packet.t === 'MESSAGE_REACTION_ADD') {
       handleReactionAdd(client, {
         userId: packet.d.user_id,
@@ -35,7 +38,7 @@ client.on('raw', packet => {
 })
 
 client.on('ready', () => {
-  client.user?.setActivity('Version 2021.04.11 | https://discord.gg/Ctwz4BB')
+  client.user?.setActivity('Version 2021.04.18 | https://discord.gg/Ctwz4BB')
   loggerHook.send(
     '[`TIME`] USER_TAG'.replace('TIME', moment().format('HH:mm:ss')).replace('USER_TAG', client.user?.tag || ''),
   )
