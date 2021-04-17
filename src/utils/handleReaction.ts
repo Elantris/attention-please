@@ -40,6 +40,7 @@ export const handleReactionAdd = async (
           .replace('TIME', moment(now).format('HH:MM:ss'))
           .replace('MESSAGE_ID', message.id),
         userId: options.userId,
+        color: 0xffc078,
       })
     }
 
@@ -69,6 +70,7 @@ export const handleReactionAdd = async (
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
+    color: 0xffc078,
   })
 }
 
@@ -94,5 +96,6 @@ export const handleReactionRemove = async (
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
+    color: 0xffc078,
   })
 }

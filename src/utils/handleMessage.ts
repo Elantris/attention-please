@@ -119,6 +119,7 @@ export const sendLog = async (
     channelId?: string
     userId?: string
     processTime?: number
+    color?: number
   },
 ) => {
   const guild = client.guilds.cache.get(options.guildId || '')
@@ -130,7 +131,7 @@ export const sendLog = async (
       embeds: [
         ...(options.embeds || []),
         {
-          color: options.error ? 0xff6b6b : undefined,
+          color: options.error ? 0xff6b6b : options.color,
           fields: [
             {
               name: 'Status',

@@ -39,6 +39,7 @@ const remindCronJob = async (client: Client, now: number) => {
         guildId: remindJob.guildId,
         channelId: remindJob.channelId,
         userId: remindJob.userId,
+        color: 0xffc078,
       })
 
       await remindMessage.react('✅').catch(() => {})
