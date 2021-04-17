@@ -12,7 +12,7 @@ const client = new Client()
 client.on('message', handleMessage)
 client.on('raw', packet => {
   try {
-    if (packet.d.user_id === client.user?.id) {
+    if (!packet?.d?.user_id || !client.user || packet.d.user_id === client.user.id) {
       return
     }
     if (packet.t === 'MESSAGE_REACTION_ADD') {

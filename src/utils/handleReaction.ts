@@ -55,7 +55,7 @@ export const handleReactionAdd = async (
   const job: RemindJobProps = {
     clientId: client.user?.id || '',
     createdAt: now,
-    remindAt: moment().add(remindTime, 'seconds').toDate().getTime(),
+    remindAt: moment().add(remindTime, 'minutes').toDate().getTime(),
     userId: options.userId,
     guildId: options.guildId,
     channelId: options.channelId,
