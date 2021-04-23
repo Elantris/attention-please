@@ -34,6 +34,10 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
     }
 
     if (checkAt.isAfter(message.createdTimestamp)) {
+      const duplicatedJobId = Object.keys(cache.checkJobs).find(
+        jobId => cache.checkJobs[jobId]?.messageId === targetMessage.id,
+      )
+
       const job: CheckJobProps = {
         checkAt: checkAt.toDate().getTime(),
         guildId: targetMessage.guild.id,
@@ -44,10 +48,6 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
         clientId: message.client.user?.id || '',
       }
       await database.ref(`/checkJobs/${message.id}`).set(job)
-
-      const duplicatedJobId = Object.keys(cache.checkJobs).find(
-        jobId => cache.checkJobs[jobId]?.messageId === targetMessage.id,
-      )
 
       if (duplicatedJobId) {
         await database.ref(`/checkJobs/${duplicatedJobId}`).remove()
