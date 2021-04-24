@@ -35,6 +35,7 @@ export const handleReactionAdd = async (
     const message = await channel.messages.fetch(options.messageId)
     if (message.author.id === client.user?.id) {
       await message.delete()
+
       sendLog(client, {
         content: '[`TIME`] Delete message `MESSAGE_ID`'
           .replace('TIME', moment(now).format('HH:mm:ss'))
@@ -66,7 +67,9 @@ export const handleReactionAdd = async (
   await database.ref(`/remindJobs/${jobId}`).set(job)
 
   sendLog(client, {
-    content: '[`TIME`] Create job `JOB_ID`'.replace('TIME', moment(now).format('HH:mm:ss')).replace('JOB_ID', jobId),
+    content: '[`TIME`] Create remind job `JOB_ID`'
+      .replace('TIME', moment(now).format('HH:mm:ss'))
+      .replace('JOB_ID', jobId),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
@@ -92,7 +95,9 @@ export const handleReactionRemove = async (
   await database.ref(`/remindJobs/${jobId}`).remove()
 
   sendLog(client, {
-    content: '[`TIME`] Remove job `JOB_ID`'.replace('TIME', moment(now).format('HH:mm:ss')).replace('JOB_ID', jobId),
+    content: '[`TIME`] Remove remind job `JOB_ID`'
+      .replace('TIME', moment(now).format('HH:mm:ss'))
+      .replace('JOB_ID', jobId),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,

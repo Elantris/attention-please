@@ -109,7 +109,7 @@ export const sendResponse = async (commandMessage: Message, result: CommandResul
   })
 }
 
-export const sendLog = async (
+export const sendLog = (
   client: Client,
   options: {
     content?: string
@@ -156,7 +156,7 @@ export const sendLog = async (
               inline: true,
             },
           ],
-          footer: options.processTime ? `${options.processTime} ms` : undefined,
+          footer: options.processTime ? { text: `${options.processTime} ms` } : undefined,
         },
       ],
     })

@@ -12,9 +12,7 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
     }
   }
 
-  const loadingMessage = await message.channel.send(':mag: 搜尋訊息中. . .').catch(() => null)
   const { targetMessage, reason } = await fetchGuildMessage(message, args[1])
-  loadingMessage?.delete().catch(() => {})
 
   if (!targetMessage || !targetMessage.guild) {
     return {
