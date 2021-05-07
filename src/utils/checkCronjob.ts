@@ -37,7 +37,7 @@ const checkCronjob = async (client: Client, now: number) => {
 
       sendLog(client, {
         content: '[`TIME`] Execute check job `JOB_ID`'
-          .replace('TIME', moment(now).format('HH:MM:ss'))
+          .replace('TIME', moment(now).format('HH:mm:ss'))
           .replace('JOB_ID', jobId),
         guildId: checkJob.guildId,
         channelId: checkJob.channelId,

@@ -40,7 +40,7 @@ const remindCronJob = async (client: Client, now: number) => {
 
       sendLog(client, {
         content: '[`TIME`] Execute remind job `JOB_ID`'
-          .replace('TIME', moment(now).format('HH:MM:ss'))
+          .replace('TIME', moment(now).format('HH:mm:ss'))
           .replace('JOB_ID', jobId),
         guildId: remindJob.guildId,
         channelId: remindJob.channelId,
@@ -54,7 +54,7 @@ const remindCronJob = async (client: Client, now: number) => {
 
       sendLog(client, {
         content: '[`TIME`] Execute remind job `JOB_ID`'
-          .replace('TIME', moment(now).format('HH:MM:ss'))
+          .replace('TIME', moment(now).format('HH:mm:ss'))
           .replace('JOB_ID', jobId),
         guildId: remindJob.guildId,
         channelId: remindJob.channelId,

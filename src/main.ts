@@ -38,10 +38,10 @@ client.on('raw', packet => {
 })
 
 client.on('ready', () => {
-  client.user?.setActivity('Version 2021.04.24 | https://discord.gg/Ctwz4BB')
   loggerHook.send(
     '[`TIME`] USER_TAG'.replace('TIME', moment().format('HH:mm:ss')).replace('USER_TAG', client.user?.tag || ''),
   )
+  client.user?.setActivity('Version 2021.05.08 | https://discord.gg/Ctwz4BB')
 })
 
 let intervalLock = false

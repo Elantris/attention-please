@@ -23,12 +23,12 @@
   "homepage": "https://github.com/Elantris/attention-please#readme",
   "dependencies": {
     "discord.js": "^12.5.3",
-    "firebase-admin": "^9.6.0",
+    "firebase-admin": "^9.7.0",
     "moment": "^2.29.1"
   },
   "devDependencies": {
-    "@types/node": "^14.14.41",
-    "@types/ws": "^7.4.1",
+    "@types/node": "^15.0.2",
+    "@types/ws": "^7.4.2",
     "typescript": "^4.2.4"
   }
 }
