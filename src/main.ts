@@ -41,7 +41,7 @@ client.on('ready', () => {
   loggerHook.send(
     '[`TIME`] USER_TAG'.replace('TIME', moment().format('HH:mm:ss')).replace('USER_TAG', client.user?.tag || ''),
   )
-  client.user?.setActivity('Version 2021.05.08 | https://discord.gg/Ctwz4BB')
+  client.user?.setActivity('Version 2021.05.17 | https://discord.gg/Ctwz4BB')
 })
 
 let intervalLock = false

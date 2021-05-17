@@ -7,7 +7,7 @@ import getReactionStatus from '../utils/getReactionStatus'
 const commandCheck: CommandProps = async ({ message, guildId, args }) => {
   if (!args[1]) {
     return {
-      content: ':x: 要結算哪一則訊息呢？指定訊息 ID 或訊息連結',
+      content: ':question: 要結算哪一則訊息呢？指定訊息 ID 或訊息連結',
       isSyntaxError: true,
     }
   }

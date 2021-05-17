@@ -4,7 +4,7 @@ import cache, { database } from '../utils/cache'
 const parseBoolean = (value: string) => !(value === 'false' || value === '0' || value === 'off')
 
 const defaultSettings: {
-  [key: string]: string | number | boolean
+  [key in string]?: string | number | boolean
 } = {
   prefix: 'ap!',
   timezone: 8,
@@ -14,7 +14,7 @@ const defaultSettings: {
   mentionAbsent: false,
 }
 const settingKeyName: {
-  [key: string]: string
+  [key in string]?: string
 } = {
   prefix: '指令前綴',
   timezone: '時區',
@@ -33,7 +33,7 @@ const commandSettings: CommandProps = async ({ guildId, args }) => {
       content: ':gear: `GUILD_ID` 全部設定'.replace('GUILD_ID', guildId),
       embed: {
         fields: Object.keys(defaultSettings).map(key => ({
-          name: `${settingKeyName[key]} \`${key}\``,
+          name: `${settingKeyName[key]}\n\`${key}\``,
           value: cache.settings[guildId]?.[key] ?? `${defaultSettings[key]} (預設)`,
           inline: true,
         })),
@@ -41,7 +41,7 @@ const commandSettings: CommandProps = async ({ guildId, args }) => {
     }
   }
 
-  if (typeof defaultSettings[settingKey] === undefined) {
+  if (typeof settingKeyName[settingKey] !== 'string') {
     return {
       content: ':question: 沒有這個設定項目',
       isSyntaxError: true,

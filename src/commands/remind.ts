@@ -15,7 +15,6 @@ const commandRemind: CommandProps = async ({ message, args }) => {
             .map(([emoji, minutes]) => `${emoji}：${minutes} 分鐘`)
             .join('\n'),
         ),
-      isSyntaxError: true,
     }
   }
 
@@ -25,7 +24,7 @@ const commandRemind: CommandProps = async ({ message, args }) => {
 
   if (emoji.length !== 2 && !isCustomEmoji) {
     return {
-      content: ':x: 這好像不是一個可以使用的表情符號，請換一個試試看',
+      content: ':thinking: 這好像不是一個可以使用的表情符號，請換一個試試看',
       isSyntaxError: true,
     }
   }
@@ -49,7 +48,7 @@ const commandRemind: CommandProps = async ({ message, args }) => {
 
   if (Object.keys(remindSettings).length >= 8) {
     return {
-      content: ':x: 最多只能設定 8 個 emoji 的提醒時間',
+      content: ':lock: 最多只能設定 8 個 emoji 的提醒時間',
       isSyntaxError: true,
     }
   }

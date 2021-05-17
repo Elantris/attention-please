@@ -1,8 +1,8 @@
-import { Client, DMChannel } from 'discord.js'
+import { Client } from 'discord.js'
 import moment from 'moment'
 import cache, { database } from './cache'
 import getReactionStatus from './getReactionStatus'
-import { sendLog, sendResponse } from './handleMessage'
+import { sendLog } from './handleMessage'
 
 const checkCronjob = async (client: Client, now: number) => {
   for (const jobId in cache.checkJobs) {
@@ -29,7 +29,17 @@ const checkCronjob = async (client: Client, now: number) => {
       const targetMessage = await channel.messages.fetch(checkJob.messageId)
       const commandMessage = await responseChannel.messages.fetch(jobId)
 
-      await sendResponse(commandMessage, await getReactionStatus(targetMessage))
+      const responseMessage = await commandMessage.channel.send(await getReactionStatus(targetMessage))
+      sendLog(client, {
+        content: '[`TIME`] Execute check job `JOB_ID`\nRESPONSE_CONTENT'
+          .replace('TIME', moment(responseMessage.createdTimestamp).format('HH:mm:ss'))
+          .replace('JOB_ID', jobId)
+          .replace('RESPONSE_CONTENT', responseMessage.content),
+        embeds: responseMessage.embeds,
+        guildId: checkJob.guildId,
+        channelId: checkJob.channelId,
+        userId: commandMessage.author.id,
+      })
 
       await database.ref(`/checkJobs/${jobId}`).remove()
     } catch (error) {
@@ -37,7 +47,7 @@ const checkCronjob = async (client: Client, now: number) => {
 
       sendLog(client, {
         content: '[`TIME`] Execute check job `JOB_ID`'
-          .replace('TIME', moment(now).format('HH:mm:ss'))
+          .replace('TIME', moment().format('HH:mm:ss'))
           .replace('JOB_ID', jobId),
         guildId: checkJob.guildId,
         channelId: checkJob.channelId,

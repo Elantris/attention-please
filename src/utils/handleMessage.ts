@@ -30,17 +30,13 @@ const handleMessage = async (message: Message) => {
 
   const guildId = message.guild.id
   const prefix = cache.settings[guildId]?.prefix || 'ap!'
-  const mentionBotPattern = new RegExp(`<@!{0,1}${message.client.user?.id}>`)
-  if (mentionBotPattern.test(message.content)) {
-    message.channel.send(':gear: 指令前綴：`PREFIX`'.replace('PREFIX', Util.escapeMarkdown(prefix)))
-    return
-  }
-  if (!message.content.startsWith(prefix)) {
+  const isMentioned = new RegExp(`<@!{0,1}${message.client.user?.id}>`).test(message.content)
+  if (!message.content.startsWith(prefix) && !isMentioned) {
     return
   }
 
-  const args = message.content.replace(/\s+/g, ' ').split(' ')
-  const commandName = args[0].slice(prefix.length)
+  const args = message.content.replace(/[\s\n]+/g, ' ').split(' ')
+  const commandName = isMentioned ? 'help' : args[0].slice(prefix.length)
   if (!commandName || !commands[commandName]) {
     return
   }
@@ -68,7 +64,10 @@ const handleMessage = async (message: Message) => {
       return
     }
   } catch (error) {
-    await sendResponse(message, { content: ':fire: 好像發生了點問題，如果重試後狀況沒有改善請加入開發群組回報', error })
+    await sendResponse(message, {
+      content: ':fire: 好像發生了點問題，如果重試後狀況沒有改善請加入開發群組回報\nhttps://discord.gg/Ctwz4BB',
+      error,
+    })
     delete guildStatus[guildId]
     return
   }

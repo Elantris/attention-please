@@ -1,4 +1,4 @@
-import { Client, NewsChannel, TextChannel, Util } from 'discord.js'
+import { Client, Util } from 'discord.js'
 import moment from 'moment'
 import cache, { database } from './cache'
 import { sendLog } from './handleMessage'
