@@ -1,7 +1,8 @@
 import { CommandProps } from '../types'
 import cache, { database } from '../utils/cache'
 
-const parseBoolean = (value: string) => !(value === 'false' || value === '0' || value === 'off')
+const parseBoolean = (value: string) =>
+  !(value === '0' || value === '❌' || value === '關閉' || value === 'off' || value === 'close' || value === 'false')
 
 const defaultSettings: {
   [key in string]?: string | number | boolean
@@ -24,24 +25,28 @@ const settingKeyName: {
   mentionAbsent: '標記未簽到成員',
 }
 
-const commandSettings: CommandProps = async ({ guildId, args }) => {
+const commandSettings: CommandProps = async ({ message, guildId, args }) => {
   const settingKey = args[1]
   const settingValues = args[2]
 
   if (!settingKey) {
     return {
-      content: ':gear: `GUILD_ID` 全部設定'.replace('GUILD_ID', guildId),
+      content: ':gear: **GUILD_NAME** 全部設定'.replace('GUILD_NAME', message.guild?.name || ''),
       embed: {
-        fields: Object.keys(defaultSettings).map(key => ({
-          name: `${settingKeyName[key]}\n\`${key}\``,
-          value: cache.settings[guildId]?.[key] ?? `${defaultSettings[key]} (預設)`,
-          inline: true,
-        })),
+        fields: Object.keys(defaultSettings).map(key => {
+          const value = cache.settings[guildId]?.[key] ?? defaultSettings[key]
+
+          return {
+            name: `${settingKeyName[key]}\n\`${key}\``,
+            value: typeof defaultSettings[key] === 'boolean' ? (value ? ':white_check_mark: 開啟' : ':x: 關閉') : value,
+            inline: true,
+          }
+        }),
       },
     }
   }
 
-  if (typeof settingKeyName[settingKey] !== 'string') {
+  if (!settingKeyName[settingKey]) {
     return {
       content: ':question: 沒有這個設定項目',
       isSyntaxError: true,
@@ -51,9 +56,8 @@ const commandSettings: CommandProps = async ({ guildId, args }) => {
   if (!settingValues) {
     await database.ref(`/settings/${guildId}/${settingKey}`).remove()
     return {
-      content: ':gear: `GUILD_ID` 設定項目 **KEY** 已重設為預設值：`VALUE`'
-        .replace('GUILD_ID', guildId)
-        .replace('KEY', settingKey)
+      content: ':gear: 設定項目 **SETTING_KEY_NAME** 已重設為預設值：`VALUE`'
+        .replace('SETTING_KEY_NAME', settingKeyName[settingKey] || '')
         .replace('VALUE', `${defaultSettings[settingKey]}`),
     }
   }
@@ -73,10 +77,17 @@ const commandSettings: CommandProps = async ({ guildId, args }) => {
 
   await database.ref(`/settings/${guildId}/${settingKey}`).set(newValue)
 
+  if (typeof defaultSettings[settingKey] === 'boolean') {
+    return {
+      content: ':gear: 設定項目 **SETTING_KEY_NAME** ACTION'
+        .replace('SETTING_KEY_NAME', settingKeyName[settingKey] || '')
+        .replace('ACTION', newValue ? '已開啟' : '已關閉'),
+    }
+  }
+
   return {
-    content: ':gear: `GUILD_ID` 設定項目 **KEY** 已變更為 `VALUE`'
-      .replace('GUILD_ID', guildId)
-      .replace('KEY', settingKey)
+    content: ':gear: 設定項目 **SETTING_KEY_NAME** 已變更為 `VALUE`'
+      .replace('SETTING_KEY_NAME', settingKeyName[settingKey] || '')
       .replace('VALUE', `${newValue}`),
   }
 }

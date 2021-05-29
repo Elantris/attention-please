@@ -48,8 +48,8 @@ export const handleReactionAdd = async (
     return
   }
 
-  const remindTime = cache.remindSettings[options.userId]?.[emoji] || remindTimeMap[emoji]
-  if (!cache.settings[options.guildId]?.allowRemind || !remindTime) {
+  const remindTime = cache.remindSettings[options.userId]?.[emoji] ?? remindTimeMap[emoji]
+  if (!cache.settings[options.guildId]?.allowRemind || typeof remindTime === 'undefined') {
     return
   }
 
@@ -89,7 +89,7 @@ export const handleReactionRemove = async (
 ) => {
   const now = Date.now()
   const jobId = `${options.userId}_${options.messageId}`
-  if (!remindTimeMap[options.emoji] || !cache.remindJobs[jobId]) {
+  if (typeof remindTimeMap[options.emoji] !== 'number' || !cache.remindJobs[jobId]) {
     return
   }
   await database.ref(`/remindJobs/${jobId}`).remove()

@@ -7,7 +7,7 @@ const commandRemind: CommandProps = async ({ message, guildId, args }) => {
 
   if (!cache.settings[guildId]?.allowRemind) {
     return {
-      content: ':warning: 警告！這是一個測試中的功能，請參考說明文件的指示透過 c!settings 設定開啟這項功能',
+      content: ':warning: 警告！這是一個測試中的功能，請參考說明文件的指示透過指令 c!settings 開啟這項功能',
       isSyntaxError: true,
     }
   }
@@ -19,6 +19,7 @@ const commandRemind: CommandProps = async ({ message, guildId, args }) => {
         .replace(
           'REMIND_SETTINGS',
           Object.entries(remindSettings)
+            .sort((a, b) => a[1] - b[1])
             .map(([emoji, minutes]) => `${emoji}：${minutes} 分鐘`)
             .join('\n'),
         ),
@@ -31,7 +32,7 @@ const commandRemind: CommandProps = async ({ message, guildId, args }) => {
 
   if (emoji.length !== 2 && !isCustomEmoji) {
     return {
-      content: ':thinking: 這好像不是一個可以使用的表情符號，請換一個試試看',
+      content: ':x: 「EMOJI」這好像不是一個可以使用的表情符號，請換一個再試試看'.replace('EMOJI', emoji),
       isSyntaxError: true,
     }
   }
