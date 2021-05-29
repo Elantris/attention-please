@@ -7,6 +7,7 @@ import { handleReactionAdd, handleReactionRemove } from './utils/handleReaction'
 import { loggerHook } from './utils/hooks'
 import remindCronJob from './utils/remindCronJob'
 
+moment.locale('zh-tw')
 const client = new Client()
 
 client.on('message', handleMessage)
@@ -41,7 +42,7 @@ client.on('ready', () => {
   loggerHook.send(
     '[`TIME`] USER_TAG'.replace('TIME', moment().format('HH:mm:ss')).replace('USER_TAG', client.user?.tag || ''),
   )
-  client.user?.setActivity('Version 2021.05.17 | https://discord.gg/Ctwz4BB')
+  client.user?.setActivity('Version 2021.05.29 | https://discord.gg/Ctwz4BB')
 })
 
 let intervalLock = false

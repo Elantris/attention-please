@@ -16,7 +16,8 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
 
   if (!targetMessage || !targetMessage.guild) {
     return {
-      content: reason || ':question:',
+      content: reason || ':x:',
+      isSyntaxError: true,
     }
   }
 
@@ -61,6 +62,10 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
           .replace('MESSAGE_ID', targetMessage.id)
           .replace('CHECK_AT', checkAt.format('YYYY-MM-DD HH:mm')),
       }
+    } else {
+      return await getReactionStatus(targetMessage, {
+        passedCheckAt: checkAt.from(message.createdTimestamp, true),
+      })
     }
   }
 

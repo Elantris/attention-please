@@ -2,7 +2,12 @@ import { DMChannel, EmbedFieldData, Message, Util } from 'discord.js'
 import { CommandResultProps } from '../types'
 import cache from './cache'
 
-const getReactionStatus: (message: Message) => Promise<CommandResultProps> = async message => {
+const getReactionStatus: (
+  message: Message,
+  options?: {
+    passedCheckAt?: string
+  },
+) => Promise<CommandResultProps> = async (message, options) => {
   if (message.channel instanceof DMChannel || !message.guild) {
     return {
       content: ':x:',
@@ -10,6 +15,7 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
     }
   }
 
+  const channel = message.channel
   const reactionStatus: {
     [UserID in string]?: {
       name: string
@@ -17,7 +23,7 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
     }
   } = {}
   const members = await message.guild.members.fetch()
-  members
+  const mentionedMembers = members
     .filter(
       member =>
         message.mentions.everyone ||
@@ -26,11 +32,12 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
     )
     .filter(member => !member.user.bot)
     .sort()
-    .each(member => {
+    .map(member => {
       reactionStatus[member.id] = {
         name: Util.escapeMarkdown(member.displayName.slice(0, 16)),
         emoji: [],
       }
+      return member
     })
 
   if (Object.keys(reactionStatus).length === 0) {
@@ -109,6 +116,19 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
     )
   }
 
+  const warnings: string[] = []
+  const noPermissionMembersCount = mentionedMembers.filter(
+    member =>
+      !channel.permissionsFor(member)?.has('VIEW_CHANNEL') ||
+      !channel.permissionsFor(member)?.has('READ_MESSAGE_HISTORY'),
+  ).length
+  if (noPermissionMembersCount) {
+    warnings.push(`:warning: 被標記的成員當中有 ${noPermissionMembersCount} 人沒有權限看到這則訊息`)
+  }
+  if (options?.passedCheckAt) {
+    warnings.push(`:warning: 指定的時間已經過了大約 ${options.passedCheckAt}`)
+  }
+
   return {
     content: ':bar_chart: 已簽到：REACTED_MEMBERS / ALL_MEMBERS (**PERCENTAGE%**)\nMENTIONS'
       .replace('REACTED_MEMBERS', `${reactedMembers.length}`)
@@ -117,10 +137,12 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
       .replace('MENTIONS', mentionAbsent ? absentMembers.map(member => `<@!${member.id}>`).join(' ') : '')
       .trim(),
     embed: {
-      description: '結算目標：[訊息連結](MESSAGE_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS'
+      description: '結算目標：[訊息連結](MESSAGE_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
         .replace('MESSAGE_URL', message.url)
         .replace('ALL_MEMBERS', `${allMembersCount}`)
-        .replace('REACTED_MEMBERS', `${reactedMembers.length}`),
+        .replace('REACTED_MEMBERS', `${reactedMembers.length}`)
+        .replace('WARNINGS', warnings.join('\n'))
+        .trim(),
       fields,
     },
   }

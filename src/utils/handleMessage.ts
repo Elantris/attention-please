@@ -18,13 +18,27 @@ readdirSync(join(__dirname, '..', 'commands'))
   })
 
 const handleMessage = async (message: Message) => {
+  if (message.author.bot) {
+    return
+  }
+
   if (
-    message.author.bot ||
     cache.banned[message.author.id] ||
     !message.guild ||
     cache.banned[message.guild.id] ||
     message instanceof DMChannel
   ) {
+    sendLog(message.client, {
+      content: '[`TIME`] **USER_TAG**: CONTENT'
+        .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
+        .replace('USER_TAG', Util.escapeMarkdown(message.author.tag))
+        .replace('CONTENT', message.content),
+      embeds: message.embeds,
+      guildId: message.guild?.id,
+      channelId: message.channel.id,
+      userId: message.author.id,
+      color: 0x74c0fc,
+    })
     return
   }
 
