@@ -37,7 +37,7 @@ const fetchGuildMessage: (
   if (!options.messageId) {
     return {
       targetMessage: null,
-      reason: ':x: 目標訊息格式錯誤，請參考說明文件裡支援的訊息格式',
+      reason: ':x: 目標訊息格式錯誤，請參考說明文件裡支援的訊息格式（訊息連結或 ID）',
     }
   }
 

@@ -1,3 +1,4 @@
+import { Util } from 'discord.js'
 import moment from 'moment'
 import { CheckJobProps, CommandProps } from '../types'
 import cache, { database } from '../utils/cache'
@@ -27,7 +28,10 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
 
     if (!checkAt.isValid()) {
       return {
-        content: ':x: 指定的時間好像怪怪的，推薦使用的格式：`YYYY-MM-DD HH:mm`',
+        content: ':x: 指定時間 `ARGUMENTS` 的格式好像怪怪的，推薦使用的格式：`YYYY-MM-DD HH:mm`'.replace(
+          'ARGUMENTS',
+          Util.escapeMarkdown(args.slice(2).join(' ').slice(100)),
+        ),
         isSyntaxError: true,
       }
     }

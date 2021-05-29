@@ -44,7 +44,7 @@ const handleMessage = async (message: Message) => {
 
   const guildId = message.guild.id
   const prefix = cache.settings[guildId]?.prefix || 'ap!'
-  const isMentioned = new RegExp(`<@!{0,1}${message.client.user?.id}>`).test(message.content)
+  const isMentioned = new RegExp(`^<@!{0,1}${message.client.user?.id}>$`).test(message.content)
   if (!message.content.startsWith(prefix) && !isMentioned) {
     return
   }
