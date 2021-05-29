@@ -2,8 +2,15 @@ import { Util } from 'discord.js'
 import { CommandProps } from '../types'
 import cache, { database } from '../utils/cache'
 
-const commandRemind: CommandProps = async ({ message, args }) => {
+const commandRemind: CommandProps = async ({ message, guildId, args }) => {
   const remindSettings = cache.remindSettings[message.author.id] || {}
+
+  if (!cache.settings[guildId]?.allowRemind) {
+    return {
+      content: ':warning: 警告！這是一個測試中的功能，請參考說明文件的指示透過 c!settings 設定開啟這項功能',
+      isSyntaxError: true,
+    }
+  }
 
   if (args.length < 3) {
     return {
@@ -29,14 +36,21 @@ const commandRemind: CommandProps = async ({ message, args }) => {
     }
   }
 
-  if (!Number.isSafeInteger(minutes) || minutes < 0 || minutes > 1440) {
+  if (!Number.isSafeInteger(minutes) || minutes > 1440) {
     return {
-      content: ':x: 設定的時間必須介於 1 ~ 1440 分鐘之間',
+      content: ':x: 設定的時間必須是一個數字',
       isSyntaxError: true,
     }
   }
 
-  if (minutes === 0) {
+  if (minutes > 1440) {
+    return {
+      content: ':x: 分鐘數不能超過 1440',
+      isSyntaxError: true,
+    }
+  }
+
+  if (minutes < 0) {
     await database.ref(`/remindSettings/${message.author.id}/${emoji}`).remove()
     return {
       content: ':gear: **MEMBER_NAME** 移除了 EMOJI 的提醒功能'
