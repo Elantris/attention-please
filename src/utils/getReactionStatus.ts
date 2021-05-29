@@ -5,32 +5,27 @@ import cache from './cache'
 const getReactionStatus: (message: Message) => Promise<CommandResultProps> = async message => {
   if (message.channel instanceof DMChannel || !message.guild) {
     return {
-      content: '',
+      content: ':x:',
+      isSyntaxError: true,
     }
   }
 
-  const members = await message.guild.members.fetch()
-  const channel = message.channel
   const reactionStatus: {
-    [UserID: string]: {
+    [UserID in string]?: {
       name: string
       emoji: string[]
     }
   } = {}
-
+  const members = await message.guild.members.fetch()
   members
-    .filter(
-      member =>
-        !member.user.bot &&
-        !!channel.permissionsFor(member)?.has('VIEW_CHANNEL') &&
-        !!channel.permissionsFor(member)?.has('READ_MESSAGE_HISTORY'),
-    )
     .filter(
       member =>
         message.mentions.everyone ||
         message.mentions.users.has(member.id) ||
         message.mentions.roles.some(role => role.members.has(member.id)),
     )
+    .filter(member => !member.user.bot)
+    .sort()
     .each(member => {
       reactionStatus[member.id] = {
         name: Util.escapeMarkdown(member.displayName.slice(0, 16)),
@@ -40,19 +35,18 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
 
   if (Object.keys(reactionStatus).length === 0) {
     return {
-      content: ':x: 這則訊息沒有被標記的人、或是被標記的人都沒有權限看到這則訊息',
+      content: ':x: 這則訊息沒有標記的對象',
     }
   }
 
   const reactions = message.reactions.cache.array()
   for (const reaction of reactions) {
     const users = await reaction.users.fetch()
-    users.each(user => {
-      if (!reactionStatus[user.id]) {
-        return
-      }
-      reactionStatus[user.id].emoji.push(reaction.emoji.name)
-    })
+    users
+      .filter(user => !!reactionStatus[user.id])
+      .each(user => {
+        reactionStatus[user.id]?.emoji.push(reaction.emoji.name)
+      })
   }
 
   const allMembersCount = Object.keys(reactionStatus).length
@@ -60,21 +54,19 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
     id: string
     name: string
   }[] = Object.keys(reactionStatus)
-    .filter(userId => reactionStatus[userId].emoji.length !== 0)
-    .sort()
+    .filter(userId => reactionStatus[userId]?.emoji.length)
     .map(userId => ({
       id: userId,
-      name: reactionStatus[userId].name,
+      name: reactionStatus[userId]?.name || userId,
     }))
   const absentMembers: {
     id: string
     name: string
   }[] = Object.keys(reactionStatus)
-    .filter(userId => reactionStatus[userId].emoji.length === 0)
-    .sort()
+    .filter(userId => !reactionStatus[userId]?.emoji.length)
     .map(userId => ({
       id: userId,
-      name: reactionStatus[userId].name,
+      name: reactionStatus[userId]?.name || userId,
     }))
 
   const showReacted = !!cache.settings[message.guild.id]?.showReacted
@@ -125,7 +117,10 @@ const getReactionStatus: (message: Message) => Promise<CommandResultProps> = asy
       .replace('MENTIONS', mentionAbsent ? absentMembers.map(member => `<@!${member.id}>`).join(' ') : '')
       .trim(),
     embed: {
-      description: '結算目標：[訊息連結](MESSAGE_URL)'.replace('MESSAGE_URL', message.url),
+      description: '結算目標：[訊息連結](MESSAGE_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS'
+        .replace('MESSAGE_URL', message.url)
+        .replace('ALL_MEMBERS', `${allMembersCount}`)
+        .replace('REACTED_MEMBERS', `${reactedMembers.length}`),
       fields,
     },
   }
