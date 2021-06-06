@@ -4,14 +4,41 @@ import { RemindJobProps } from '../types'
 import cache, { database } from './cache'
 import { sendLog } from './handleMessage'
 
-export const remindTimeMap: {
+export const handleRaw = (client: Client, packet: any) => {
+  try {
+    if (!packet?.d?.user_id || !client.user || packet.d.user_id === client.user.id) {
+      return
+    }
+    if (packet.t === 'MESSAGE_REACTION_ADD') {
+      handleReactionAdd(client, {
+        userId: packet.d.user_id,
+        guildId: packet.d.guild_id,
+        channelId: packet.d.channel_id,
+        messageId: packet.d.message_id,
+        emoji: packet.d.emoji,
+      })
+    } else if (packet.t === 'MESSAGE_REACTION_REMOVE') {
+      handleReactionRemove(client, {
+        userId: packet.d.user_id,
+        guildId: packet.d.guild_id,
+        channelId: packet.d.channel_id,
+        messageId: packet.d.message_id,
+        emoji: packet.d.emoji,
+      })
+    }
+  } catch (error) {
+    sendLog(client, { error })
+  }
+}
+
+const remindTimeMap: {
   [Emoji in string]?: number
 } = {
   '⏰': 20,
   '🔔': 60,
 }
 
-export const handleReactionAdd = async (
+const handleReactionAdd = async (
   client: Client,
   options: {
     userId: string
@@ -77,7 +104,7 @@ export const handleReactionAdd = async (
   })
 }
 
-export const handleReactionRemove = async (
+const handleReactionRemove = async (
   client: Client,
   options: {
     userId: string

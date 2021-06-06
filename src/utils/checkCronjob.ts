@@ -12,7 +12,7 @@ const checkCronjob = async (client: Client, now: number) => {
       !checkJob ||
       checkJob.clientId !== client.user?.id ||
       checkJob.checkAt > now ||
-      checkJob.retryTimes > 3
+      checkJob.retryTimes > 2
     ) {
       continue
     }

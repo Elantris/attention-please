@@ -7,13 +7,6 @@ const fetchGuildMessage: (
   targetMessage: Message | null
   reason?: string
 }> = async (message, search) => {
-  if (!message.guild) {
-    return {
-      targetMessage: null,
-      reason: ':x: 目標訊息必須在群組內',
-    }
-  }
-
   const options: {
     channelId?: string
     messageId?: string
@@ -41,9 +34,9 @@ const fetchGuildMessage: (
     }
   }
 
-  const guildChannels = message.guild.channels.cache
-    .array()
-    .filter(channel => !options.channelId || channel.id === options.channelId)
+  const guildChannels =
+    message.guild?.channels.cache.filter(channel => !options.channelId || channel.id === options.channelId).array() ||
+    []
 
   for (const channel of guildChannels) {
     if (!channel.isText()) {

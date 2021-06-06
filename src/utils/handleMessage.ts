@@ -7,8 +7,8 @@ import cache from './cache'
 import getHint from './getHint'
 import { loggerHook } from './hooks'
 
-const guildStatus: { [GuildID: string]: 'processing' | 'cooling-down' | 'muted' } = {}
-const commands: { [CommandName: string]: CommandProps } = {}
+const guildStatus: { [GuildID in string]?: 'processing' | 'cooling-down' | 'muted' } = {}
+const commands: { [CommandName in string]?: CommandProps } = {}
 
 readdirSync(join(__dirname, '..', 'commands'))
   .filter(filename => filename.endsWith('.js') || filename.endsWith('.ts'))
@@ -18,27 +18,7 @@ readdirSync(join(__dirname, '..', 'commands'))
   })
 
 const handleMessage = async (message: Message) => {
-  if (message.author.bot) {
-    return
-  }
-
-  if (
-    cache.banned[message.author.id] ||
-    !message.guild ||
-    cache.banned[message.guild.id] ||
-    message instanceof DMChannel
-  ) {
-    sendLog(message.client, {
-      content: '[`TIME`] **USER_TAG**: CONTENT'
-        .replace('TIME', moment(message.createdTimestamp).format('HH:mm:ss'))
-        .replace('USER_TAG', Util.escapeMarkdown(message.author.tag))
-        .replace('CONTENT', message.content),
-      embeds: message.embeds,
-      guildId: message.guild?.id,
-      channelId: message.channel.id,
-      userId: message.author.id,
-      color: 0x74c0fc,
-    })
+  if (message.author.bot || !message.guild || cache.banned[message.author.id] || cache.banned[message.guild.id]) {
     return
   }
 
@@ -68,31 +48,28 @@ const handleMessage = async (message: Message) => {
 
   try {
     guildStatus[guildId] = 'processing'
-    const commandResult = await commands[commandName]({ message, guildId, args })
+    const commandResult = await commands[commandName]?.({ message, guildId, args })
+    if (!commandResult) {
+      return
+    }
     if (!commandResult.content && !commandResult.embed) {
       throw new Error('No result content.')
     }
     await sendResponse(message, commandResult)
-    if (commandResult.isSyntaxError) {
-      delete guildStatus[guildId]
-      return
-    }
   } catch (error) {
     await sendResponse(message, {
-      content: ':fire: 好像發生了點問題，如果重試後狀況沒有改善請加入開發群組回報\nhttps://discord.gg/Ctwz4BB',
+      content: ':fire: 好像發生了點問題，請加入開發群組回報狀況\nhttps://discord.gg/Ctwz4BB',
       error,
     })
-    delete guildStatus[guildId]
-    return
   }
 
   guildStatus[guildId] = 'cooling-down'
   setTimeout(() => {
     delete guildStatus[guildId]
-  }, 5000)
+  }, 3000)
 }
 
-export const sendResponse = async (commandMessage: Message, result: CommandResultProps) => {
+const sendResponse = async (commandMessage: Message, result: CommandResultProps) => {
   const responseMessage = await commandMessage.channel
     .send(result.content, {
       embed: {

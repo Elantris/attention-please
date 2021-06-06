@@ -28,9 +28,9 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
 
     if (!checkAt.isValid()) {
       return {
-        content: ':x: 指定時間 `ARGUMENTS` 的格式好像怪怪的，推薦使用的格式：`YYYY-MM-DD HH:mm`'.replace(
+        content: ':x: 指定時間的格式好像怪怪的\n推薦時間格式：`YYYY-MM-DD HH:mm`\n您輸入的字串：`ARGUMENTS`'.replace(
           'ARGUMENTS',
-          Util.escapeMarkdown(args.slice(2).join(' ').slice(100)),
+          Util.escapeMarkdown(args.slice(2).join(' ')),
         ),
         isSyntaxError: true,
       }

@@ -11,7 +11,7 @@ const remindCronJob = async (client: Client, now: number) => {
       !remindJob ||
       remindJob.clientId !== client.user?.id ||
       remindJob.remindAt > now ||
-      remindJob.retryTimes > 3
+      remindJob.retryTimes > 2
     ) {
       continue
     }

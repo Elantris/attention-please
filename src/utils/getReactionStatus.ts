@@ -137,8 +137,8 @@ const getReactionStatus: (
       .replace('MENTIONS', mentionAbsent ? absentMembers.map(member => `<@!${member.id}>`).join(' ') : '')
       .trim(),
     embed: {
-      description: '結算目標：[訊息連結](MESSAGE_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
-        .replace('MESSAGE_URL', message.url)
+      description: '結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
+        .replace('TARGET_URL', message.url)
         .replace('ALL_MEMBERS', `${allMembersCount}`)
         .replace('REACTED_MEMBERS', `${reactedMembers.length}`)
         .replace('WARNINGS', warnings.join('\n'))
