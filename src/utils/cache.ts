@@ -35,7 +35,6 @@ const cache: {
       showReacted: boolean
       showAbsent: boolean
       mentionAbsent: boolean
-      allowRemind: boolean
     }
   }
 } = {

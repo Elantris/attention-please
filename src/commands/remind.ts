@@ -5,13 +5,6 @@ import cache, { database } from '../utils/cache'
 const commandRemind: CommandProps = async ({ message, guildId, args }) => {
   const remindSettings = cache.remindSettings[message.author.id] || {}
 
-  if (!cache.settings[guildId]?.allowRemind) {
-    return {
-      content: ':warning: 警告！這是一個測試中的功能，請參考說明文件的指示透過指令 c!settings 開啟這項功能',
-      isSyntaxError: true,
-    }
-  }
-
   if (args.length < 3) {
     return {
       content: ':gear: **MEMBER_NAME** 自訂提醒設定：\nREMIND_SETTINGS'

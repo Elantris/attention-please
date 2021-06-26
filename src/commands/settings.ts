@@ -9,7 +9,6 @@ const defaultSettings: {
 } = {
   prefix: 'ap!',
   timezone: 8,
-  allowRemind: false,
   showReacted: false,
   showAbsent: true,
   mentionAbsent: false,
@@ -19,7 +18,6 @@ const settingKeyName: {
 } = {
   prefix: '指令前綴',
   timezone: '時區',
-  allowRemind: '訊息提醒功能',
   showReacted: '顯示已簽到名單',
   showAbsent: '顯示未簽到名單',
   mentionAbsent: '標記未簽到成員',

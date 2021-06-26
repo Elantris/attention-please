@@ -76,7 +76,7 @@ const handleReactionAdd = async (
   }
 
   const remindTime = cache.remindSettings[options.userId]?.[emoji] ?? remindTimeMap[emoji]
-  if (!cache.settings[options.guildId]?.allowRemind || typeof remindTime === 'undefined') {
+  if (typeof remindTime === 'undefined') {
     return
   }
 
