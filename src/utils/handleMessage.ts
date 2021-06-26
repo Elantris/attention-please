@@ -3,7 +3,7 @@ import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
 import { CommandProps, CommandResultProps } from '../types'
-import cache from './cache'
+import cache, { database } from './cache'
 import getHint from './getHint'
 import { loggerHook } from './hooks'
 
@@ -49,13 +49,22 @@ const handleMessage = async (message: Message) => {
   try {
     guildStatus[guildId] = 'processing'
     const commandResult = await commands[commandName]?.({ message, guildId, args })
-    if (!commandResult) {
-      return
-    }
-    if (!commandResult.content && !commandResult.embed) {
+    if (!commandResult || (!commandResult.content && !commandResult.embed)) {
       throw new Error('No result content.')
     }
     await sendResponse(message, commandResult)
+
+    if (commandResult.isSyntaxError) {
+      cache.syntaxErrorsCounts[message.author.id] = (cache.syntaxErrorsCounts[message.author.id] || 0) + 1
+      if ((cache.syntaxErrorsCounts[message.author.id] || 0) > 16) {
+        database
+          .ref(`/banned/${message.author.id}`)
+          .set(`[${moment(message.createdTimestamp).format('YYYY-MM-DD HH:mm')}] too many syntax errors`)
+        await sendResponse(message, {
+          content: ':lock: 錯誤使用指令太多次，請加入客服群組說明原因以解鎖機器人使用權',
+        })
+      }
+    }
   } catch (error) {
     await sendResponse(message, {
       content: ':fire: 好像發生了點問題，請加入開發群組回報狀況\nhttps://discord.gg/Ctwz4BB',
@@ -84,25 +93,43 @@ const sendResponse = async (commandMessage: Message, result: CommandResultProps)
     .catch(() => null)
 
   if (!responseMessages) {
-    return
-  }
-
-  for (const responseMessage of responseMessages) {
     await sendLog(commandMessage.client, {
       content: '[`TIME`] COMMAND_CONTENT\nRESPONSE_CONTENT'
         .replace('TIME', moment(commandMessage.createdTimestamp).format('HH:mm:ss'))
         .replace('COMMAND_CONTENT', commandMessage.content)
-        .replace('RESPONSE_CONTENT', responseMessage.content || 'Error: send response failed')
+        .replace('RESPONSE_CONTENT', 'Error: send responses failed')
         .trim(),
-      embeds: responseMessage.embeds,
       error: result.error,
       guildId: commandMessage.guild?.id,
       channelId: commandMessage.channel.id,
       userId: commandMessage.author.id,
-      processTime: responseMessage.createdTimestamp
-        ? responseMessage.createdTimestamp - commandMessage.createdTimestamp
-        : undefined,
     })
+    return
+  }
+
+  for (const i in responseMessages) {
+    const responseMessage = responseMessages[i]
+
+    if (i === '0') {
+      await sendLog(commandMessage.client, {
+        content: '[`TIME`] COMMAND_CONTENT\nRESPONSE_CONTENT'
+          .replace('TIME', moment(commandMessage.createdTimestamp).format('HH:mm:ss'))
+          .replace('COMMAND_CONTENT', commandMessage.content)
+          .replace('RESPONSE_CONTENT', responseMessage.content)
+          .trim(),
+        embeds: responseMessage.embeds,
+        error: result.error,
+        guildId: commandMessage.guild?.id,
+        channelId: commandMessage.channel.id,
+        userId: commandMessage.author.id,
+        processTime: responseMessage.createdTimestamp - commandMessage.createdTimestamp,
+      })
+    } else {
+      await sendLog(commandMessage.client, {
+        content: responseMessage.content,
+        embeds: responseMessage.embeds,
+      })
+    }
   }
 }
 
@@ -144,7 +171,7 @@ export const sendLog = async (
               value:
                 channel instanceof TextChannel || channel instanceof NewsChannel
                   ? `${channel.id}\n${Util.escapeMarkdown(channel.name)}`
-                  : '--',
+                  : channel?.id || '--',
               inline: true,
             },
             {

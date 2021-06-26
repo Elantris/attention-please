@@ -72,6 +72,7 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
   if (typeof defaultSettings[settingKey] === 'number' && Number.isNaN(newValue)) {
     return {
       content: ':x: 設定項目必須為數字',
+      isSyntaxError: true,
     }
   }
 

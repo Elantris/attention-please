@@ -38,6 +38,9 @@ const cache: {
       mentionAbsent: boolean
     }
   }
+  syntaxErrorsCounts: {
+    [UserID in string]?: number
+  }
 } = {
   banned: {},
   checkJobs: {},
@@ -45,6 +48,7 @@ const cache: {
   remindJobs: {},
   remindSettings: {},
   settings: {},
+  syntaxErrorsCounts: {},
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {
