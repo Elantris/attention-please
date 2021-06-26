@@ -2,7 +2,7 @@ import { Client } from 'discord.js'
 import moment from 'moment'
 import cache, { database } from './cache'
 import getReactionStatus from './getReactionStatus'
-import { sendLog } from './handleMessage'
+import sendLog from './sendLog'
 
 const checkCronjob = async (client: Client, now: number) => {
   for (const jobId in cache.checkJobs) {

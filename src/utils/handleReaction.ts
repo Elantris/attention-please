@@ -2,7 +2,7 @@ import { Client, DMChannel } from 'discord.js'
 import moment from 'moment'
 import { RemindJobProps } from '../types'
 import cache, { database } from './cache'
-import { sendLog } from './handleMessage'
+import sendLog from './sendLog'
 
 export const handleRaw = (client: Client, packet: any) => {
   try {
@@ -67,6 +67,7 @@ const handleReactionAdd = async (
         content: '[`TIME`] Delete message `MESSAGE_ID`'
           .replace('TIME', moment(now).format('HH:mm:ss'))
           .replace('MESSAGE_ID', message.id),
+        channelId: options.channelId,
         userId: options.userId,
         color: 0xffc078,
       })

@@ -1,7 +1,7 @@
 import { Client, Util } from 'discord.js'
 import moment from 'moment'
 import cache, { database } from './cache'
-import { sendLog } from './handleMessage'
+import sendLog from './sendLog'
 
 const remindCronJob = async (client: Client, now: number) => {
   for (const jobId in cache.remindJobs) {

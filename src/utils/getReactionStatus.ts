@@ -43,7 +43,7 @@ const getReactionStatus: (
 
   if (Object.keys(reactionStatus).length === 0) {
     return {
-      content: ':x: 這則訊息沒有標記的對象',
+      content: ':x: 這則訊息沒有標記的對象，直接右鍵目標訊息選「反應」就能看到列表',
     }
   }
 
@@ -78,9 +78,9 @@ const getReactionStatus: (
       name: reactionStatus[userId]?.name || userId,
     }))
 
-  const showReacted = !!cache.settings[message.guild.id]?.showReacted
+  const showReacted = cache.settings[message.guild.id]?.showReacted ?? false
   const showAbsent = cache.settings[message.guild.id]?.showAbsent ?? true
-  const mentionAbsent = !!cache.settings[message.guild.id]?.mentionAbsent
+  const mentionAbsent = cache.settings[message.guild.id]?.mentionAbsent ?? false
 
   const fields: EmbedFieldData[] = []
   if (showAbsent) {
@@ -142,7 +142,7 @@ const getReactionStatus: (
     embed: {
       color: 0xff922b,
       description:
-        '結算時間：TIME\n結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
+        '結算時間：`TIME`\n結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
           .replace('TIME', countAt)
           .replace('TARGET_URL', message.url)
           .replace('ALL_MEMBERS', `${allMembersCount}`)

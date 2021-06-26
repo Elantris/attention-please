@@ -12,13 +12,17 @@ const client = new Client()
 
 client.on('message', handleMessage)
 client.on('raw', packet => handleRaw(client, packet))
-
 client.on('ready', () => {
   loggerHook.send(
-    '[`TIME`] USER_TAG'.replace('TIME', moment().format('HH:mm:ss')).replace('USER_TAG', client.user?.tag || ''),
+    '`TIME` USER_TAG'
+      .replace('TIME', moment().format('YYYY-MM-DD HH:mm:ss'))
+      .replace('USER_TAG', client.user?.tag || ''),
   )
-  client.user?.setActivity('Version 2021.06.07 | https://discord.gg/Ctwz4BB')
 })
+
+client.setInterval(() => {
+  client.user?.setActivity('Version 2021.06.26 | https://discord.gg/Ctwz4BB', { type: 'CUSTOM_STATUS' })
+}, 3600000)
 
 let intervalLock = false
 client.setInterval(async () => {
