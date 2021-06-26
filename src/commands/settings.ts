@@ -9,6 +9,7 @@ const defaultSettings: {
 } = {
   prefix: 'ap!',
   timezone: 8,
+  sortByName: false,
   showReacted: false,
   showAbsent: true,
   mentionAbsent: false,
@@ -18,6 +19,7 @@ const settingKeyName: {
 } = {
   prefix: '指令前綴',
   timezone: '時區',
+  sortByName: '依顯示名稱排序',
   showReacted: '顯示已簽到名單',
   showAbsent: '顯示未簽到名單',
   mentionAbsent: '標記未簽到成員',

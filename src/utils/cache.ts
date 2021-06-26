@@ -32,6 +32,7 @@ const cache: {
       [key: string]: any
       prefix: string
       timezone: number
+      sortByName: boolean
       showReacted: boolean
       showAbsent: boolean
       mentionAbsent: boolean

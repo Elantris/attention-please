@@ -22,6 +22,7 @@ const getReactionStatus: (
       emoji: string[]
     }
   } = {}
+  const isSortByName = !!cache.settings[message.guild.id]?.sortByName
   const members = await message.guild.members.fetch()
   const mentionedMembers = members
     .filter(
@@ -31,7 +32,7 @@ const getReactionStatus: (
         message.mentions.roles.some(role => role.members.has(member.id)),
     )
     .filter(member => !member.user.bot)
-    .sort()
+    .sort((a, b) => (isSortByName ? a.displayName.localeCompare(b.displayName) : a.id.localeCompare(b.id)))
     .map(member => {
       reactionStatus[member.id] = {
         name: Util.escapeMarkdown(member.displayName.slice(0, 16)),
