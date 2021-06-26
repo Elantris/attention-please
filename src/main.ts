@@ -20,16 +20,13 @@ client.on('ready', () => {
   )
 })
 
-client.setInterval(() => {
-  client.user?.setActivity('Version 2021.06.26 | https://discord.gg/Ctwz4BB', { type: 'CUSTOM_STATUS' })
-}, 3600000)
-
 let intervalLock = false
 client.setInterval(async () => {
   if (intervalLock) {
     return
   }
   intervalLock = true
+  client.user?.setActivity('Version 2021.06.26 | https://discord.gg/Ctwz4BB', { type: 'CUSTOM_STATUS' })
   const now = Date.now()
   await checkCronjob(client, now)
   await remindCronJob(client, now)

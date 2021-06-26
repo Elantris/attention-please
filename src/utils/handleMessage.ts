@@ -65,6 +65,8 @@ const handleMessage = async (message: Message) => {
           content: ':lock: 錯誤使用指令太多次，請加入客服群組說明原因以解鎖機器人使用權',
         })
       }
+    } else {
+      cache.syntaxErrorsCounts[message.author.id] = 0
     }
   } catch (error) {
     await sendResponse(message, {
