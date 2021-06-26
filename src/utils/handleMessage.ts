@@ -70,8 +70,9 @@ const handleMessage = async (message: Message) => {
 }
 
 const sendResponse = async (commandMessage: Message, result: CommandResultProps) => {
-  const responseMessage = await commandMessage.channel
+  const responseMessages = await commandMessage.channel
     .send(result.content, {
+      split: { char: ' ' },
       embed: {
         title: '加入 eeBots Support（公告、更新）',
         url: 'https://discord.gg/Ctwz4BB',
@@ -82,24 +83,30 @@ const sendResponse = async (commandMessage: Message, result: CommandResultProps)
     })
     .catch(() => null)
 
-  sendLog(commandMessage.client, {
-    content: '[`TIME`] COMMAND_CONTENT\nRESPONSE_CONTENT'
-      .replace('TIME', moment(commandMessage.createdTimestamp).format('HH:mm:ss'))
-      .replace('COMMAND_CONTENT', commandMessage.content)
-      .replace('RESPONSE_CONTENT', responseMessage?.content || 'Error: send response failed')
-      .trim(),
-    embeds: responseMessage?.embeds,
-    error: result.error,
-    guildId: commandMessage.guild?.id,
-    channelId: commandMessage.channel.id,
-    userId: commandMessage.author.id,
-    processTime: responseMessage?.createdTimestamp
-      ? responseMessage?.createdTimestamp - commandMessage.createdTimestamp
-      : undefined,
-  })
+  if (!responseMessages) {
+    return
+  }
+
+  for (const responseMessage of responseMessages) {
+    await sendLog(commandMessage.client, {
+      content: '[`TIME`] COMMAND_CONTENT\nRESPONSE_CONTENT'
+        .replace('TIME', moment(commandMessage.createdTimestamp).format('HH:mm:ss'))
+        .replace('COMMAND_CONTENT', commandMessage.content)
+        .replace('RESPONSE_CONTENT', responseMessage.content || 'Error: send response failed')
+        .trim(),
+      embeds: responseMessage.embeds,
+      error: result.error,
+      guildId: commandMessage.guild?.id,
+      channelId: commandMessage.channel.id,
+      userId: commandMessage.author.id,
+      processTime: responseMessage.createdTimestamp
+        ? responseMessage.createdTimestamp - commandMessage.createdTimestamp
+        : undefined,
+    })
+  }
 }
 
-export const sendLog = (
+export const sendLog = async (
   client: Client,
   options: {
     content?: string
@@ -116,7 +123,7 @@ export const sendLog = (
   const channel = client.channels.cache.get(options.channelId || '')
   const user = client.users.cache.get(options.userId || '')
 
-  loggerHook
+  await loggerHook
     .send(options.content, {
       embeds: [
         ...(options.embeds || []),

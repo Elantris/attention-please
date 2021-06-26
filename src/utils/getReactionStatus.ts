@@ -1,4 +1,5 @@
 import { DMChannel, EmbedFieldData, Message, Util } from 'discord.js'
+import moment from 'moment'
 import { CommandResultProps } from '../types'
 import cache from './cache'
 
@@ -15,7 +16,6 @@ const getReactionStatus: (
     }
   }
 
-  const channel = message.channel
   const reactionStatus: {
     [UserID in string]?: {
       name: string
@@ -46,6 +46,7 @@ const getReactionStatus: (
     }
   }
 
+  const countAt = moment().format('YYYY-MM-DD HH:mm')
   const reactions = message.reactions.cache.array()
   for (const reaction of reactions) {
     const users = await reaction.users.fetch()
@@ -93,7 +94,7 @@ const getReactionStatus: (
           return accumulator
         }, [])
         .map((memberNames, index) => ({
-          name: `:warning: 未簽到名單 第 ${index + 1} 頁`,
+          name: `:x: 未簽到名單 第 ${index + 1} 頁`,
           value: memberNames.join('、'),
         })),
     )
@@ -117,6 +118,7 @@ const getReactionStatus: (
   }
 
   const warnings: string[] = []
+  const channel = message.channel
   const noPermissionMembersCount = mentionedMembers.filter(
     member =>
       !channel.permissionsFor(member)?.has('VIEW_CHANNEL') ||
@@ -137,12 +139,15 @@ const getReactionStatus: (
       .replace('MENTIONS', mentionAbsent ? absentMembers.map(member => `<@!${member.id}>`).join(' ') : '')
       .trim(),
     embed: {
-      description: '結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
-        .replace('TARGET_URL', message.url)
-        .replace('ALL_MEMBERS', `${allMembersCount}`)
-        .replace('REACTED_MEMBERS', `${reactedMembers.length}`)
-        .replace('WARNINGS', warnings.join('\n'))
-        .trim(),
+      color: 0xff922b,
+      description:
+        '結算時間：TIME\n結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
+          .replace('TIME', countAt)
+          .replace('TARGET_URL', message.url)
+          .replace('ALL_MEMBERS', `${allMembersCount}`)
+          .replace('REACTED_MEMBERS', `${reactedMembers.length}`)
+          .replace('WARNINGS', warnings.join('\n'))
+          .trim(),
       fields,
     },
   }
