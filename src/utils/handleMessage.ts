@@ -1,11 +1,10 @@
-import { Client, DMChannel, Message, MessageEmbed, NewsChannel, TextChannel, Util } from 'discord.js'
+import { Message } from 'discord.js'
 import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
 import { CommandProps, CommandResultProps } from '../types'
 import cache, { database } from './cache'
 import getHint from './getHint'
-import { loggerHook } from './hooks'
 import sendLog from './sendLog'
 
 const guildStatus: { [GuildID in string]?: 'processing' | 'cooling-down' | 'muted' } = {}
@@ -73,7 +72,6 @@ const handleMessage = async (message: Message) => {
       content: ':fire: 好像發生了點問題，請加入開發群組回報狀況\nhttps://discord.gg/Ctwz4BB',
       error,
     })
-    sendLog(message.client, { error })
   }
 
   guildStatus[guildId] = 'cooling-down'
