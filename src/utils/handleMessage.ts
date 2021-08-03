@@ -3,8 +3,7 @@ import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
 import { CommandProps, CommandResultProps } from '../types'
-import cache, { database } from './cache'
-import getHint from './getHint'
+import cache, { database, getHint } from './cache'
 import sendLog from './sendLog'
 
 const guildStatus: { [GuildID in string]?: 'processing' | 'cooling-down' | 'muted' } = {}
@@ -69,7 +68,7 @@ const handleMessage = async (message: Message) => {
     }
   } catch (error) {
     await sendResponse(message, {
-      content: ':fire: 好像發生了點問題，請加入開發群組回報狀況\nhttps://discord.gg/Ctwz4BB',
+      content: ':fire: 好像發生了點問題請稍後再試，如果狀況還是沒有改善請加入開發群組回報狀況',
       error,
     })
   }

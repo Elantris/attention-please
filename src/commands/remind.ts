@@ -3,6 +3,13 @@ import { CommandProps } from '../types'
 import cache, { database } from '../utils/cache'
 
 const commandRemind: CommandProps = async ({ message, guildId, args }) => {
+  if (!cache.settings[guildId]?.enableRemind) {
+    return {
+      content: ':lock: 請先透過 settings 指令啟用「提醒功能」',
+      isSyntaxError: true,
+    }
+  }
+
   const remindSettings = cache.remindSettings[message.author.id] || {}
 
   if (args.length < 3) {

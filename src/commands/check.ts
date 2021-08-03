@@ -22,16 +22,24 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
     }
   }
 
+  if (!targetMessage.mentions.everyone && !targetMessage.mentions.roles.size && !targetMessage.mentions.members?.size) {
+    return {
+      content: ':x: 這則訊息沒有標記的對象，請選擇一個有「@身份組」或「@成員」的訊息',
+      isSyntaxError: true,
+    }
+  }
+
   if (args[2]) {
     const checkAt = moment(args.slice(2).join(' ')).startOf('minute')
     checkAt.utcOffset(cache.settings[guildId]?.timezone || 8)
 
     if (!checkAt.isValid()) {
       return {
-        content: ':x: 指定時間的格式好像怪怪的\n推薦時間格式：`YYYY-MM-DD HH:mm`\n您輸入的字串：`ARGUMENTS`'.replace(
-          'ARGUMENTS',
-          Util.escapeMarkdown(args.slice(2).join(' ')),
-        ),
+        content:
+          ':x: 指定時間的格式好像怪怪的\n推薦時間格式：`YYYY-MM-DD HH:mm`（西元年-月-日 時:分）\n您輸入的字串：`ARGUMENTS`'.replace(
+            'ARGUMENTS',
+            Util.escapeMarkdown(args.slice(2).join(' ')),
+          ),
         isSyntaxError: true,
       }
     }

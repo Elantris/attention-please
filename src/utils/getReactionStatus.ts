@@ -16,67 +16,81 @@ const getReactionStatus: (
     }
   }
 
-  const reactionStatus: {
-    [UserID in string]?: {
-      name: string
-      emoji: string[]
+  const guildId = message.guild.id
+
+  const mentionedMembers: {
+    [UserID: string]: {
+      isReacted: boolean
+      displayName: string
     }
   } = {}
-  const isSortByName = !!cache.settings[message.guild.id]?.sortByName
-  const members = await message.guild.members.fetch()
-  const mentionedMembers = members
-    .filter(
-      member =>
-        message.mentions.everyone ||
-        message.mentions.users.has(member.id) ||
-        message.mentions.roles.some(role => role.members.has(member.id)),
-    )
-    .filter(member => !member.user.bot)
-    .sort((a, b) => (isSortByName ? a.displayName.localeCompare(b.displayName) : a.id.localeCompare(b.id)))
-    .map(member => {
-      reactionStatus[member.id] = {
-        name: Util.escapeMarkdown(member.displayName.slice(0, 16)),
-        emoji: [],
+  if (message.mentions.everyone) {
+    for (const memberId in cache.displayNames[guildId]) {
+      mentionedMembers[memberId] = {
+        isReacted: false,
+        displayName: cache.displayNames[guildId]?.[memberId] || '',
       }
-      return member
-    })
+    }
+  } else {
+    message.mentions.users
+      ?.filter(user => !user.bot)
+      .forEach(user => {
+        mentionedMembers[user.id] = {
+          isReacted: false,
+          displayName: cache.displayNames[guildId]?.[user.id] || user.username,
+        }
+      })
 
-  if (Object.keys(reactionStatus).length === 0) {
-    return {
-      content: ':x: 這則訊息沒有標記的對象，直接右鍵目標訊息選「反應」就能看到列表',
+    for (const memberId in cache.displayNames[guildId]) {
+      if (mentionedMembers[memberId]) {
+        continue
+      }
+      if (message.mentions.roles.some(role => !!cache.memberRoles[guildId]?.[memberId]?.includes(role.id))) {
+        mentionedMembers[memberId] = {
+          isReacted: false,
+          displayName: cache.displayNames[guildId]?.[memberId] || '',
+        }
+      }
     }
   }
 
-  const countAt = moment().format('YYYY-MM-DD HH:mm')
-  const reactions = message.reactions.cache.array()
-  for (const reaction of reactions) {
-    const users = await reaction.users.fetch()
-    users
-      .filter(user => !!reactionStatus[user.id])
-      .each(user => {
-        reactionStatus[user.id]?.emoji.push(reaction.emoji.name)
-      })
+  if (Object.keys(mentionedMembers).length === 0) {
+    return {
+      content: ':x: 這則訊息沒有標記的對象，請選擇一個有「@身份組」或「@成員」的訊息',
+      isSyntaxError: true,
+    }
   }
 
-  const allMembersCount = Object.keys(reactionStatus).length
-  const reactedMembers: {
-    id: string
-    name: string
-  }[] = Object.keys(reactionStatus)
-    .filter(userId => reactionStatus[userId]?.emoji.length)
-    .map(userId => ({
-      id: userId,
-      name: reactionStatus[userId]?.name || userId,
-    }))
-  const absentMembers: {
-    id: string
-    name: string
-  }[] = Object.keys(reactionStatus)
-    .filter(userId => !reactionStatus[userId]?.emoji.length)
-    .map(userId => ({
-      id: userId,
-      name: reactionStatus[userId]?.name || userId,
-    }))
+  const countAt = moment()
+    .utcOffset(cache.settings[guildId]?.timezone || 8)
+    .format('YYYY-MM-DD HH:mm')
+  const messageReactions = message.reactions.cache.array()
+  for (const messageReaction of messageReactions) {
+    const users = (await messageReaction.users.fetch()).array()
+    for (const user of users) {
+      if (!mentionedMembers[user.id]) {
+        continue
+      }
+      mentionedMembers[user.id].isReacted = true
+    }
+  }
+
+  const reactedMemberIds = [
+    ...Object.keys(mentionedMembers)
+      .filter(memberId => mentionedMembers[memberId].isReacted && mentionedMembers[memberId].displayName)
+      .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName)),
+    ...Object.keys(mentionedMembers)
+      .filter(memberId => mentionedMembers[memberId].isReacted && !mentionedMembers[memberId].displayName)
+      .sort(),
+  ]
+  const absentMemberIds = [
+    ...Object.keys(mentionedMembers)
+      .filter(memberId => !mentionedMembers[memberId].isReacted && mentionedMembers[memberId].displayName)
+      .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName)),
+    ...Object.keys(mentionedMembers)
+      .filter(memberId => !mentionedMembers[memberId].isReacted && !mentionedMembers[memberId].displayName)
+      .sort(),
+  ]
 
   const showReacted = cache.settings[message.guild.id]?.showReacted ?? false
   const showAbsent = cache.settings[message.guild.id]?.showAbsent ?? true
@@ -85,13 +99,15 @@ const getReactionStatus: (
   const fields: EmbedFieldData[] = []
   if (showAbsent) {
     fields.push(
-      ...absentMembers
-        .reduce<string[][]>((accumulator, member, index) => {
+      ...absentMemberIds
+        .reduce<string[][]>((accumulator, memberId, index) => {
           const page = Math.floor(index / 50)
           if (index % 50 === 0) {
             accumulator[page] = []
           }
-          accumulator[page].push(member.name)
+          accumulator[page].push(
+            Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)) || `<@${memberId}>`,
+          )
           return accumulator
         }, [])
         .map((memberNames, index) => ({
@@ -102,13 +118,15 @@ const getReactionStatus: (
   }
   if (showReacted) {
     fields.push(
-      ...reactedMembers
-        .reduce<string[][]>((accumulator, member, index) => {
+      ...reactedMemberIds
+        .reduce<string[][]>((accumulator, memberId, index) => {
           const page = Math.floor(index / 50)
           if (index % 50 === 0) {
             accumulator[page] = []
           }
-          accumulator[page].push(member.name)
+          accumulator[page].push(
+            Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)) || `<@${memberId}>`,
+          )
           return accumulator
         }, [])
         .map((memberNames, index) => ({
@@ -120,13 +138,13 @@ const getReactionStatus: (
 
   const warnings: string[] = []
   const channel = message.channel
-  const noPermissionMembersCount = mentionedMembers.filter(
+  const noPermissionMembers = (await message.guild.members.fetch({ user: absentMemberIds })).filter(
     member =>
       !channel.permissionsFor(member)?.has('VIEW_CHANNEL') ||
       !channel.permissionsFor(member)?.has('READ_MESSAGE_HISTORY'),
-  ).length
-  if (noPermissionMembersCount) {
-    warnings.push(`:warning: 被標記的成員當中有 ${noPermissionMembersCount} 人沒有權限看到這則訊息`)
+  )
+  if (noPermissionMembers.size) {
+    warnings.push(`:warning: 被標記的成員當中有 ${noPermissionMembers.size} 人沒有權限看到這則訊息`)
   }
   if (options?.passedCheckAt) {
     warnings.push(`:warning: 指定的時間已經過了大約 ${options.passedCheckAt}`)
@@ -134,19 +152,21 @@ const getReactionStatus: (
 
   return {
     content: ':bar_chart: 已簽到：REACTED_MEMBERS / ALL_MEMBERS (**PERCENTAGE%**)\nMENTIONS'
-      .replace('REACTED_MEMBERS', `${reactedMembers.length}`)
-      .replace('ALL_MEMBERS', `${allMembersCount}`)
-      .replace('PERCENTAGE', `${((reactedMembers.length * 100) / allMembersCount).toFixed(2)}`)
-      .replace('MENTIONS', mentionAbsent ? absentMembers.map(member => `<@!${member.id}>`).join(' ') : '')
+      .replace('REACTED_MEMBERS', `${reactedMemberIds.length}`)
+      .replace('ALL_MEMBERS', `${Object.keys(mentionedMembers).length}`)
+      .replace('PERCENTAGE', `${((reactedMemberIds.length * 100) / Object.keys(mentionedMembers).length).toFixed(2)}`)
+      .replace('MENTIONS', mentionAbsent ? absentMemberIds.map(memberId => `<@${memberId}>`).join(' ') : '')
       .trim(),
     embed: {
+      title: '加入 eeBots Support（公告、更新）',
+      url: 'https://discord.gg/Ctwz4BB',
       color: 0xff922b,
       description:
         '結算時間：`TIME`\n結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
           .replace('TIME', countAt)
           .replace('TARGET_URL', message.url)
-          .replace('ALL_MEMBERS', `${allMembersCount}`)
-          .replace('REACTED_MEMBERS', `${reactedMembers.length}`)
+          .replace('ALL_MEMBERS', `${Object.keys(mentionedMembers).length}`)
+          .replace('REACTED_MEMBERS', `${reactedMemberIds.length}`)
           .replace('WARNINGS', warnings.join('\n'))
           .trim(),
       fields,

@@ -1,44 +1,41 @@
-import { CommandProps } from '../types'
+import { CommandProps, SettingKey } from '../types'
 import cache, { database } from '../utils/cache'
 
-const parseBoolean = (value: string) =>
-  !(value === '0' || value === '❌' || value === '關閉' || value === 'off' || value === 'close' || value === 'false')
-
 const defaultSettings: {
-  [key in string]?: string | number | boolean
+  [key in SettingKey]?: string | number | boolean
 } = {
   prefix: 'ap!',
   timezone: 8,
-  sortByName: false,
+  enableRemind: false,
   showReacted: false,
   showAbsent: true,
-  mentionAbsent: false,
 }
 const settingKeyName: {
-  [key in string]?: string
+  [key in SettingKey]?: string
 } = {
   prefix: '指令前綴',
   timezone: '時區',
-  sortByName: '依顯示名稱排序',
+  enableRemind: '開啟提醒功能',
   showReacted: '顯示已簽到名單',
   showAbsent: '顯示未簽到名單',
-  mentionAbsent: '標記未簽到成員',
 }
 
 const commandSettings: CommandProps = async ({ message, guildId, args }) => {
-  const settingKey = args[1]
+  const settingKey = args[1] as SettingKey
   const settingValues = args[2]
 
   if (!settingKey) {
     return {
       content: ':gear: **GUILD_NAME** 全部設定'.replace('GUILD_NAME', message.guild?.name || ''),
       embed: {
-        fields: Object.keys(defaultSettings).map(key => {
+        fields: Object.keys(defaultSettings).map(v => {
+          const key = v as SettingKey
           const value = cache.settings[guildId]?.[key] ?? defaultSettings[key]
 
           return {
             name: `${settingKeyName[key]}\n\`${key}\``,
-            value: typeof defaultSettings[key] === 'boolean' ? (value ? ':white_check_mark: 開啟' : ':x: 關閉') : value,
+            value:
+              typeof defaultSettings[key] === 'boolean' ? (value ? ':white_check_mark: 開啟' : ':x: 關閉') : `${value}`,
             inline: true,
           }
         }),
@@ -48,7 +45,7 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
 
   if (!settingKeyName[settingKey]) {
     return {
-      content: ':question: 沒有這個設定項目',
+      content: ':question: 沒有這個設定項目，或是這個設定項目已被移除',
       isSyntaxError: true,
     }
   }
@@ -62,12 +59,12 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
     }
   }
 
-  let newValue: string | number | boolean =
+  const newValue: string | number | boolean =
     typeof defaultSettings[settingKey] === 'string'
       ? settingValues
       : typeof defaultSettings[settingKey] === 'number'
       ? parseInt(settingValues)
-      : parseBoolean(settingValues)
+      : settingValues === '1' || settingValues === 'true'
 
   if (typeof defaultSettings[settingKey] === 'number' && Number.isNaN(newValue)) {
     return {
