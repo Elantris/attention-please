@@ -55,12 +55,12 @@ const handleMessage = async (message: Message) => {
 
     if (commandResult.isSyntaxError) {
       cache.syntaxErrorsCounts[message.author.id] = (cache.syntaxErrorsCounts[message.author.id] || 0) + 1
-      if ((cache.syntaxErrorsCounts[message.author.id] || 0) > 16) {
+      if ((cache.syntaxErrorsCounts[message.author.id] || 0) > 8) {
         database
           .ref(`/banned/${message.author.id}`)
           .set(`[${moment(message.createdTimestamp).format('YYYY-MM-DD HH:mm')}] too many syntax errors`)
         await sendResponse(message, {
-          content: ':lock: 錯誤使用指令太多次，請加入客服群組說明原因以解鎖機器人使用權',
+          content: ':lock: 無法正確使用機器人指令嗎？歡迎加入客服群組尋求協助！',
         })
       }
     } else {

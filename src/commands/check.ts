@@ -35,49 +35,56 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
 
     if (!checkAt.isValid()) {
       return {
-        content:
-          ':x: 指定時間的格式好像怪怪的\n推薦時間格式：`YYYY-MM-DD HH:mm`（西元年-月-日 時:分）\n您輸入的字串：`ARGUMENTS`'.replace(
-            'ARGUMENTS',
+        content: ':x: 指定預約結算的時間格式好像怪怪的',
+        embed: {
+          description: '推薦時間格式：`YYYY-MM-DD HH:mm`（西元年-月-日 時:分）\n使用者的輸入：`USER_INPUT`'.replace(
+            'USER_INPUT',
             Util.escapeMarkdown(args.slice(2).join(' ')),
           ),
+        },
         isSyntaxError: true,
       }
     }
 
-    if (checkAt.isAfter(message.createdTimestamp)) {
-      const duplicatedJobId = Object.keys(cache.checkJobs).find(
-        jobId => cache.checkJobs[jobId]?.messageId === targetMessage.id,
-      )
-
-      const job: CheckJobProps = {
-        checkAt: checkAt.toDate().getTime(),
-        guildId: targetMessage.guild.id,
-        channelId: targetMessage.channel.id,
-        messageId: targetMessage.id,
-        responseChannelId: message.channel.id,
-        retryTimes: 0,
-        clientId: message.client.user?.id || '',
-      }
-      await database.ref(`/checkJobs/${message.id}`).set(job)
-
-      if (duplicatedJobId) {
-        await database.ref(`/checkJobs/${duplicatedJobId}`).remove()
-        return {
-          content: ':alarm_clock: `MESSAGE_ID` 的結算時間改為 `CHECK_AT`'
-            .replace('MESSAGE_ID', targetMessage.id)
-            .replace('CHECK_AT', checkAt.format('YYYY-MM-DD HH:mm')),
-        }
-      }
-
-      return {
-        content: ':alarm_clock: `MESSAGE_ID` 將會在 `CHECK_AT` 列出被標記且沒有按表情符號的成員名單'
-          .replace('MESSAGE_ID', targetMessage.id)
-          .replace('CHECK_AT', checkAt.format('YYYY-MM-DD HH:mm')),
-      }
-    } else {
+    if (checkAt.isBefore(message.createdTimestamp)) {
       return await getReactionStatus(targetMessage, {
         passedCheckAt: checkAt.from(message.createdTimestamp, true),
       })
+    }
+
+    const duplicatedJobId = Object.keys(cache.checkJobs).find(
+      jobId => cache.checkJobs[jobId]?.messageId === targetMessage.id,
+    )
+    const job: CheckJobProps = {
+      checkAt: checkAt.toDate().getTime(),
+      guildId: targetMessage.guild.id,
+      channelId: targetMessage.channel.id,
+      messageId: targetMessage.id,
+      userId: message.author.id,
+      responseChannelId: message.channel.id,
+      retryTimes: 0,
+      clientId: message.client.user?.id || '',
+    }
+    await database.ref(`/checkJobs/${message.id}`).set(job)
+
+    if (duplicatedJobId) {
+      await database.ref(`/checkJobs/${duplicatedJobId}`).remove()
+    }
+
+    return {
+      content: (duplicatedJobId
+        ? ':alarm_clock: **GUILD_NAME** 變更 `MESSAGE_ID` 結算時間'
+        : ':alarm_clock: **GUILD_NAME** 建立 `MESSAGE_ID` 預約結算'
+      )
+        .replace('GUILD_NAME', message.guild?.name || '')
+        .replace('MESSAGE_ID', targetMessage.id),
+      embed: {
+        description:
+          '預約結算：`TIME`\n結算目標：[訊息連結](TARGET_URL)\n\n刪除 [指令訊息](COMMAND_URL) 即可取消預約結算'
+            .replace('TIME', checkAt.format('YYYY-MM-DD HH:mm'))
+            .replace('TARGET_URL', targetMessage.url)
+            .replace('COMMAND_URL', message.url),
+      },
     }
   }
 

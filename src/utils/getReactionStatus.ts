@@ -18,6 +18,11 @@ const getReactionStatus: (
 
   const guildId = message.guild.id
 
+  if (!cache.isMembersFetched[guildId]) {
+    await message.guild.members.fetch()
+    cache.isMembersFetched[guildId] = true
+  }
+
   const mentionedMembers: {
     [UserID: string]: {
       isReacted: boolean
@@ -25,33 +30,28 @@ const getReactionStatus: (
     }
   } = {}
   if (message.mentions.everyone) {
-    for (const memberId in cache.displayNames[guildId]) {
-      mentionedMembers[memberId] = {
+    message.guild.members.cache.each(member => {
+      mentionedMembers[member.id] = {
         isReacted: false,
-        displayName: cache.displayNames[guildId]?.[memberId] || '',
+        displayName: member.displayName,
       }
-    }
+    })
   } else {
-    message.mentions.users
-      ?.filter(user => !user.bot)
-      .forEach(user => {
-        mentionedMembers[user.id] = {
+    message.mentions.members?.each(member => {
+      mentionedMembers[member.id] = {
+        isReacted: false,
+        displayName: member.displayName,
+      }
+    })
+
+    message.mentions.roles.each(role => {
+      role.members.each(member => {
+        mentionedMembers[member.id] = {
           isReacted: false,
-          displayName: cache.displayNames[guildId]?.[user.id] || user.username,
+          displayName: member.displayName,
         }
       })
-
-    for (const memberId in cache.displayNames[guildId]) {
-      if (mentionedMembers[memberId]) {
-        continue
-      }
-      if (message.mentions.roles.some(role => !!cache.memberRoles[guildId]?.[memberId]?.includes(role.id))) {
-        mentionedMembers[memberId] = {
-          isReacted: false,
-          displayName: cache.displayNames[guildId]?.[memberId] || '',
-        }
-      }
-    }
+    })
   }
 
   if (Object.keys(mentionedMembers).length === 0) {
@@ -75,22 +75,12 @@ const getReactionStatus: (
     }
   }
 
-  const reactedMemberIds = [
-    ...Object.keys(mentionedMembers)
-      .filter(memberId => mentionedMembers[memberId].isReacted && mentionedMembers[memberId].displayName)
-      .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName)),
-    ...Object.keys(mentionedMembers)
-      .filter(memberId => mentionedMembers[memberId].isReacted && !mentionedMembers[memberId].displayName)
-      .sort(),
-  ]
-  const absentMemberIds = [
-    ...Object.keys(mentionedMembers)
-      .filter(memberId => !mentionedMembers[memberId].isReacted && mentionedMembers[memberId].displayName)
-      .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName)),
-    ...Object.keys(mentionedMembers)
-      .filter(memberId => !mentionedMembers[memberId].isReacted && !mentionedMembers[memberId].displayName)
-      .sort(),
-  ]
+  const reactedMemberIds = Object.keys(mentionedMembers)
+    .filter(memberId => mentionedMembers[memberId].isReacted)
+    .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
+  const absentMemberIds = Object.keys(mentionedMembers)
+    .filter(memberId => !mentionedMembers[memberId].isReacted)
+    .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
 
   const showReacted = cache.settings[message.guild.id]?.showReacted ?? false
   const showAbsent = cache.settings[message.guild.id]?.showAbsent ?? true
@@ -105,9 +95,7 @@ const getReactionStatus: (
           if (index % 50 === 0) {
             accumulator[page] = []
           }
-          accumulator[page].push(
-            Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)) || `<@${memberId}>`,
-          )
+          accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
           return accumulator
         }, [])
         .map((memberNames, index) => ({
@@ -124,9 +112,7 @@ const getReactionStatus: (
           if (index % 50 === 0) {
             accumulator[page] = []
           }
-          accumulator[page].push(
-            Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)) || `<@${memberId}>`,
-          )
+          accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
           return accumulator
         }, [])
         .map((memberNames, index) => ({

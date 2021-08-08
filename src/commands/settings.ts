@@ -10,7 +10,7 @@ const defaultSettings: {
   showReacted: false,
   showAbsent: true,
 }
-const settingKeyName: {
+const settingKeyNames: {
   [key in SettingKey]?: string
 } = {
   prefix: '指令前綴',
@@ -22,7 +22,7 @@ const settingKeyName: {
 
 const commandSettings: CommandProps = async ({ message, guildId, args }) => {
   const settingKey = args[1] as SettingKey
-  const settingValues = args[2]
+  const settingValue = args[2]
 
   if (!settingKey) {
     return {
@@ -33,7 +33,7 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
           const value = cache.settings[guildId]?.[key] ?? defaultSettings[key]
 
           return {
-            name: `${settingKeyName[key]}\n\`${key}\``,
+            name: `${settingKeyNames[key]}\n\`${key}\``,
             value:
               typeof defaultSettings[key] === 'boolean' ? (value ? ':white_check_mark: 開啟' : ':x: 關閉') : `${value}`,
             inline: true,
@@ -43,28 +43,36 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
     }
   }
 
-  if (!settingKeyName[settingKey]) {
+  if (!settingKeyNames[settingKey]) {
     return {
       content: ':question: 沒有這個設定項目，或是這個設定項目已被移除',
+      embed: {
+        description: '可以設定的項目：SETTING_KEYS'.replace(
+          'SETTING_KEYS',
+          Object.keys(defaultSettings)
+            .map(key => `\`${key}\``)
+            .join('、'),
+        ),
+      },
       isSyntaxError: true,
     }
   }
 
-  if (!settingValues) {
+  if (!settingValue) {
     await database.ref(`/settings/${guildId}/${settingKey}`).remove()
     return {
       content: ':gear: 設定項目 **SETTING_KEY_NAME** 已重設為預設值：`VALUE`'
-        .replace('SETTING_KEY_NAME', settingKeyName[settingKey] || '')
+        .replace('SETTING_KEY_NAME', settingKeyNames[settingKey] || '')
         .replace('VALUE', `${defaultSettings[settingKey]}`),
     }
   }
 
   const newValue: string | number | boolean =
     typeof defaultSettings[settingKey] === 'string'
-      ? settingValues
+      ? settingValue
       : typeof defaultSettings[settingKey] === 'number'
-      ? parseInt(settingValues)
-      : settingValues === '1' || settingValues === 'true'
+      ? parseInt(settingValue)
+      : settingValue === '1' || settingValue === 'true' || settingValue === 'on' || settingValue === '開啟'
 
   if (typeof defaultSettings[settingKey] === 'number' && Number.isNaN(newValue)) {
     return {
@@ -78,14 +86,14 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
   if (typeof defaultSettings[settingKey] === 'boolean') {
     return {
       content: ':gear: 設定項目 **SETTING_KEY_NAME** ACTION'
-        .replace('SETTING_KEY_NAME', settingKeyName[settingKey] || '')
+        .replace('SETTING_KEY_NAME', settingKeyNames[settingKey] || '')
         .replace('ACTION', newValue ? '已開啟' : '已關閉'),
     }
   }
 
   return {
-    content: ':gear: 設定項目 **SETTING_KEY_NAME** 已變更為 `VALUE`'
-      .replace('SETTING_KEY_NAME', settingKeyName[settingKey] || '')
+    content: ':gear: 設定項目 **SETTING_KEY_NAME** 已變更為 VALUE'
+      .replace('SETTING_KEY_NAME', settingKeyNames[settingKey] || '')
       .replace('VALUE', `${newValue}`),
   }
 }

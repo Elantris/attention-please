@@ -52,6 +52,9 @@ const cache: {
   syntaxErrorsCounts: {
     [UserID in string]?: number
   }
+  isMembersFetched: {
+    [GuildID in string]?: boolean
+  }
 } = {
   banned: {},
   checkJobs: {},
@@ -62,6 +65,7 @@ const cache: {
   remindSettings: {},
   settings: {},
   syntaxErrorsCounts: {},
+  isMembersFetched: {},
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {

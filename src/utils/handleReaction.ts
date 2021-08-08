@@ -1,4 +1,4 @@
-import { Client, DMChannel } from 'discord.js'
+import { Client, DMChannel, Message } from 'discord.js'
 import moment from 'moment'
 import { RemindJobProps } from '../types'
 import cache, { database } from './cache'
@@ -73,6 +73,10 @@ const handleReactionAdd = async (
       })
     }
 
+    return
+  }
+
+  if (!cache.settings[options.guildId]?.enableRemind) {
     return
   }
 

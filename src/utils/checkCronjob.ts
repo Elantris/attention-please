@@ -38,7 +38,7 @@ const checkCronjob = async (client: Client, now: number) => {
         embeds: responseMessage.embeds,
         guildId: checkJob.guildId,
         channelId: checkJob.channelId,
-        userId: commandMessage.author.id,
+        userId: checkJob.userId,
       })
 
       await database.ref(`/checkJobs/${jobId}`).remove()

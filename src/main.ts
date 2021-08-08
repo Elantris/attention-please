@@ -28,22 +28,21 @@ const locks = {
   updateMember: false,
 }
 
-// let intervalLock = false
 client.setInterval(async () => {
-  const now = Date.now()
-
   if (!locks.checkJob) {
     locks.checkJob = true
-    await checkCronjob(client, now)
+    await checkCronjob(client, Date.now())
     locks.checkJob = false
   }
+}, 10000)
 
+client.setInterval(async () => {
   if (!locks.remindJob) {
     locks.remindJob = true
-    await remindCronJob(client, now)
+    await remindCronJob(client, Date.now())
     locks.remindJob = false
   }
-}, 20000)
+}, 10000)
 
 client.setInterval(async () => {
   client.user?.setActivity('Version 2021.08.04 | https://discord.gg/Ctwz4BB')

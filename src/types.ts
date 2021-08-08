@@ -19,6 +19,7 @@ export type CheckJobProps = {
   guildId: string
   channelId: string
   messageId: string
+  userId: string
   responseChannelId: string
   retryTimes: number
 }
@@ -28,6 +29,15 @@ export type RemindJobProps = {
   createdAt: number
   remindAt: number
   userId: string
+  guildId: string
+  channelId: string
+  messageId: string
+  retryTimes: number
+}
+
+export type EventJobProps = {
+  clientId: string
+  createdAt: number
   guildId: string
   channelId: string
   messageId: string
