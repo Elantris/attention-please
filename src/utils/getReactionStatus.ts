@@ -2,6 +2,7 @@ import { DMChannel, EmbedFieldData, Message, Util } from 'discord.js'
 import moment from 'moment'
 import { CommandResultProps } from '../types'
 import cache from './cache'
+import notEmpty from './notEmpty'
 
 const getReactionStatus: (
   message: Message,
@@ -124,13 +125,16 @@ const getReactionStatus: (
 
   const warnings: string[] = []
   const channel = message.channel
-  const noPermissionMembers = (await message.guild.members.fetch({ user: absentMemberIds })).filter(
-    member =>
-      !channel.permissionsFor(member)?.has('VIEW_CHANNEL') ||
-      !channel.permissionsFor(member)?.has('READ_MESSAGE_HISTORY'),
-  )
-  if (noPermissionMembers.size) {
-    warnings.push(`:warning: 被標記的成員當中有 ${noPermissionMembers.size} 人沒有權限看到這則訊息`)
+  const noPermissionMembers = absentMemberIds
+    .map(memberId => message.guild?.members.cache.get(memberId))
+    .filter(notEmpty)
+    .filter(
+      member =>
+        !channel.permissionsFor(member)?.has('VIEW_CHANNEL') ||
+        !channel.permissionsFor(member)?.has('READ_MESSAGE_HISTORY'),
+    )
+  if (noPermissionMembers.length) {
+    warnings.push(`:warning: 被標記的成員當中有 ${noPermissionMembers.length} 人沒有權限看到這則訊息`)
   }
   if (options?.passedCheckAt) {
     warnings.push(`:warning: 指定的時間已經過了大約 ${options.passedCheckAt}`)
