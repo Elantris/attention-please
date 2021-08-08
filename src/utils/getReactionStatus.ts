@@ -32,6 +32,9 @@ const getReactionStatus: (
   } = {}
   if (message.mentions.everyone) {
     message.guild.members.cache.each(member => {
+      if (member.user.bot) {
+        return
+      }
       mentionedMembers[member.id] = {
         isReacted: false,
         displayName: member.displayName,
@@ -39,6 +42,9 @@ const getReactionStatus: (
     })
   } else {
     message.mentions.members?.each(member => {
+      if (member.user.bot) {
+        return
+      }
       mentionedMembers[member.id] = {
         isReacted: false,
         displayName: member.displayName,
@@ -47,6 +53,9 @@ const getReactionStatus: (
 
     message.mentions.roles.each(role => {
       role.members.each(member => {
+        if (member.user.bot) {
+          return
+        }
         mentionedMembers[member.id] = {
           isReacted: false,
           displayName: member.displayName,
