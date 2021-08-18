@@ -18,11 +18,7 @@ const getReactionStatus: (
   }
 
   const guildId = message.guild.id
-
-  if (!cache.isMembersFetched[guildId]) {
-    await message.guild.members.fetch()
-    cache.isMembersFetched[guildId] = true
-  }
+  await message.guild.members.fetch()
 
   const mentionedMembers: {
     [UserID: string]: {

@@ -35,13 +35,4 @@ export type RemindJobProps = {
   retryTimes: number
 }
 
-export type EventJobProps = {
-  clientId: string
-  createdAt: number
-  guildId: string
-  channelId: string
-  messageId: string
-  retryTimes: number
-}
-
 export type SettingKey = 'prefix' | 'timezone' | 'enableRemind' | 'showReacted' | 'showAbsent'
