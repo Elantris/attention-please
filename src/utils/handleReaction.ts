@@ -1,4 +1,4 @@
-import { Client, DMChannel, Message } from 'discord.js'
+import { Client, DMChannel } from 'discord.js'
 import moment from 'moment'
 import { RemindJobProps } from '../types'
 import cache, { database } from './cache'
@@ -26,7 +26,7 @@ export const handleRaw = (client: Client, packet: any) => {
         emoji: packet.d.emoji,
       })
     }
-  } catch (error) {
+  } catch (error: any) {
     sendLog(client, { error })
   }
 }
@@ -64,12 +64,11 @@ const handleReactionAdd = async (
       await message.delete()
 
       sendLog(client, {
-        content: '[`TIME`] Delete message `MESSAGE_ID`'
-          .replace('TIME', moment(now).format('HH:mm:ss'))
-          .replace('MESSAGE_ID', message.id),
+        color: 0xffc078,
+        time: now,
+        content: 'Delete message `MESSAGE_ID`'.replace('MESSAGE_ID', message.id),
         channelId: options.channelId,
         userId: options.userId,
-        color: 0xffc078,
       })
     }
 
@@ -99,13 +98,12 @@ const handleReactionAdd = async (
   await database.ref(`/remindJobs/${jobId}`).set(job)
 
   sendLog(client, {
-    content: '[`TIME`] Create remind job `JOB_ID`'
-      .replace('TIME', moment(now).format('HH:mm:ss'))
-      .replace('JOB_ID', jobId),
+    color: 0xffc078,
+    time: now,
+    content: 'Create remind job `JOB_ID`'.replace('JOB_ID', jobId),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
-    color: 0xffc078,
   })
 }
 
@@ -127,12 +125,11 @@ const handleReactionRemove = async (
   await database.ref(`/remindJobs/${jobId}`).remove()
 
   sendLog(client, {
-    content: '[`TIME`] Remove remind job `JOB_ID`'
-      .replace('TIME', moment(now).format('HH:mm:ss'))
-      .replace('JOB_ID', jobId),
+    color: 0xffc078,
+    time: now,
+    content: 'Remove remind job `JOB_ID`'.replace('JOB_ID', jobId),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
-    color: 0xffc078,
   })
 }

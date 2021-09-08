@@ -1,5 +1,4 @@
 import { Client } from 'discord.js'
-import moment from 'moment'
 import cache, { database } from './cache'
 import getReactionStatus from './getReactionStatus'
 import sendLog from './sendLog'
@@ -19,40 +18,42 @@ const checkCronjob = async (client: Client, now: number) => {
 
     try {
       const guild = await client.guilds.fetch(checkJob.guildId)
-      const channel = guild.channels.cache.get(checkJob.channelId)
+      const targetChannel = guild.channels.cache.get(checkJob.channelId)
       const responseChannel = guild.channels.cache.get(checkJob.responseChannelId)
 
-      if (!channel?.isText() || !responseChannel?.isText()) {
-        throw new Error('Invalid channel')
+      if (!targetChannel?.isText() || !responseChannel?.isText()) {
+        throw new Error('channel not found')
       }
 
-      const targetMessage = await channel.messages.fetch(checkJob.messageId)
+      const targetMessage = await targetChannel.messages.fetch(checkJob.messageId)
       const commandMessage = await responseChannel.messages.fetch(jobId)
+      const responseMessages = await responseChannel.send(await getReactionStatus(targetMessage), {
+        split: { char: ' ' },
+      })
 
-      const responseMessage = await commandMessage.channel.send(await getReactionStatus(targetMessage))
       sendLog(client, {
-        content: '[`TIME`] Execute check job `JOB_ID`\nRESPONSE_CONTENT'
-          .replace('TIME', moment(responseMessage.createdTimestamp).format('HH:mm:ss'))
-          .replace('JOB_ID', jobId)
-          .replace('RESPONSE_CONTENT', responseMessage.content),
-        embeds: responseMessage.embeds,
-        guildId: checkJob.guildId,
-        channelId: checkJob.channelId,
-        userId: checkJob.userId,
+        commandMessage,
+        responseMessage: responseMessages[responseMessages.length - 1],
+        color: 0xffc078,
+        time: now,
+        content: 'Execute check job `JOB_ID`'.replace('JOB_ID', jobId),
       })
 
       await database.ref(`/checkJobs/${jobId}`).remove()
-    } catch (error) {
-      await database.ref(`/checkJobs/${jobId}/retryTimes`).set(checkJob.retryTimes + 1)
-
-      sendLog(client, {
-        content: '[`TIME`] Execute check job `JOB_ID`'
-          .replace('TIME', moment().format('HH:mm:ss'))
-          .replace('JOB_ID', jobId),
-        guildId: checkJob.guildId,
-        channelId: checkJob.channelId,
-        error,
-      })
+    } catch (error: any) {
+      if (checkJob.retryTimes > 2) {
+        sendLog(client, {
+          time: now,
+          content: 'Failed to execute check job `JOB_ID`'.replace('JOB_ID', jobId),
+          guildId: checkJob.guildId,
+          channelId: checkJob.channelId,
+          userId: checkJob.userId,
+          error,
+        })
+        await database.ref(`/checkJobs/${jobId}`).remove()
+      } else {
+        await database.ref(`/checkJobs/${jobId}/retryTimes`).set(checkJob.retryTimes + 1)
+      }
     }
   }
 }

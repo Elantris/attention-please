@@ -17,9 +17,9 @@ const remindCronJob = async (client: Client, now: number) => {
     }
 
     try {
-      const user = await client.users.fetch(remindJob.userId)
       const guild = await client.guilds.fetch(remindJob.guildId)
       const channel = guild.channels.cache.get(remindJob.channelId)
+      const user = await client.users.fetch(remindJob.userId)
 
       if (!channel?.isText()) {
         throw new Error('channel not found')
@@ -39,28 +39,27 @@ const remindCronJob = async (client: Client, now: number) => {
       await remindMessage.react('✅').catch(() => {})
 
       sendLog(client, {
-        content: '[`TIME`] Execute remind job `JOB_ID`'
-          .replace('TIME', moment(now).format('HH:mm:ss'))
-          .replace('JOB_ID', jobId),
-        guildId: remindJob.guildId,
-        channelId: remindJob.channelId,
-        userId: remindJob.userId,
+        commandMessage: targetMessage,
         color: 0xffc078,
+        time: now,
+        content: 'Execute remind job `JOB_ID`'.replace('JOB_ID', jobId),
       })
 
       await database.ref(`/remindJobs/${jobId}`).remove()
-    } catch (error) {
-      await database.ref(`/remindJobs/${jobId}/retryTimes`).set(remindJob.retryTimes + 1)
-
-      sendLog(client, {
-        content: '[`TIME`] Execute remind job `JOB_ID`'
-          .replace('TIME', moment(now).format('HH:mm:ss'))
-          .replace('JOB_ID', jobId),
-        guildId: remindJob.guildId,
-        channelId: remindJob.channelId,
-        userId: remindJob.userId,
-        error,
-      })
+    } catch (error: any) {
+      if (remindJob.retryTimes > 2) {
+        sendLog(client, {
+          time: now,
+          content: 'Failed to execute remind job `JOB_ID`'.replace('JOB_ID', jobId),
+          guildId: remindJob.guildId,
+          channelId: remindJob.channelId,
+          userId: remindJob.userId,
+          error,
+        })
+        await database.ref(`/remindJobs/${jobId}`).remove()
+      } else {
+        await database.ref(`/remindJobs/${jobId}/retryTimes`).set(remindJob.retryTimes + 1)
+      }
     }
   }
 }

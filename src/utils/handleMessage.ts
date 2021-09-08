@@ -2,9 +2,9 @@ import { Message } from 'discord.js'
 import { readdirSync } from 'fs'
 import moment from 'moment'
 import { join } from 'path'
-import { CommandProps, CommandResultProps } from '../types'
-import cache, { database, getHint } from './cache'
-import sendLog from './sendLog'
+import { CommandProps } from '../types'
+import cache, { database } from './cache'
+import sendResponse from './sendResponse'
 
 const guildStatus: { [GuildID in string]?: 'processing' | 'cooling-down' | 'muted' } = {}
 const commands: { [CommandName in string]?: CommandProps } = {}
@@ -66,7 +66,7 @@ const handleMessage = async (message: Message) => {
     } else {
       cache.syntaxErrorsCounts[message.author.id] = 0
     }
-  } catch (error) {
+  } catch (error: any) {
     await sendResponse(message, {
       content: ':fire: 好像發生了點問題請稍後再試，如果狀況還是沒有改善請加入開發群組回報狀況',
       error,
@@ -77,54 +77,6 @@ const handleMessage = async (message: Message) => {
   setTimeout(() => {
     delete guildStatus[guildId]
   }, 3000)
-}
-
-const sendResponse = async (commandMessage: Message, result: CommandResultProps) => {
-  try {
-    const responseMessages = await commandMessage.channel.send(result.content, {
-      split: { char: ' ' },
-      embed: {
-        title: '加入 eeBots Support（公告、更新）',
-        url: 'https://discord.gg/Ctwz4BB',
-        color: 0xff922b,
-        footer: { text: `💡 ${getHint()}` },
-        ...result.embed,
-      },
-    })
-
-    for (const i in responseMessages) {
-      const responseMessage = responseMessages[i]
-
-      await sendLog(commandMessage.client, {
-        content:
-          i === '0'
-            ? '[`TIME`] COMMAND_CONTENT\nRESPONSE_CONTENT'
-                .replace('TIME', moment(commandMessage.createdTimestamp).format('HH:mm:ss'))
-                .replace('COMMAND_CONTENT', commandMessage.content)
-                .replace('RESPONSE_CONTENT', responseMessage.content)
-                .trim()
-                .slice(0, 2000)
-            : responseMessage.content,
-        embeds: responseMessage.embeds,
-        error: result.error,
-        guildId: commandMessage.guild?.id,
-        channelId: commandMessage.channel.id,
-        userId: commandMessage.author.id,
-        processTime: responseMessage.createdTimestamp - commandMessage.createdTimestamp,
-        noSystemStatus: i !== '0',
-      })
-    }
-  } catch (error) {
-    sendLog(commandMessage.client, {
-      content: '[`TIME`] COMMAND_CONTENT\nError: send responses failed'
-        .replace('TIME', moment(commandMessage.createdTimestamp).format('HH:mm:ss'))
-        .replace('COMMAND_CONTENT', commandMessage.content),
-      error: error,
-      guildId: commandMessage.guild?.id,
-      channelId: commandMessage.channel.id,
-      userId: commandMessage.author.id,
-    })
-  }
 }
 
 export default handleMessage
