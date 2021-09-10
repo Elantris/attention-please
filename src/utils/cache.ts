@@ -23,14 +23,15 @@ const cache: {
   }
   settings: {
     [GuildID in string]?: {
+      [key: string]: string | number | boolean
       prefix: string
-      timezone: number
-      enableRemind: boolean
-      showReacted: boolean
-      showAbsent: boolean
-      // hidden settings
-      mentionAbsent: boolean
+      offset: number
+      display: 'absent' | 'reacted'
     }
+  }
+  modules: {
+    enableRemind: { [GuildID in string]?: boolean }
+    mentionAbsent: { [GuildID in string]?: boolean }
   }
 
   checkJobs: {
@@ -48,6 +49,10 @@ const cache: {
   hints: {},
   remindJobs: {},
   settings: {},
+  modules: {
+    enableRemind: {},
+    mentionAbsent: {},
+  },
 
   checkJobs: {},
   remindSettings: {},
@@ -86,6 +91,9 @@ database.ref('/remindSettings').on('child_removed', removeCache)
 database.ref('/settings').on('child_added', updateCache)
 database.ref('/settings').on('child_changed', updateCache)
 database.ref('/settings').on('child_removed', removeCache)
+database.ref('/modules').on('child_added', updateCache)
+database.ref('/modules').on('child_changed', updateCache)
+database.ref('/modules').on('child_removed', removeCache)
 
 export const getHint: (key?: string) => string = key => {
   if (key && cache.hints[key]) {

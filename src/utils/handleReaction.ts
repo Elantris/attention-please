@@ -1,5 +1,4 @@
 import { Client, DMChannel } from 'discord.js'
-import moment from 'moment'
 import { RemindJobProps } from '../types'
 import cache, { database } from './cache'
 import sendLog from './sendLog'
@@ -66,7 +65,7 @@ const handleReactionAdd = async (
       sendLog(client, {
         color: 0xffc078,
         time: now,
-        content: 'Delete message `MESSAGE_ID`'.replace('MESSAGE_ID', message.id),
+        content: 'Delete reminded message `MESSAGE_ID`'.replace('MESSAGE_ID', message.id),
         channelId: options.channelId,
         userId: options.userId,
       })
@@ -88,7 +87,7 @@ const handleReactionAdd = async (
   const job: RemindJobProps = {
     clientId: client.user?.id || '',
     createdAt: now,
-    remindAt: moment(now).add(remindTime, 'minutes').toDate().getTime(),
+    remindAt: now + remindTime * 60000,
     userId: options.userId,
     guildId: options.guildId,
     channelId: options.channelId,
@@ -119,7 +118,7 @@ const handleReactionRemove = async (
 ) => {
   const now = Date.now()
   const jobId = `${options.userId}_${options.messageId}`
-  if (typeof remindTimeMap[options.emoji] !== 'number' || !cache.remindJobs[jobId]) {
+  if (!remindTimeMap[options.emoji] || !cache.remindJobs[jobId]) {
     return
   }
   await database.ref(`/remindJobs/${jobId}`).remove()

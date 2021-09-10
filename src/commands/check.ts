@@ -1,5 +1,5 @@
 import { Util } from 'discord.js'
-import moment from 'moment'
+import { DateTime } from 'luxon'
 import { CheckJobProps, CommandProps } from '../types'
 import cache, { database } from '../utils/cache'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
@@ -8,7 +8,7 @@ import getReactionStatus from '../utils/getReactionStatus'
 const commandCheck: CommandProps = async ({ message, guildId, args }) => {
   if (!args[1]) {
     return {
-      content: ':question: 要結算哪一則訊息呢？指定訊息 ID 或訊息連結',
+      content: ':question: 要結算哪一則訊息呢？請複製訊息連結或訊息 ID',
       isSyntaxError: true,
     }
   }
@@ -30,14 +30,15 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
   }
 
   if (args[2]) {
-    const checkAt = moment(args.slice(2).join(' ')).startOf('minute')
-    checkAt.utcOffset(cache.settings[guildId]?.timezone || 8)
+    const checkAt = DateTime.fromFormat(args.slice(2).join(' '), 'yyyy-MM-dd HH:mm')
+      .plus({ hours: cache.settings[guildId]?.offset ?? 8 })
+      .toMillis()
 
-    if (!checkAt.isValid()) {
+    if (Number.isNaN(checkAt)) {
       return {
         content: ':x: 指定預約結算的時間格式好像怪怪的',
         embed: {
-          description: '推薦時間格式：`YYYY-MM-DD HH:mm`（西元年-月-日 時:分）\n使用者的輸入：`USER_INPUT`'.replace(
+          description: '指定時間格式：`YYYY-MM-DD HH:mm`（西元年-月-日 時:分）\n使用者的輸入：`USER_INPUT`'.replace(
             'USER_INPUT',
             Util.escapeMarkdown(args.slice(2).join(' ')),
           ),
@@ -46,9 +47,9 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
       }
     }
 
-    if (checkAt.isBefore(message.createdTimestamp)) {
+    if (checkAt < message.createdTimestamp) {
       return await getReactionStatus(targetMessage, {
-        passedCheckAt: checkAt.from(message.createdTimestamp, true),
+        passedCheckAt: checkAt,
       })
     }
 
@@ -56,7 +57,7 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
       jobId => cache.checkJobs[jobId]?.messageId === targetMessage.id,
     )
     const job: CheckJobProps = {
-      checkAt: checkAt.toDate().getTime(),
+      checkAt,
       guildId: targetMessage.guild.id,
       channelId: targetMessage.channel.id,
       messageId: targetMessage.id,
@@ -76,14 +77,13 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
         ? ':alarm_clock: **GUILD_NAME** 變更 `MESSAGE_ID` 結算時間'
         : ':alarm_clock: **GUILD_NAME** 建立 `MESSAGE_ID` 預約結算'
       )
-        .replace('GUILD_NAME', message.guild?.name || '')
+        .replace('GUILD_NAME', message.guild?.name || guildId)
         .replace('MESSAGE_ID', targetMessage.id),
       embed: {
-        description:
-          '預約結算：`TIME`\n結算目標：[訊息連結](TARGET_URL)\n\n刪除 [指令訊息](COMMAND_URL) 即可取消預約結算'
-            .replace('TIME', checkAt.format('YYYY-MM-DD HH:mm'))
-            .replace('TARGET_URL', targetMessage.url)
-            .replace('COMMAND_URL', message.url),
+        description: '預約結算：TIME\n結算目標：[訊息連結](TARGET_URL)\n\n刪除 [指令訊息](COMMAND_URL) 即可取消預約結算'
+          .replace('TIME', `<t:${Math.floor(checkAt / 1000)}:F> / <t:${Math.floor(checkAt / 1000)}:R>`)
+          .replace('TARGET_URL', targetMessage.url)
+          .replace('COMMAND_URL', message.url),
       },
     }
   }

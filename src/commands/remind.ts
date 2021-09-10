@@ -5,7 +5,10 @@ import cache, { database } from '../utils/cache'
 const commandRemind: CommandProps = async ({ message, guildId, args }) => {
   if (!cache.settings[guildId]?.enableRemind) {
     return {
-      content: ':lock: 請先透過 settings 指令啟用「提醒功能」',
+      content: ':lock: **GUILD_NAME** 未擁有「訊息提醒」的功能'.replace(
+        'GUILD_NAME',
+        Util.escapeMarkdown(message.guild?.name || guildId),
+      ),
       isSyntaxError: true,
     }
   }
@@ -14,15 +17,15 @@ const commandRemind: CommandProps = async ({ message, guildId, args }) => {
 
   if (args.length < 3) {
     return {
-      content: ':gear: **MEMBER_NAME** 自訂提醒設定：\nREMIND_SETTINGS'
-        .replace('MEMBER_NAME', Util.escapeMarkdown(message.member?.displayName || ''))
-        .replace(
-          'REMIND_SETTINGS',
-          Object.entries(remindSettings)
-            .sort((a, b) => a[1] - b[1])
-            .map(([emoji, minutes]) => `${emoji}：${minutes} 分鐘`)
-            .join('\n'),
-        ),
+      content: ':gear: **MEMBER_NAME** 自訂提醒設定：COUNT/8'
+        .replace('MEMBER_NAME', Util.escapeMarkdown(message.member?.displayName || message.author.tag))
+        .replace('COUNT', `${Object.keys(remindSettings).length}`),
+      embed: {
+        description: Object.entries(remindSettings)
+          .sort((a, b) => a[1] - b[1])
+          .map(([emoji, minutes]) => `${emoji}：${minutes} 分鐘`)
+          .join('\n'),
+      },
     }
   }
 
@@ -39,14 +42,7 @@ const commandRemind: CommandProps = async ({ message, guildId, args }) => {
 
   if (!Number.isSafeInteger(minutes) || minutes > 1440) {
     return {
-      content: ':x: 設定的時間必須是一個數字',
-      isSyntaxError: true,
-    }
-  }
-
-  if (minutes > 1440) {
-    return {
-      content: ':x: 分鐘數不能超過 1440',
+      content: ':x: 提醒時間必須是一個小於 1440 的數字',
       isSyntaxError: true,
     }
   }
@@ -55,7 +51,7 @@ const commandRemind: CommandProps = async ({ message, guildId, args }) => {
     await database.ref(`/remindSettings/${message.author.id}/${emoji}`).remove()
     return {
       content: ':gear: **MEMBER_NAME** 移除了 EMOJI 的提醒功能'
-        .replace('MEMBER_NAME', Util.escapeMarkdown(message.member?.displayName || ''))
+        .replace('MEMBER_NAME', Util.escapeMarkdown(message.member?.displayName || message.author.tag))
         .replace('EMOJI', emoji)
         .trim(),
     }
@@ -71,10 +67,10 @@ const commandRemind: CommandProps = async ({ message, guildId, args }) => {
   await database.ref(`/remindSettings/${message.author.id}/${emoji}`).set(minutes)
 
   return {
-    content: ':gear: **MEMBER_NAME** 已將 EMOJI 設定為 DELAY 分鐘'
-      .replace('MEMBER_NAME', Util.escapeMarkdown(message.member?.displayName || ''))
+    content: ':gear: **MEMBER_NAME** 已將 EMOJI 設定為 REMIND_TIME 分鐘'
+      .replace('MEMBER_NAME', Util.escapeMarkdown(message.member?.displayName || message.author.tag))
       .replace('EMOJI', emoji)
-      .replace('DELAY', `${minutes}`)
+      .replace('REMIND_TIME', `${minutes}`)
       .trim(),
   }
 }

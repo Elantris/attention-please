@@ -1,5 +1,5 @@
 import { Client, Util } from 'discord.js'
-import moment from 'moment'
+
 import cache, { database } from './cache'
 import sendLog from './sendLog'
 
@@ -28,9 +28,9 @@ const remindCronJob = async (client: Client, now: number) => {
       const targetMessage = await channel.messages.fetch(remindJob.messageId)
 
       const remindMessage = await user.send(
-        'MEMBER_NAME `TIME` (GUILD_NAME / CHANNEL_NAME)\nMESSAGE_CONTENT\nMESSAGE_URL'
+        'MEMBER_NAME TIME (GUILD_NAME / CHANNEL_NAME)\nMESSAGE_CONTENT\nMESSAGE_URL'
           .replace('MEMBER_NAME', Util.escapeMarkdown(targetMessage.member?.displayName || ''))
-          .replace('TIME', moment(targetMessage.createdTimestamp).format('YYYY-MM-DD HH:mm'))
+          .replace('TIME', `<t:${Math.floor(targetMessage.createdTimestamp / 1000)}:F>`)
           .replace('GUILD_NAME', Util.escapeMarkdown(guild.name))
           .replace('CHANNEL_NAME', Util.escapeMarkdown(channel.name))
           .replace('MESSAGE_CONTENT', targetMessage.content)
@@ -39,10 +39,12 @@ const remindCronJob = async (client: Client, now: number) => {
       await remindMessage.react('✅').catch(() => {})
 
       sendLog(client, {
-        commandMessage: targetMessage,
         color: 0xffc078,
         time: now,
         content: 'Execute remind job `JOB_ID`'.replace('JOB_ID', jobId),
+        guildId: remindJob.guildId,
+        channelId: remindJob.channelId,
+        userId: remindJob.userId,
       })
 
       await database.ref(`/remindJobs/${jobId}`).remove()

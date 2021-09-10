@@ -1,5 +1,4 @@
 import { DMChannel, EmbedFieldData, Message, Util } from 'discord.js'
-import moment from 'moment'
 import { CommandResultProps } from '../types'
 import cache from './cache'
 import notEmpty from './notEmpty'
@@ -7,7 +6,7 @@ import notEmpty from './notEmpty'
 const getReactionStatus: (
   message: Message,
   options?: {
-    passedCheckAt?: string
+    passedCheckAt?: number
   },
 ) => Promise<CommandResultProps> = async (message, options) => {
   if (message.channel instanceof DMChannel || !message.guild) {
@@ -17,7 +16,7 @@ const getReactionStatus: (
     }
   }
 
-  const guildId = message.guild.id
+  const countAt = Date.now()
   await message.guild.members.fetch()
 
   const mentionedMembers: {
@@ -67,9 +66,6 @@ const getReactionStatus: (
     }
   }
 
-  const countAt = moment()
-    .utcOffset(cache.settings[guildId]?.timezone || 8)
-    .format('YYYY-MM-DD HH:mm')
   const messageReactions = message.reactions.cache.array()
   for (const messageReaction of messageReactions) {
     const users = (await messageReaction.users.fetch()).array()
@@ -88,12 +84,11 @@ const getReactionStatus: (
     .filter(memberId => !mentionedMembers[memberId].isReacted)
     .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
 
-  const showReacted = cache.settings[message.guild.id]?.showReacted ?? false
-  const showAbsent = cache.settings[message.guild.id]?.showAbsent ?? true
-  const mentionAbsent = cache.settings[message.guild.id]?.mentionAbsent ?? false
+  const nameListDisplay = cache.settings[message.guild.id]?.display || 'absent'
+  const isMentionAbsentEnabled = !!cache.modules.mentionAbsent?.[message.guild.id]
 
   const fields: EmbedFieldData[] = []
-  if (showAbsent) {
+  if (nameListDisplay === 'absent') {
     fields.push(
       ...absentMemberIds
         .reduce<string[][]>((accumulator, memberId, index) => {
@@ -110,7 +105,7 @@ const getReactionStatus: (
         })),
     )
   }
-  if (showReacted) {
+  if (nameListDisplay === 'reacted') {
     fields.push(
       ...reactedMemberIds
         .reduce<string[][]>((accumulator, memberId, index) => {
@@ -142,7 +137,7 @@ const getReactionStatus: (
     warnings.push(`:warning: 被標記的成員當中有 ${noPermissionMembers.length} 人沒有權限看到這則訊息`)
   }
   if (options?.passedCheckAt) {
-    warnings.push(`:warning: 指定的時間已經過了大約 ${options.passedCheckAt}`)
+    warnings.push(`:warning: 指定的時間在 <t:${Math.floor(options.passedCheckAt / 1000)}:R>`)
   }
 
   return {
@@ -150,15 +145,15 @@ const getReactionStatus: (
       .replace('REACTED_MEMBERS', `${reactedMemberIds.length}`)
       .replace('ALL_MEMBERS', `${Object.keys(mentionedMembers).length}`)
       .replace('PERCENTAGE', `${((reactedMemberIds.length * 100) / Object.keys(mentionedMembers).length).toFixed(2)}`)
-      .replace('MENTIONS', mentionAbsent ? absentMemberIds.map(memberId => `<@${memberId}>`).join(' ') : '')
+      .replace('MENTIONS', isMentionAbsentEnabled ? absentMemberIds.map(memberId => `<@${memberId}>`).join(' ') : '')
       .trim(),
     embed: {
       title: '加入 eeBots Support（公告、更新）',
       url: 'https://discord.gg/Ctwz4BB',
       color: 0xff922b,
       description:
-        '結算時間：`TIME`\n結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
-          .replace('TIME', countAt)
+        '結算時間：TIME\n結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
+          .replace('TIME', `<t:${Math.floor(countAt / 1000)}:F> / <t:${Math.floor(countAt / 1000)}:R>`)
           .replace('TARGET_URL', message.url)
           .replace('ALL_MEMBERS', `${Object.keys(mentionedMembers).length}`)
           .replace('REACTED_MEMBERS', `${reactedMemberIds.length}`)

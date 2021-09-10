@@ -1,5 +1,4 @@
 import { Client, DMChannel, Message } from 'discord.js'
-import moment from 'moment'
 import { loggerHook } from './hooks'
 
 const sendLog = async (
@@ -18,13 +17,15 @@ const sendLog = async (
     processTime?: number
   },
 ) => {
-  const guild = options.commandMessage?.guild || client.guilds.cache.get(options.guildId || '')
-  const channel = options.commandMessage?.channel || client.channels.cache.get(options.channelId || '')
-  const user = options.commandMessage?.author || client.users.cache.get(options.userId || '')
+  const guild = options.guildId ? client.guilds.cache.get(options.guildId) : options.commandMessage?.guild
+  const channel = options.channelId ? client.channels.cache.get(options.channelId) : options.commandMessage?.channel
+  const user = options.userId ? client.users.cache.get(options.userId) : options.commandMessage?.author
+
+  const time = options.time || options.commandMessage?.createdTimestamp || Date.now()
 
   await loggerHook.send(
-    '[`TIME`] CONTENT'
-      .replace('TIME', moment(options.time || options.commandMessage?.createdTimestamp).format('HH:mm:ss'))
+    '[TIME] CONTENT'
+      .replace('TIME', `<t:${Math.floor(time / 1000)}:T>`)
       .replace(
         'CONTENT',
         `${options.content || ''}\n${options.commandMessage?.content || ''}\n${
@@ -45,12 +46,10 @@ const sendLog = async (
             },
             {
               name: 'Channel',
-              value: channel?.isText()
-                ? channel instanceof DMChannel
-                  ? channel.id
-                  : `${channel.id}\n${channel.name}`
-                : options.channelId || '--',
-
+              value:
+                channel?.isText() && !(channel instanceof DMChannel)
+                  ? `${channel.id}\n${channel.name}`
+                  : options.channelId || channel?.id || '--',
               inline: true,
             },
             {

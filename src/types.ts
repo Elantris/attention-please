@@ -34,5 +34,3 @@ export type RemindJobProps = {
   messageId: string
   retryTimes: number
 }
-
-export type SettingKey = 'prefix' | 'timezone' | 'enableRemind' | 'showReacted' | 'showAbsent'

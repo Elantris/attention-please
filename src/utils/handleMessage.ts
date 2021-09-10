@@ -1,6 +1,6 @@
 import { Message } from 'discord.js'
 import { readdirSync } from 'fs'
-import moment from 'moment'
+import { DateTime } from 'luxon'
 import { join } from 'path'
 import { CommandProps } from '../types'
 import cache, { database } from './cache'
@@ -56,9 +56,9 @@ const handleMessage = async (message: Message) => {
     if (commandResult.isSyntaxError) {
       cache.syntaxErrorsCounts[message.author.id] = (cache.syntaxErrorsCounts[message.author.id] || 0) + 1
       if ((cache.syntaxErrorsCounts[message.author.id] || 0) > 8) {
-        database
+        await database
           .ref(`/banned/${message.author.id}`)
-          .set(`[${moment(message.createdTimestamp).format('YYYY-MM-DD HH:mm')}] too many syntax errors`)
+          .set(`[${DateTime.fromMillis(message.createdTimestamp).toFormat('yyyy-MM-dd HH:mm')}] too many syntax errors`)
         await sendResponse(message, {
           content: ':lock: 無法正確使用機器人指令嗎？歡迎加入客服群組尋求協助！',
         })
