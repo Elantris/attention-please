@@ -1,15 +1,14 @@
-import { Client, DMChannel, Message } from 'discord.js'
+import { Client, DMChannel, MessageEmbed, MessageEmbedOptions } from 'discord.js'
 import { loggerHook } from './hooks'
+import timeFormatter from './timeFormatter'
 
 const sendLog = async (
   client: Client,
   options: {
-    commandMessage?: Message
-    responseMessage?: Message
-
-    color?: number
+    color?: string
     time?: number
     content?: string
+    embeds?: (MessageEmbed | MessageEmbedOptions)[]
     error?: Error
     guildId?: string
     channelId?: string
@@ -17,26 +16,17 @@ const sendLog = async (
     processTime?: number
   },
 ) => {
-  const guild = options.guildId ? client.guilds.cache.get(options.guildId) : options.commandMessage?.guild
-  const channel = options.channelId ? client.channels.cache.get(options.channelId) : options.commandMessage?.channel
-  const user = options.userId ? client.users.cache.get(options.userId) : options.commandMessage?.author
-
-  const time = options.time || options.commandMessage?.createdTimestamp || Date.now()
+  const guild = options.guildId ? client.guilds.cache.get(options.guildId) : undefined
+  const channel = options.channelId ? client.channels.cache.get(options.channelId) : undefined
+  const user = options.userId ? client.users.cache.get(options.userId) : undefined
 
   await loggerHook.send(
-    '[TIME] CONTENT'
-      .replace('TIME', `<t:${Math.floor(time / 1000)}:T>`)
-      .replace(
-        'CONTENT',
-        `${options.content || ''}\n${options.commandMessage?.content || ''}\n${
-          options.responseMessage?.content || ''
-        }`.trim(),
-      ),
+    '[`TIME`] CONTENT'.replace('TIME', timeFormatter(options.time)).replace('CONTENT', options.content?.trim() || ''),
     {
       embeds: [
-        ...(options.responseMessage?.embeds || []),
+        ...(options?.embeds || []),
         {
-          color: options.error ? 0xff6b6b : options.color,
+          color: options.error ? '#ff6b6b' : options.color,
           description: options.error ? '```ERROR```'.replace('ERROR', options.error.stack || '') : undefined,
           fields: [
             {

@@ -6,13 +6,7 @@ import sendLog from './sendLog'
 const checkCronjob = async (client: Client, now: number) => {
   for (const jobId in cache.checkJobs) {
     const checkJob = cache.checkJobs[jobId]
-    if (
-      jobId === '_' ||
-      !checkJob ||
-      checkJob.clientId !== client.user?.id ||
-      checkJob.checkAt > now ||
-      checkJob.retryTimes > 2
-    ) {
+    if (jobId === '_' || !checkJob || checkJob.clientId !== client.user?.id || checkJob.checkAt > now) {
       continue
     }
 
@@ -32,21 +26,26 @@ const checkCronjob = async (client: Client, now: number) => {
       })
 
       sendLog(client, {
-        commandMessage,
-        responseMessage: responseMessages[responseMessages.length - 1],
-        color: 0xffc078,
+        color: '#ffc078',
         time: now,
-        content: 'Execute check job `JOB_ID`'.replace('JOB_ID', jobId),
+        content: 'Execute check job `JOB_ID`\nRESPONSE_CONTENT'
+          .replace('JOB_ID', jobId)
+          .replace('RESPONSE_CONTENT', responseMessages[responseMessages.length - 1].content),
+        embeds: responseMessages[responseMessages.length - 1].embeds,
+        guildId: commandMessage.guild?.id,
+        channelId: commandMessage.channel.id,
+        userId: commandMessage.author.id,
       })
 
       await database.ref(`/checkJobs/${jobId}`).remove()
     } catch (error: any) {
-      if (checkJob.retryTimes > 2) {
+      if (checkJob.retryTimes > 1) {
         sendLog(client, {
+          color: '#ff6b6b',
           time: now,
           content: 'Failed to execute check job `JOB_ID`'.replace('JOB_ID', jobId),
           guildId: checkJob.guildId,
-          channelId: checkJob.channelId,
+          channelId: checkJob.responseChannelId,
           userId: checkJob.userId,
           error,
         })

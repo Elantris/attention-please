@@ -4,6 +4,7 @@ import { CheckJobProps, CommandProps } from '../types'
 import cache, { database } from '../utils/cache'
 import fetchGuildMessage from '../utils/fetchGuildMessage'
 import getReactionStatus from '../utils/getReactionStatus'
+import timeFormatter from '../utils/timeFormatter'
 
 const commandCheck: CommandProps = async ({ message, guildId, args }) => {
   if (!args[1]) {
@@ -80,10 +81,12 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
         .replace('GUILD_NAME', message.guild?.name || guildId)
         .replace('MESSAGE_ID', targetMessage.id),
       embed: {
-        description: '預約結算：TIME\n結算目標：[訊息連結](TARGET_URL)\n\n刪除 [指令訊息](COMMAND_URL) 即可取消預約結算'
-          .replace('TIME', `<t:${Math.floor(checkAt / 1000)}:F> / <t:${Math.floor(checkAt / 1000)}:R>`)
-          .replace('TARGET_URL', targetMessage.url)
-          .replace('COMMAND_URL', message.url),
+        description:
+          '預約結算：`TIME` (FROM_NOW)\n結算目標：[訊息連結](TARGET_URL)\n\n刪除 [指令訊息](COMMAND_URL) 即可取消預約結算'
+            .replace('TIME', timeFormatter())
+            .replace('FROM_NOW', `<t:${Math.floor(checkAt / 1000)}:R>`)
+            .replace('TARGET_URL', targetMessage.url)
+            .replace('COMMAND_URL', message.url),
       },
     }
   }

@@ -2,6 +2,7 @@ import { DMChannel, EmbedFieldData, Message, Util } from 'discord.js'
 import { CommandResultProps } from '../types'
 import cache from './cache'
 import notEmpty from './notEmpty'
+import timeFormatter from './timeFormatter'
 
 const getReactionStatus: (
   message: Message,
@@ -77,53 +78,57 @@ const getReactionStatus: (
     }
   }
 
-  const reactedMemberIds = Object.keys(mentionedMembers)
-    .filter(memberId => mentionedMembers[memberId].isReacted)
-    .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
-  const absentMemberIds = Object.keys(mentionedMembers)
-    .filter(memberId => !mentionedMembers[memberId].isReacted)
-    .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
+  const reactedMemberIds = Object.keys(mentionedMembers).filter(memberId => mentionedMembers[memberId].isReacted)
+  const absentMemberIds = Object.keys(mentionedMembers).filter(memberId => !mentionedMembers[memberId].isReacted)
 
   const nameListDisplay = cache.settings[message.guild.id]?.display || 'absent'
   const isMentionAbsentEnabled = !!cache.modules.mentionAbsent?.[message.guild.id]
 
+  const warnings: string[] = []
   const fields: EmbedFieldData[] = []
   if (nameListDisplay === 'absent') {
-    fields.push(
-      ...absentMemberIds
-        .reduce<string[][]>((accumulator, memberId, index) => {
-          const page = Math.floor(index / 50)
-          if (index % 50 === 0) {
-            accumulator[page] = []
-          }
-          accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
-          return accumulator
-        }, [])
-        .map((memberNames, index) => ({
-          name: `:x: 未簽到名單 第 ${index + 1} 頁`,
-          value: memberNames.join('、'),
-        })),
-    )
+    if (absentMemberIds.length > 300) {
+      warnings.push(':warning: 缺席人數超過 300 人隱藏顯示名單')
+    } else {
+      fields.push(
+        ...absentMemberIds
+          .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
+          .reduce<string[][]>((accumulator, memberId, index) => {
+            const page = Math.floor(index / 50)
+            if (index % 50 === 0) {
+              accumulator[page] = []
+            }
+            accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
+            return accumulator
+          }, [])
+          .map((memberNames, index) => ({
+            name: `:x: 未簽到名單 第 ${index + 1} 頁`,
+            value: memberNames.join('、'),
+          })),
+      )
+    }
+  } else if (nameListDisplay === 'reacted') {
+    if (reactedMemberIds.length > 300) {
+      warnings.push(':warning: 回應人數超過 300 人隱藏顯示名單')
+    } else {
+      fields.push(
+        ...reactedMemberIds
+          .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
+          .reduce<string[][]>((accumulator, memberId, index) => {
+            const page = Math.floor(index / 50)
+            if (index % 50 === 0) {
+              accumulator[page] = []
+            }
+            accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
+            return accumulator
+          }, [])
+          .map((memberNames, index) => ({
+            name: `:white_check_mark: 簽到名單 第 ${index + 1} 頁`,
+            value: memberNames.join('、'),
+          })),
+      )
+    }
   }
-  if (nameListDisplay === 'reacted') {
-    fields.push(
-      ...reactedMemberIds
-        .reduce<string[][]>((accumulator, memberId, index) => {
-          const page = Math.floor(index / 50)
-          if (index % 50 === 0) {
-            accumulator[page] = []
-          }
-          accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
-          return accumulator
-        }, [])
-        .map((memberNames, index) => ({
-          name: `:white_check_mark: 簽到名單 第 ${index + 1} 頁`,
-          value: memberNames.join('、'),
-        })),
-    )
-  }
-
-  const warnings: string[] = []
   const channel = message.channel
   const noPermissionMembers = absentMemberIds
     .map(memberId => message.guild?.members.cache.get(memberId))
@@ -150,13 +155,15 @@ const getReactionStatus: (
     embed: {
       title: '加入 eeBots Support（公告、更新）',
       url: 'https://discord.gg/Ctwz4BB',
-      color: 0xff922b,
+      color: '#ff922b',
       description:
-        '結算時間：TIME\n結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n\nWARNINGS'
-          .replace('TIME', `<t:${Math.floor(countAt / 1000)}:F> / <t:${Math.floor(countAt / 1000)}:R>`)
+        '結算時間：`TIME` (FROM_NOW)\n結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n缺席人數：ABSENT_MEMBERS\n\nWARNINGS'
+          .replace('TIME', timeFormatter(countAt))
+          .replace('FROM_NOW', `<t:${Math.floor(countAt / 1000)}:R>`)
           .replace('TARGET_URL', message.url)
           .replace('ALL_MEMBERS', `${Object.keys(mentionedMembers).length}`)
           .replace('REACTED_MEMBERS', `${reactedMemberIds.length}`)
+          .replace('ABSENT_MEMBERS', `${absentMemberIds.length}`)
           .replace('WARNINGS', warnings.join('\n'))
           .trim(),
       fields,

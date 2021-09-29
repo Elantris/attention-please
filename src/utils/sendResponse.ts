@@ -8,7 +8,7 @@ const sendResponse = async (commandMessage: Message, result: CommandResultProps)
     const responseMessages = await commandMessage.channel.send(result.content, {
       split: { char: ' ' },
       embed: {
-        color: 0xff922b,
+        color: '#ff922b',
         title: '加入 eeBots Support（公告、更新）',
         url: 'https://discord.gg/Ctwz4BB',
         footer: { text: `💡 ${getHint()}` },
@@ -17,16 +17,25 @@ const sendResponse = async (commandMessage: Message, result: CommandResultProps)
     })
 
     sendLog(commandMessage.client, {
-      commandMessage,
-      responseMessage: responseMessages[responseMessages.length - 1],
+      color: '#ff922b',
+      time: commandMessage.createdTimestamp,
+      content: `${commandMessage.content}\n${responseMessages[responseMessages.length - 1].content}`,
+      embeds: responseMessages[responseMessages.length - 1].embeds,
       error: result.error,
+      guildId: commandMessage.guild?.id,
+      channelId: commandMessage.channel.id,
+      userId: commandMessage.author.id,
       processTime: responseMessages[responseMessages.length - 1].createdTimestamp - commandMessage.createdTimestamp,
     })
   } catch (error: any) {
     sendLog(commandMessage.client, {
-      commandMessage,
-      content: 'Error: send responses failed',
+      color: '#ff6b6b',
+      time: commandMessage.createdTimestamp,
+      content: `${commandMessage.content}\nError: send responses failed`,
       error,
+      guildId: commandMessage.guild?.id,
+      channelId: commandMessage.channel.id,
+      userId: commandMessage.author.id,
       processTime: Date.now() - commandMessage.createdTimestamp,
     })
   }

@@ -26,7 +26,6 @@ export type CheckJobProps = {
 
 export type RemindJobProps = {
   clientId: string
-  createdAt: number
   remindAt: number
   userId: string
   guildId: string

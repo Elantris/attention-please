@@ -1,10 +1,10 @@
 import { Message } from 'discord.js'
 import { readdirSync } from 'fs'
-import { DateTime } from 'luxon'
 import { join } from 'path'
 import { CommandProps } from '../types'
 import cache, { database } from './cache'
 import sendResponse from './sendResponse'
+import timeFormatter from './timeFormatter'
 
 const guildStatus: { [GuildID in string]?: 'processing' | 'cooling-down' | 'muted' } = {}
 const commands: { [CommandName in string]?: CommandProps } = {}
@@ -58,7 +58,7 @@ const handleMessage = async (message: Message) => {
       if ((cache.syntaxErrorsCounts[message.author.id] || 0) > 8) {
         await database
           .ref(`/banned/${message.author.id}`)
-          .set(`[${DateTime.fromMillis(message.createdTimestamp).toFormat('yyyy-MM-dd HH:mm')}] too many syntax errors`)
+          .set(`[${timeFormatter(message.createdTimestamp)}] too many syntax errors`)
         await sendResponse(message, {
           content: ':lock: 無法正確使用機器人指令嗎？歡迎加入客服群組尋求協助！',
         })

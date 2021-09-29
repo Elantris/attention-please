@@ -26,7 +26,10 @@ export const handleRaw = (client: Client, packet: any) => {
       })
     }
   } catch (error: any) {
-    sendLog(client, { error })
+    sendLog(client, {
+      color: '#ff6b6b',
+      error,
+    })
   }
 }
 
@@ -63,7 +66,7 @@ const handleReactionAdd = async (
       await message.delete()
 
       sendLog(client, {
-        color: 0xffc078,
+        color: '#ffc078',
         time: now,
         content: 'Delete reminded message `MESSAGE_ID`'.replace('MESSAGE_ID', message.id),
         channelId: options.channelId,
@@ -86,7 +89,6 @@ const handleReactionAdd = async (
   const jobId = `${options.userId}_${options.messageId}`
   const job: RemindJobProps = {
     clientId: client.user?.id || '',
-    createdAt: now,
     remindAt: now + remindTime * 60000,
     userId: options.userId,
     guildId: options.guildId,
@@ -97,9 +99,11 @@ const handleReactionAdd = async (
   await database.ref(`/remindJobs/${jobId}`).set(job)
 
   sendLog(client, {
-    color: 0xffc078,
+    color: '#ffc078',
     time: now,
-    content: 'Create remind job `JOB_ID`'.replace('JOB_ID', jobId),
+    content: 'Create remind job `JOB_ID` (REMIND_TIME minutes)'
+      .replace('JOB_ID', jobId)
+      .replace('REMIND_TIME', `${remindTime}`),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
@@ -124,7 +128,7 @@ const handleReactionRemove = async (
   await database.ref(`/remindJobs/${jobId}`).remove()
 
   sendLog(client, {
-    color: 0xffc078,
+    color: '#ffc078',
     time: now,
     content: 'Remove remind job `JOB_ID`'.replace('JOB_ID', jobId),
     guildId: options.guildId,

@@ -49,21 +49,17 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
     }
   }
 
-  if (!settingValue) {
-    await database.ref(`/settings/${guildId}/${settingKey}`).remove()
-    return {
-      content: ':gear: 設定項目 **SETTING_KEY_NAME** 已重設為預設值：`VALUE`'
-        .replace('SETTING_KEY_NAME', settingKeyNameMap[settingKey] || '')
-        .replace('VALUE', `${defaultSettings[settingKey]}`),
-    }
-  }
-
   if (settingKey === 'prefix') {
+    if (!settingValue) {
+      return {
+        content: ':gear: **指令前綴** 為 `PREFIX`'.replace('PREFIX', cache.settings[guildId]?.prefix || 'ap!'),
+      }
+    }
     if (settingValue.length > 5) {
       return {
         content: ':x: 輸入的字串長度過長',
         embed: {
-          description: ':warning: 指令前綴的長度最多 5 個字元',
+          description: ':warning: 指令前綴的長度限制最多 5 個字元',
         },
         isSyntaxError: true,
       }
@@ -78,7 +74,7 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
   }
 
   if (settingKey === 'offset') {
-    const offset = parseFloat(settingValue)
+    const offset = parseFloat(settingValue ?? '8')
     if (Number.isNaN(offset) || offset < -12 || offset > 12) {
       return {
         content: ':x: 請輸入 -12 ~ 12 之間的數字',
@@ -99,21 +95,12 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
   }
 
   if (settingKey === 'display') {
-    if (!['absent', 'reacted'].includes(settingValue)) {
-      return {
-        content: ':x: 無效的設定值，請輸入 `absent` 或 `reacted`',
-        embed: {
-          description:
-            ':warning: 顯示名單為結算時要顯示「未簽到 absent」或「有簽到 reacted」的成員，例如：`ap!settings display reacted`',
-        },
-        isSyntaxError: true,
-      }
-    }
-    await database.ref(`/settings/${guildId}/display`).set(settingValue)
+    const newValue = cache.settings[guildId]?.display === 'reacted' ? 'absent' : 'reacted'
+    await database.ref(`/settings/${guildId}/display`).set(newValue)
     return {
-      content: ':gear: **顯示名單** 已設定為 `DISPLAY`'.replace('DISPLAY', settingValue),
+      content: `':gear: **顯示名單** 已切換為 **${newValue === 'absent' ? '未簽到' : '已簽到'}**'`,
       embed: {
-        description: `現在結算時會顯示 ${settingValue === 'absent' ? '未簽到' : '已簽到'} 的成員`,
+        description: `現在結算時會顯示${newValue === 'absent' ? '未簽到' : '已簽到'}的成員`,
       },
     }
   }
