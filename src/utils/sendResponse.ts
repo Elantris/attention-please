@@ -12,6 +12,7 @@ const sendResponse = async (commandMessage: Message, result: CommandResultProps)
         title: '加入 eeBots Support（公告、更新）',
         url: 'https://discord.gg/Ctwz4BB',
         footer: { text: `💡 ${getHint()}` },
+        files: result.files,
         ...result.embed,
       },
     })
@@ -20,6 +21,7 @@ const sendResponse = async (commandMessage: Message, result: CommandResultProps)
       color: '#ff922b',
       time: commandMessage.createdTimestamp,
       content: `${commandMessage.content}\n${responseMessages[responseMessages.length - 1].content}`,
+      files: result.files,
       embeds: responseMessages[responseMessages.length - 1].embeds,
       error: result.error,
       guildId: commandMessage.guild?.id,

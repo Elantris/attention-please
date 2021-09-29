@@ -48,8 +48,16 @@ const handleMessage = async (message: Message) => {
   try {
     guildStatus[guildId] = 'processing'
     const commandResult = await commands[commandName]?.({ message, guildId, args })
-    if (!commandResult || (!commandResult.content && !commandResult.embed)) {
-      throw new Error('No result content.')
+    guildStatus[guildId] = 'cooling-down'
+    setTimeout(() => {
+      delete guildStatus[guildId]
+    }, 3000)
+
+    if (!commandResult) {
+      return
+    }
+    if (!commandResult.content && !commandResult.embed) {
+      throw new Error('no result content')
     }
     await sendResponse(message, commandResult)
 
@@ -72,11 +80,6 @@ const handleMessage = async (message: Message) => {
       error,
     })
   }
-
-  guildStatus[guildId] = 'cooling-down'
-  setTimeout(() => {
-    delete guildStatus[guildId]
-  }, 3000)
 }
 
 export default handleMessage

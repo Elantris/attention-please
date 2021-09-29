@@ -1,4 +1,6 @@
-import { DMChannel, EmbedFieldData, Message, Util } from 'discord.js'
+import { DMChannel, EmbedFieldData, FileOptions, Message, Util } from 'discord.js'
+import { writeFileSync } from 'fs'
+import { join } from 'path'
 import { CommandResultProps } from '../types'
 import cache from './cache'
 import notEmpty from './notEmpty'
@@ -84,51 +86,76 @@ const getReactionStatus: (
   const nameListDisplay = cache.settings[message.guild.id]?.display || 'absent'
   const isMentionAbsentEnabled = !!cache.modules.mentionAbsent?.[message.guild.id]
 
-  const warnings: string[] = []
   const fields: EmbedFieldData[] = []
-  if (nameListDisplay === 'absent') {
-    if (absentMemberIds.length > 300) {
-      warnings.push(':warning: 缺席人數超過 300 人隱藏顯示名單')
-    } else {
-      fields.push(
-        ...absentMemberIds
-          .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
-          .reduce<string[][]>((accumulator, memberId, index) => {
-            const page = Math.floor(index / 50)
-            if (index % 50 === 0) {
-              accumulator[page] = []
-            }
-            accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
-            return accumulator
-          }, [])
-          .map((memberNames, index) => ({
-            name: `:x: 未簽到名單 第 ${index + 1} 頁`,
-            value: memberNames.join('、'),
-          })),
-      )
-    }
+  const files: FileOptions[] = []
+  if (Object.keys(mentionedMembers).length > 300) {
+    const filePath = join(__dirname, '../../tmp/', `${message.id}.txt`)
+    writeFileSync(
+      filePath,
+      `GUILD_NAME / CHANNEL_NAME\r\n結算時間：TIME\r\n訊息連結：MESSAGE_URL\r\n標記人數：ALL_MEMBERS\r\n回應人數：REACTED_MEMBERS_COUNT (PERCENTAGE%)\r\n\r\n缺席名單：\r\nABSENT_MEMBERS\r\n\r\n簽到名單：\r\nREACTED_MEMBERS`
+        .replace('GUILD_NAME', message.guild.name)
+        .replace('CHANNEL_NAME', message.channel.name)
+        .replace('TIME', timeFormatter(countAt))
+        .replace('MESSAGE_URL', message.url)
+        .replace('ALL_MEMBERS', `${Object.keys(mentionedMembers).length}`)
+        .replace('REACTED_MEMBERS_COUNT', `${reactedMemberIds.length}`)
+        .replace('PERCENTAGE', ((reactedMemberIds.length * 100) / Object.keys(mentionedMembers).length).toFixed(2))
+        .replace(
+          'ABSENT_MEMBERS',
+          absentMemberIds
+            .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
+            .map(memberId => mentionedMembers[memberId].displayName)
+            .join('\r\n'),
+        )
+        .replace(
+          'REACTED_MEMBERS',
+          reactedMemberIds
+            .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
+            .map(memberId => mentionedMembers[memberId].displayName)
+            .join('\r\n'),
+        ),
+      { encoding: 'utf8' },
+    )
+    files.push({
+      attachment: filePath,
+      name: `${message.id}.txt`,
+    })
+  } else if (nameListDisplay === 'absent') {
+    fields.push(
+      ...absentMemberIds
+        .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
+        .reduce<string[][]>((accumulator, memberId, index) => {
+          const page = Math.floor(index / 50)
+          if (index % 50 === 0) {
+            accumulator[page] = []
+          }
+          accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
+          return accumulator
+        }, [])
+        .map((memberNames, index) => ({
+          name: `:x: 缺席名單 第 ${index + 1} 頁`,
+          value: memberNames.join('、'),
+        })),
+    )
   } else if (nameListDisplay === 'reacted') {
-    if (reactedMemberIds.length > 300) {
-      warnings.push(':warning: 回應人數超過 300 人隱藏顯示名單')
-    } else {
-      fields.push(
-        ...reactedMemberIds
-          .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
-          .reduce<string[][]>((accumulator, memberId, index) => {
-            const page = Math.floor(index / 50)
-            if (index % 50 === 0) {
-              accumulator[page] = []
-            }
-            accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
-            return accumulator
-          }, [])
-          .map((memberNames, index) => ({
-            name: `:white_check_mark: 簽到名單 第 ${index + 1} 頁`,
-            value: memberNames.join('、'),
-          })),
-      )
-    }
+    fields.push(
+      ...reactedMemberIds
+        .sort((a, b) => mentionedMembers[a].displayName.localeCompare(mentionedMembers[b].displayName))
+        .reduce<string[][]>((accumulator, memberId, index) => {
+          const page = Math.floor(index / 50)
+          if (index % 50 === 0) {
+            accumulator[page] = []
+          }
+          accumulator[page].push(Util.escapeMarkdown(mentionedMembers[memberId].displayName.slice(0, 16)))
+          return accumulator
+        }, [])
+        .map((memberNames, index) => ({
+          name: `:white_check_mark: 簽到名單 第 ${index + 1} 頁`,
+          value: memberNames.join('、'),
+        })),
+    )
   }
+
   const channel = message.channel
   const noPermissionMembers = absentMemberIds
     .map(memberId => message.guild?.members.cache.get(memberId))
@@ -138,6 +165,7 @@ const getReactionStatus: (
         !channel.permissionsFor(member)?.has('VIEW_CHANNEL') ||
         !channel.permissionsFor(member)?.has('READ_MESSAGE_HISTORY'),
     )
+  const warnings: string[] = []
   if (noPermissionMembers.length) {
     warnings.push(`:warning: 被標記的成員當中有 ${noPermissionMembers.length} 人沒有權限看到這則訊息`)
   }
@@ -152,6 +180,7 @@ const getReactionStatus: (
       .replace('PERCENTAGE', `${((reactedMemberIds.length * 100) / Object.keys(mentionedMembers).length).toFixed(2)}`)
       .replace('MENTIONS', isMentionAbsentEnabled ? absentMemberIds.map(memberId => `<@${memberId}>`).join(' ') : '')
       .trim(),
+    files,
     embed: {
       title: '加入 eeBots Support（公告、更新）',
       url: 'https://discord.gg/Ctwz4BB',

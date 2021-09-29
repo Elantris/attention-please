@@ -1,4 +1,4 @@
-import { Client, DMChannel, MessageEmbed, MessageEmbedOptions } from 'discord.js'
+import { Client, DMChannel, FileOptions, MessageEmbed, MessageEmbedOptions } from 'discord.js'
 import { loggerHook } from './hooks'
 import timeFormatter from './timeFormatter'
 
@@ -8,6 +8,7 @@ const sendLog = async (
     color?: string
     time?: number
     content?: string
+    files?: FileOptions[]
     embeds?: (MessageEmbed | MessageEmbedOptions)[]
     error?: Error
     guildId?: string
@@ -23,6 +24,7 @@ const sendLog = async (
   await loggerHook.send(
     '[`TIME`] CONTENT'.replace('TIME', timeFormatter(options.time)).replace('CONTENT', options.content?.trim() || ''),
     {
+      files: options.files,
       embeds: [
         ...(options?.embeds || []),
         {

@@ -1,4 +1,4 @@
-import { Message, MessageEmbedOptions } from 'discord.js'
+import { FileOptions, Message, MessageEmbedOptions } from 'discord.js'
 
 export type CommandProps = (options: {
   message: Message
@@ -8,6 +8,7 @@ export type CommandProps = (options: {
 
 export type CommandResultProps = {
   content?: string
+  files?: FileOptions[]
   embed?: MessageEmbedOptions
   isSyntaxError?: boolean
   error?: Error
