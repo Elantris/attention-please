@@ -1,6 +1,9 @@
 import { DateTime } from 'luxon'
+import cache from './cache'
 
-const timeFormatter: (time?: number | null) => string = time =>
-  DateTime.fromMillis(time || Date.now()).toFormat('yyyy-MM-dd HH:mm')
+const timeFormatter: (options?: { guildId?: string; time?: number | null }) => string = options =>
+  DateTime.fromMillis(options?.time || Date.now())
+    .setZone((options?.guildId && cache.settings[options.guildId]?.timezone) || 'Asia/Taipei')
+    .toFormat('yyyy-MM-dd HH:mm')
 
 export default timeFormatter

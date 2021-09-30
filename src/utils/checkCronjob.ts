@@ -21,7 +21,10 @@ const checkCronjob = async (client: Client, now: number) => {
 
       const targetMessage = await targetChannel.messages.fetch(checkJob.messageId)
       const commandMessage = await responseChannel.messages.fetch(jobId)
-      const responseMessages = await responseChannel.send(await getReactionStatus(targetMessage), {
+      const result = await getReactionStatus(targetMessage)
+      const responseMessages = await responseChannel.send(result.content, {
+        files: result.files,
+        embed: result.embed,
         split: { char: ' ' },
       })
 

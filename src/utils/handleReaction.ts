@@ -77,7 +77,7 @@ const handleReactionAdd = async (
     return
   }
 
-  if (!cache.settings[options.guildId]?.enableRemind) {
+  if (!cache.modules.enableRemind[options.guildId]) {
     return
   }
 
@@ -122,7 +122,7 @@ const handleReactionRemove = async (
 ) => {
   const now = Date.now()
   const jobId = `${options.userId}_${options.messageId}`
-  if (!remindTimeMap[options.emoji] || !cache.remindJobs[jobId]) {
+  if (!cache.remindJobs[jobId]) {
     return
   }
   await database.ref(`/remindJobs/${jobId}`).remove()

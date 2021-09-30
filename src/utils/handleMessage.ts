@@ -66,7 +66,7 @@ const handleMessage = async (message: Message) => {
       if ((cache.syntaxErrorsCounts[message.author.id] || 0) > 8) {
         await database
           .ref(`/banned/${message.author.id}`)
-          .set(`[${timeFormatter(message.createdTimestamp)}] too many syntax errors`)
+          .set(`[${timeFormatter({ guildId, time: message.createdTimestamp })}] too many syntax errors`)
         await sendResponse(message, {
           content: ':lock: 無法正確使用機器人指令嗎？歡迎加入客服群組尋求協助！',
         })

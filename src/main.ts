@@ -1,4 +1,5 @@
 import { Client } from 'discord.js'
+import { gunzip } from 'zlib'
 import config from './config'
 import checkCronjob from './utils/checkCronjob'
 import handleMessage from './utils/handleMessage'
@@ -37,7 +38,7 @@ client.setInterval(async () => {
 }, 10000)
 
 client.setInterval(async () => {
-  client.user?.setActivity('Version 2021.09.29 | https://discord.gg/Ctwz4BB')
+  client.user?.setActivity('Version 2021.10.01 | https://discord.gg/Ctwz4BB')
 }, 60000)
 
 client.login(config.DISCORD.TOKEN)

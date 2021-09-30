@@ -3,12 +3,15 @@ import { CommandProps } from '../types'
 import cache, { database } from '../utils/cache'
 
 const commandRemind: CommandProps = async ({ message, guildId, args }) => {
-  if (!cache.settings[guildId]?.enableRemind) {
+  if (!cache.modules.enableRemind[guildId]) {
     return {
-      content: ':lock: **GUILD_NAME** 未擁有「訊息提醒」的功能'.replace(
+      content: ':lock: **GUILD_NAME** 未開通「訊息提醒」的模組功能'.replace(
         'GUILD_NAME',
         Util.escapeMarkdown(message.guild?.name || guildId),
       ),
+      embed: {
+        description: '請在 eeBots Support 的 Attention-Please 頻道提出模組開通申請',
+      },
       isSyntaxError: true,
     }
   }

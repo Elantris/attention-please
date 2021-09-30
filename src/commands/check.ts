@@ -31,9 +31,9 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
   }
 
   if (args[2]) {
-    const checkAt = DateTime.fromFormat(args.slice(2).join(' '), 'yyyy-MM-dd HH:mm')
-      .plus({ hours: cache.settings[guildId]?.offset ?? 8 })
-      .toMillis()
+    const checkAt = DateTime.fromFormat(args.slice(2).join(' '), 'yyyy-MM-dd HH:mm', {
+      zone: cache.settings[guildId]?.timezone || 'Asia/Taipei',
+    }).toMillis()
 
     if (Number.isNaN(checkAt)) {
       return {
@@ -83,7 +83,7 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
       embed: {
         description:
           '預約結算：`TIME` (FROM_NOW)\n結算目標：[訊息連結](TARGET_URL)\n\n刪除 [指令訊息](COMMAND_URL) 即可取消預約結算'
-            .replace('TIME', timeFormatter())
+            .replace('TIME', timeFormatter({ guildId, time: checkAt }))
             .replace('FROM_NOW', `<t:${Math.floor(checkAt / 1000)}:R>`)
             .replace('TARGET_URL', targetMessage.url)
             .replace('COMMAND_URL', message.url),

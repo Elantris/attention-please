@@ -1,11 +1,13 @@
+import { DateTime } from 'luxon'
 import { CommandProps } from '../types'
 import cache, { database } from '../utils/cache'
+import timeFormatter from '../utils/timeFormatter'
 
 const defaultSettings: {
   [key: string]: string | number
 } = {
   prefix: 'ap!',
-  offset: 8,
+  timezone: 'Asia/Taipei',
   display: 'absent',
 }
 
@@ -13,7 +15,7 @@ const settingKeyNameMap: {
   [key: string]: string
 } = {
   prefix: '指令前綴',
-  offset: '時間偏移',
+  timezone: '指定時區',
   display: '顯示名單',
 }
 
@@ -51,8 +53,9 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
 
   if (settingKey === 'prefix') {
     if (!settingValue) {
+      await database.ref(`/settings/${guildId}/prefix`).remove()
       return {
-        content: ':gear: **指令前綴** 為 `PREFIX`'.replace('PREFIX', cache.settings[guildId]?.prefix || 'ap!'),
+        content: ':gear: **指令前綴** 已重設為預設值 `ap!`',
       }
     }
     if (settingValue.length > 5) {
@@ -73,23 +76,24 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
     }
   }
 
-  if (settingKey === 'offset') {
-    const offset = parseFloat(settingValue ?? '8')
-    if (Number.isNaN(offset) || offset < -12 || offset > 12) {
+  if (settingKey === 'timezone') {
+    const newZone = settingValue || 'Asia/Taipei'
+    const now = DateTime.local().setZone(newZone)
+    if (!now.isValid) {
       return {
-        content: ':x: 請輸入 -12 ~ 12 之間的數字',
+        content: ':x: 指定時區好像怪怪的，請參考附件裡的表示方式，例如 `Asia/Taipei`',
         embed: {
-          description:
-            ':warning: 使用 check 指令建立預約結算時會使用「時間偏移」解析指定時間，預設為 GMT+8，請根據所在的時區輸入習慣的時間偏移量（單位為小時），例如 `ap!settings offset 7` 代表 GMT+7 的地區',
+          description: 'https://en.wikipedia.org/wiki/List_of_tz_database_time_zones',
         },
-        isSyntaxError: true,
       }
     }
-    await database.ref(`/settings/${guildId}/offset`).set(offset)
+
+    await database.ref(`/settings/${guildId}/timezone`).set(newZone)
+
     return {
-      content: ':gear: **時間偏移** 已設定為 **OFFSET**'.replace('OFFSET', `${offset}`),
+      content: ':gear: **指定時區** 已設定為 `TIMEZONE`'.replace('TIMEZONE', newZone),
       embed: {
-        description: '使用 check 指令時會根據時間偏移量來解析指定時間',
+        description: '現在時間：`TIME`'.replace('TIME', timeFormatter({ guildId })),
       },
     }
   }
@@ -98,9 +102,9 @@ const commandSettings: CommandProps = async ({ message, guildId, args }) => {
     const newValue = cache.settings[guildId]?.display === 'reacted' ? 'absent' : 'reacted'
     await database.ref(`/settings/${guildId}/display`).set(newValue)
     return {
-      content: `':gear: **顯示名單** 已切換為 **${newValue === 'absent' ? '未簽到' : '已簽到'}**'`,
+      content: `':gear: **顯示名單** 已切換為 ${newValue}`,
       embed: {
-        description: `現在結算時會顯示${newValue === 'absent' ? '未簽到' : '已簽到'}的成員`,
+        description: `現在結算時會顯示${newValue === 'absent' ? '缺席' : '簽到'}的成員`,
       },
     }
   }

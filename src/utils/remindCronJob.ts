@@ -29,7 +29,7 @@ const remindCronJob = async (client: Client, now: number) => {
             iconURL: targetMessage.author.displayAvatarURL() || undefined,
           },
           description: '發送時間：`TIME` (FROM_NOW)\n訊息連結：[GUILD_NAME/CHANNEL_NAME](MESSAGE_URL)'
-            .replace('TIME', timeFormatter(targetMessage.createdTimestamp))
+            .replace('TIME', timeFormatter({ guildId: remindJob.guildId, time: targetMessage.createdTimestamp }))
             .replace('FROM_NOW', `<t:${Math.floor(targetMessage.createdTimestamp / 1000)}:R>`)
             .replace('GUILD_NAME', Util.escapeMarkdown(guild.name))
             .replace('CHANNEL_NAME', Util.escapeMarkdown(channel.name))

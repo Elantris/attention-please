@@ -92,10 +92,10 @@ const getReactionStatus: (
     const filePath = join(__dirname, '../../tmp/', `${message.id}.txt`)
     writeFileSync(
       filePath,
-      `GUILD_NAME / CHANNEL_NAME\r\n結算時間：TIME\r\n訊息連結：MESSAGE_URL\r\n標記人數：ALL_MEMBERS\r\n回應人數：REACTED_MEMBERS_COUNT (PERCENTAGE%)\r\n\r\n缺席名單：\r\nABSENT_MEMBERS\r\n\r\n簽到名單：\r\nREACTED_MEMBERS`
+      `GUILD_NAME / CHANNEL_NAME\r\n結算時間：TIME\r\n訊息連結：MESSAGE_URL\r\n標記人數：ALL_MEMBERS\r\n簽到人數：REACTED_MEMBERS_COUNT (PERCENTAGE%)\r\n\r\n缺席名單：\r\nABSENT_MEMBERS\r\n\r\n簽到名單：\r\nREACTED_MEMBERS`
         .replace('GUILD_NAME', message.guild.name)
         .replace('CHANNEL_NAME', message.channel.name)
-        .replace('TIME', timeFormatter(countAt))
+        .replace('TIME', timeFormatter({ guildId: message.guild.id, time: countAt }))
         .replace('MESSAGE_URL', message.url)
         .replace('ALL_MEMBERS', `${Object.keys(mentionedMembers).length}`)
         .replace('REACTED_MEMBERS_COUNT', `${reactedMemberIds.length}`)
@@ -187,7 +187,7 @@ const getReactionStatus: (
       color: '#ff922b',
       description:
         '結算時間：`TIME` (FROM_NOW)\n結算目標：[訊息連結](TARGET_URL)\n標記人數：ALL_MEMBERS\n回應人數：REACTED_MEMBERS\n缺席人數：ABSENT_MEMBERS\n\nWARNINGS'
-          .replace('TIME', timeFormatter(countAt))
+          .replace('TIME', timeFormatter({ guildId: message.guild.id, time: countAt }))
           .replace('FROM_NOW', `<t:${Math.floor(countAt / 1000)}:R>`)
           .replace('TARGET_URL', message.url)
           .replace('ALL_MEMBERS', `${Object.keys(mentionedMembers).length}`)

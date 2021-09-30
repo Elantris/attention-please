@@ -25,7 +25,7 @@ const cache: {
     [GuildID in string]?: {
       [key: string]: string | number | boolean
       prefix: string
-      offset: number
+      timezone: string
       display: 'absent' | 'reacted'
     }
   }

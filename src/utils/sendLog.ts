@@ -8,7 +8,6 @@ const sendLog = async (
     color?: string
     time?: number
     content?: string
-    files?: FileOptions[]
     embeds?: (MessageEmbed | MessageEmbedOptions)[]
     error?: Error
     guildId?: string
@@ -22,9 +21,10 @@ const sendLog = async (
   const user = options.userId ? client.users.cache.get(options.userId) : undefined
 
   await loggerHook.send(
-    '[`TIME`] CONTENT'.replace('TIME', timeFormatter(options.time)).replace('CONTENT', options.content?.trim() || ''),
+    '[`TIME`] CONTENT'
+      .replace('TIME', timeFormatter({ time: options.time }))
+      .replace('CONTENT', options.content?.trim() || ''),
     {
-      files: options.files,
       embeds: [
         ...(options?.embeds || []),
         {
