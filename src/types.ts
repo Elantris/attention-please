@@ -8,8 +8,8 @@ export type CommandProps = (options: {
 
 export type CommandResultProps = {
   content?: string
-  files?: FileOptions[]
   embed?: MessageEmbedOptions
+  files?: FileOptions[]
   isSyntaxError?: boolean
   error?: Error
 }

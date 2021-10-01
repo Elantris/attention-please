@@ -42,6 +42,7 @@ const remindCronJob = async (client: Client, now: number) => {
         color: '#ffc078',
         time: now,
         content: 'Execute remind job `JOB_ID`'.replace('JOB_ID', jobId),
+        embeds: remindMessage.embeds,
         guildId: remindJob.guildId,
         channelId: remindJob.channelId,
         userId: remindJob.userId,

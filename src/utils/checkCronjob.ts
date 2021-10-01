@@ -35,6 +35,7 @@ const checkCronjob = async (client: Client, now: number) => {
           .replace('JOB_ID', jobId)
           .replace('RESPONSE_CONTENT', responseMessages[responseMessages.length - 1].content),
         embeds: responseMessages[responseMessages.length - 1].embeds,
+        files: result.files,
         guildId: commandMessage.guild?.id,
         channelId: commandMessage.channel.id,
         userId: commandMessage.author.id,

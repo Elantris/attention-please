@@ -9,6 +9,7 @@ const sendLog = async (
     time?: number
     content?: string
     embeds?: (MessageEmbed | MessageEmbedOptions)[]
+    files?: FileOptions[]
     error?: Error
     guildId?: string
     channelId?: string
@@ -53,6 +54,7 @@ const sendLog = async (
           footer: options.processTime ? { text: `${options.processTime} ms` } : undefined,
         },
       ],
+      files: options.files,
     },
   )
 }

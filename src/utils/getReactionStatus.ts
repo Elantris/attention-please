@@ -180,7 +180,6 @@ const getReactionStatus: (
       .replace('PERCENTAGE', `${((reactedMemberIds.length * 100) / Object.keys(mentionedMembers).length).toFixed(2)}`)
       .replace('MENTIONS', isMentionAbsentEnabled ? absentMemberIds.map(memberId => `<@${memberId}>`).join(' ') : '')
       .trim(),
-    files,
     embed: {
       title: '加入 eeBots Support（公告、更新）',
       url: 'https://discord.gg/Ctwz4BB',
@@ -197,6 +196,7 @@ const getReactionStatus: (
           .trim(),
       fields,
     },
+    files,
   }
 }
 

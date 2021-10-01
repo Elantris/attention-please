@@ -18,10 +18,10 @@ const sendResponse = async (commandMessage: Message, result: CommandResultProps)
     })
 
     sendLog(commandMessage.client, {
-      color: '#ff922b',
       time: commandMessage.createdTimestamp,
       content: `${commandMessage.content}\n${responseMessages[responseMessages.length - 1].content}`,
       embeds: responseMessages[responseMessages.length - 1].embeds,
+      files: result.files,
       error: result.error,
       guildId: commandMessage.guild?.id,
       channelId: commandMessage.channel.id,

@@ -1,5 +1,4 @@
 import { Client } from 'discord.js'
-import { gunzip } from 'zlib'
 import config from './config'
 import checkCronjob from './utils/checkCronjob'
 import handleMessage from './utils/handleMessage'
