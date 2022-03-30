@@ -2,11 +2,10 @@ import { Message } from 'discord.js'
 import { readdirSync } from 'fs'
 import { join } from 'path'
 import { CommandProps } from '../types'
-import cache, { database } from './cache'
-import sendResponse from './sendResponse'
-import timeFormatter from './timeFormatter'
+import cache from './cache'
+import executeResult from './executeResult'
 
-const guildStatus: { [GuildID in string]?: 'processing' | 'cooling-down' | 'muted' } = {}
+const guildStatus: { [GuildID in string]?: 'processing' | 'cooling-down' } = {}
 const commands: { [CommandName in string]?: CommandProps } = {}
 
 readdirSync(join(__dirname, '..', 'commands'))
@@ -28,19 +27,24 @@ const handleMessage = async (message: Message) => {
     return
   }
 
-  const args = message.content.replace(/[\s\n]+/g, ' ').split(' ')
+  const args = message.content.replace(/\s+/g, ' ').split(' ')
   const commandName = isMentioned ? 'help' : args[0].slice(prefix.length)
-  if (!commandName || !commands[commandName]) {
+  if (!commands[commandName]) {
     return
   }
 
   if (guildStatus[guildId]) {
     if (guildStatus[guildId] === 'processing') {
-      message.channel.send(':star2: 指令處理中，你需要再等一等...')
-      guildStatus[guildId] = 'muted'
-    } else if (guildStatus[guildId] === 'cooling-down') {
-      message.channel.send(':ice_cube: 指令冷卻中，你需要再慢一點...')
-      guildStatus[guildId] = 'muted'
+      await executeResult(message, {
+        response: {
+          content: ':star2: 指令處理中，你需要再等一等...',
+          embed: {
+            description: '上一個指令還沒有完全執行完畢，請耐心等待執行結果',
+          },
+        },
+      })
+    } else {
+      await message.react('🧊')
     }
     return
   }
@@ -51,32 +55,19 @@ const handleMessage = async (message: Message) => {
     guildStatus[guildId] = 'cooling-down'
     setTimeout(() => {
       delete guildStatus[guildId]
-    }, 3000)
-
-    if (!commandResult) {
-      return
-    }
-    if (!commandResult.content && !commandResult.embed) {
-      throw new Error('no result content')
-    }
-    await sendResponse(message, commandResult)
-
-    if (commandResult.isSyntaxError) {
-      cache.syntaxErrorsCounts[message.author.id] = (cache.syntaxErrorsCounts[message.author.id] || 0) + 1
-      if ((cache.syntaxErrorsCounts[message.author.id] || 0) > 8) {
-        await database
-          .ref(`/banned/${message.author.id}`)
-          .set(`[${timeFormatter({ time: message.createdTimestamp })}] too many syntax errors`)
-        await sendResponse(message, {
-          content: ':lock: 無法正確使用機器人指令嗎？歡迎加入客服群組尋求協助！',
-        })
-      }
-    } else {
-      cache.syntaxErrorsCounts[message.author.id] = 0
+    }, 5000)
+    if (commandResult) {
+      await executeResult(message, commandResult)
     }
   } catch (error: any) {
-    await sendResponse(message, {
-      content: ':fire: 好像發生了點問題請稍後再試，如果狀況還是沒有改善請加入開發群組回報狀況',
+    delete guildStatus[guildId]
+    await executeResult(message, {
+      response: {
+        content: ':fire: 好像發生了點問題請稍後再試，如果狀況還是沒有改善請加入開發群組回報狀況',
+        embed: {
+          description: '1. 請檢查是否機器人擁有正確的權限\n2. 回報問題時如果能附上截圖更能幫助開發者釐清狀況',
+        },
+      },
       error,
     })
   }

@@ -1,6 +1,9 @@
+import { WebhookClient } from 'discord.js'
 import admin, { ServiceAccount } from 'firebase-admin'
 import config from '../config'
-import { CheckJobProps, RemindJobProps } from '../types'
+import { JobProps } from '../types'
+
+export const loggerHook = new WebhookClient(config.DISCORD.LOGGER_HOOK)
 
 admin.initializeApp({
   credential: admin.credential.cert(config.FIREBASE.serviceAccount as ServiceAccount),
@@ -13,9 +16,6 @@ const cache: {
   banned: {
     [ID in string]?: number
   }
-  hints: {
-    [key in string]?: string
-  }
   remindSettings: {
     [UserId in string]?: {
       [emoji in string]: number
@@ -26,38 +26,26 @@ const cache: {
       [key: string]: string | number | boolean
       prefix: string
       timezone: string
-      display: 'absent' | 'reacted'
+      raffle: number
+      showReacted: boolean
+      showAbsent: boolean
+      showLocked: boolean
     }
   }
   modules: {
-    enableRemind: { [GuildID in string]?: boolean }
     mentionAbsent: { [GuildID in string]?: boolean }
   }
-
-  checkJobs: {
-    [JobID in string]?: CheckJobProps
-  }
-  remindJobs: {
-    [JobID in string]?: RemindJobProps
-  }
-
-  syntaxErrorsCounts: {
-    [UserID in string]?: number
+  jobs: {
+    [JobID in string]?: JobProps
   }
 } = {
   banned: {},
-  hints: {},
-  remindJobs: {},
+  remindSettings: {},
   settings: {},
   modules: {
-    enableRemind: {},
     mentionAbsent: {},
   },
-
-  checkJobs: {},
-  remindSettings: {},
-
-  syntaxErrorsCounts: {},
+  jobs: {},
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {
@@ -76,39 +64,17 @@ const removeCache = (snapshot: admin.database.DataSnapshot) => {
 database.ref('/banned').on('child_added', updateCache)
 database.ref('/banned').on('child_changed', updateCache)
 database.ref('/banned').on('child_removed', removeCache)
-database.ref('/checkJobs').on('child_added', updateCache)
-database.ref('/checkJobs').on('child_changed', updateCache)
-database.ref('/checkJobs').on('child_removed', removeCache)
-database.ref('/hints').on('child_added', updateCache)
-database.ref('/hints').on('child_changed', updateCache)
-database.ref('/hints').on('child_removed', removeCache)
 database.ref('/modules').on('child_added', updateCache)
 database.ref('/modules').on('child_changed', updateCache)
 database.ref('/modules').on('child_removed', removeCache)
-database.ref('/remindJobs').on('child_added', updateCache)
-database.ref('/remindJobs').on('child_changed', updateCache)
-database.ref('/remindJobs').on('child_removed', removeCache)
 database.ref('/remindSettings').on('child_added', updateCache)
 database.ref('/remindSettings').on('child_changed', updateCache)
 database.ref('/remindSettings').on('child_removed', removeCache)
 database.ref('/settings').on('child_added', updateCache)
 database.ref('/settings').on('child_changed', updateCache)
 database.ref('/settings').on('child_removed', removeCache)
-
-export const getHint: (key?: string) => string = key => {
-  if (key && cache.hints[key]) {
-    return cache.hints[key] || ''
-  }
-
-  const allHints = Object.values(cache.hints)
-  if (!allHints.length) {
-    return ''
-  }
-
-  const pick = Math.floor(Math.random() * allHints.length)
-  const hint = allHints[pick] || ''
-
-  return hint
-}
+database.ref('/jobs').on('child_added', updateCache)
+database.ref('/jobs').on('child_changed', updateCache)
+database.ref('/jobs').on('child_removed', removeCache)
 
 export default cache

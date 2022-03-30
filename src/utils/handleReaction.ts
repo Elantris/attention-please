@@ -1,5 +1,6 @@
 import { Client, DMChannel } from 'discord.js'
-import { RemindJobProps } from '../types'
+import OpenColor from 'open-color'
+import { JobProps } from '../types'
 import cache, { database } from './cache'
 import sendLog from './sendLog'
 
@@ -27,17 +28,9 @@ export const handleRaw = (client: Client, packet: any) => {
     }
   } catch (error: any) {
     sendLog(client, {
-      color: '#ff6b6b',
       error,
     })
   }
-}
-
-const remindTimeMap: {
-  [Emoji in string]?: number
-} = {
-  '⏰': 20,
-  '🔔': 60,
 }
 
 const handleReactionAdd = async (
@@ -50,7 +43,7 @@ const handleReactionAdd = async (
     emoji: { id: string | null; name: string }
   },
 ) => {
-  const now = Date.now()
+  const startAt = Date.now()
   const emoji = options.emoji.id ? `<:${options.emoji.name}:${options.emoji.id}>` : options.emoji.name
 
   if (!options.guildId) {
@@ -66,48 +59,59 @@ const handleReactionAdd = async (
       await message.delete()
 
       sendLog(client, {
-        color: '#ffc078',
-        time: now,
-        content: 'Delete reminded message `MESSAGE_ID`'.replace('MESSAGE_ID', message.id),
+        color: OpenColor.yellow[5],
+        time: startAt,
+        content: 'Delete remind message `MESSAGE_ID`'.replace('MESSAGE_ID', message.id),
         channelId: options.channelId,
         userId: options.userId,
+        processTime: Date.now() - startAt,
       })
     }
 
     return
   }
 
-  if (!cache.modules.enableRemind[options.guildId]) {
+  const remindTime = cache.remindSettings[options.userId]?.[emoji]
+  if (typeof remindTime !== 'number') {
     return
   }
 
-  const remindTime = cache.remindSettings[options.userId]?.[emoji] ?? remindTimeMap[emoji]
-  if (typeof remindTime === 'undefined') {
-    return
-  }
-
-  const jobId = `${options.userId}_${options.messageId}`
-  const job: RemindJobProps = {
+  const jobId = `remind_${options.userId}_${options.messageId}`
+  const job: JobProps = {
     clientId: client.user?.id || '',
-    remindAt: now + remindTime * 60000,
-    userId: options.userId,
-    guildId: options.guildId,
-    channelId: options.channelId,
-    messageId: options.messageId,
+    executeAt: startAt + remindTime * 60000,
+    type: 'remind',
+    target: {
+      messageId: options.messageId,
+      channelId: options.channelId,
+    },
+    command: {
+      userId: options.userId,
+      guildId: options.guildId,
+      channelId: options.channelId,
+    },
     retryTimes: 0,
   }
-  await database.ref(`/remindJobs/${jobId}`).set(job)
+  await database.ref(`/jobs/${jobId}`).set(job)
 
   sendLog(client, {
-    color: '#ffc078',
-    time: now,
+    color: OpenColor.yellow[5],
+    time: startAt,
     content: 'Create remind job `JOB_ID` (REMIND_TIME minutes)'
       .replace('JOB_ID', jobId)
       .replace('REMIND_TIME', `${remindTime}`),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
+    processTime: Date.now() - startAt,
   })
+
+  const targetChannel = client.channels.cache.get(options.channelId)
+  if (targetChannel?.type !== 'GUILD_TEXT') {
+    return
+  }
+  const targetMessage = await targetChannel.messages.fetch(options.messageId)
+  targetMessage.react('⏰')
 }
 
 const handleReactionRemove = async (
@@ -120,19 +124,20 @@ const handleReactionRemove = async (
     emoji: string
   },
 ) => {
-  const now = Date.now()
-  const jobId = `${options.userId}_${options.messageId}`
+  const startAt = Date.now()
+  const jobId = `remind_${options.userId}_${options.messageId}`
   if (!cache.remindJobs[jobId]) {
     return
   }
-  await database.ref(`/remindJobs/${jobId}`).remove()
+  await database.ref(`/jobs/${jobId}`).remove()
 
   sendLog(client, {
-    color: '#ffc078',
-    time: now,
-    content: 'Remove remind job `JOB_ID`'.replace('JOB_ID', jobId),
+    color: OpenColor.yellow[5],
+    time: startAt,
+    content: 'Cancel remind job `JOB_ID`'.replace('JOB_ID', jobId),
     guildId: options.guildId,
     channelId: options.channelId,
     userId: options.userId,
+    processTime: Date.now() - startAt,
   })
 }

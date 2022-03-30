@@ -7,30 +7,29 @@ export type CommandProps = (options: {
 }) => Promise<CommandResultProps>
 
 export type CommandResultProps = {
-  content?: string
-  embed?: MessageEmbedOptions
-  files?: FileOptions[]
-  isSyntaxError?: boolean
+  response?: ResponseProps
   error?: Error
 }
 
-export type CheckJobProps = {
-  clientId: string
-  checkAt: number
-  guildId: string
-  channelId: string
-  messageId: string
-  userId: string
-  responseChannelId: string
-  retryTimes: number
+export type ResponseProps = {
+  content: string
+  embed?: MessageEmbedOptions
+  files?: FileOptions[]
 }
 
-export type RemindJobProps = {
+export type JobProps = {
   clientId: string
-  remindAt: number
-  userId: string
-  guildId: string
-  channelId: string
-  messageId: string
+  executeAt: number
+  type: 'check' | 'remind' | 'raffle'
+  target: {
+    messageId: string
+    channelId: string
+  }
+  command: {
+    messageId?: string
+    guildId: string
+    channelId: string
+    userId: string
+  }
   retryTimes: number
 }
