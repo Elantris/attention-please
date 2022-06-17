@@ -1,12 +1,13 @@
 import { CommandProps } from '../types'
 import cache from '../utils/cache'
+import { translate } from '../utils/translation'
 
 const commandHelp: CommandProps = async ({ guildId }) => {
   const prefix = cache.settings[guildId]?.prefix || 'ap!'
 
   return {
     response: {
-      content: ':pushpin: Attention Please\n指令前綴：`PREFIX`\n說明文件：<MANUAL>\n開發群組：DISCORD'
+      content: translate('help.text.summary', { guildId })
         .replace('PREFIX', prefix)
         .replace('MANUAL', 'https://hackmd.io/@eelayntris/attention-please')
         .replace('DISCORD', 'https://discord.gg/Ctwz4BB'),

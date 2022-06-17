@@ -6,6 +6,7 @@ import cache, { database } from '../utils/cache'
 import fetchTargetMessage from '../utils/fetchTargetMessage'
 import getReactionStatus from '../utils/getReactionStatus'
 import timeFormatter from '../utils/timeFormatter'
+import { translate } from '../utils/translation'
 
 const commandCheck: CommandProps = async ({ message, guildId, args }) => {
   const { targetMessage, time, response } = await fetchTargetMessage({ message, guildId, args })
@@ -29,9 +30,9 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
     if (existedJobsCount > 8) {
       return {
         response: {
-          content: ':warning: 預約結算數量已達上限',
+          content: translate('check.error.checkJobLimit', { guildId }),
           embed: {
-            description: '為了避免濫用預約結算功能造成運算負擔，每個伺服器只能夠建立有限數量的預約結算',
+            description: translate('check.error.checkJobLimitHelp', { guildId }),
           },
         },
       }
@@ -64,18 +65,17 @@ const commandCheck: CommandProps = async ({ message, guildId, args }) => {
     return {
       response: {
         content: (duplicatedJobId
-          ? ':alarm_clock: **GUILD_NAME** 變更 `MESSAGE_ID` 結算時間'
-          : ':alarm_clock: **GUILD_NAME** 建立 `MESSAGE_ID` 預約結算'
+          ? translate('check.text.checkJobUpdated', { guildId })
+          : translate('check.text.checkJobCreated', { guildId })
         )
           .replace('GUILD_NAME', message.guild?.name || guildId)
           .replace('MESSAGE_ID', targetMessage.id),
         embed: {
-          description:
-            '預約結算：`TIME` (FROM_NOW)\n結算目標：[訊息連結](TARGET_URL)\n\n刪除 [指令訊息](COMMAND_URL) 即可取消預約結算'
-              .replace('TIME', timeFormatter({ guildId, time }))
-              .replace('FROM_NOW', `<t:${Math.floor(time / 1000)}:R>`)
-              .replace('TARGET_URL', targetMessage.url)
-              .replace('COMMAND_URL', message.url),
+          description: translate('check.text.checkJobDetail', { guildId })
+            .replace('TIME', timeFormatter({ guildId, time }))
+            .replace('FROM_NOW', `<t:${Math.floor(time / 1000)}:R>`)
+            .replace('TARGET_URL', targetMessage.url)
+            .replace('COMMAND_URL', message.url),
         },
       },
     }
@@ -93,6 +93,7 @@ export const makeCheckLists: (
   if (message.channel.type === 'DM' || !message.guild) {
     throw new Error('Invalid Message')
   }
+  const guildId = message.guild.id
 
   const checkAt = Date.now()
   const mentionedMembers = await getReactionStatus(message)
@@ -101,9 +102,9 @@ export const makeCheckLists: (
   if (allMembersCount === 0) {
     return {
       response: {
-        content: ':x: 這則訊息沒有標記對象',
+        content: translate('system.error.noMentionedMember', { guildId }),
         embed: {
-          description: '請選擇一個有標記對象的訊息，例如：\n1. @everyone\n2. @身份組\n3. @成員',
+          description: translate('system.error.noMentionedMemberHelp', { guildId }),
         },
       },
     }
@@ -135,10 +136,10 @@ export const makeCheckLists: (
     const filePath = join(__dirname, '../../tmp/', `${message.id}.txt`)
     writeFileSync(
       filePath,
-      'GUILD_NAME / CHANNEL_NAME\r\n結算時間：TIME\r\n訊息連結：MESSAGE_URL\r\n標記人數：ALL_COUNT\r\n簽到人數：REACTED_COUNT (PERCENTAGE%)\r\n缺席人數：ABSENT_COUNT\r\n無權人數：LOCKED_COUNT\r\n\r\n簽到名單：\r\nREACTED_MEMBERS\r\n\r\n缺席名單：\r\nABSENT_MEMBERS\r\n\r\n無權名單：\r\nLOCKED_MEMBERS'
+      translate('check.text.checkResultFullDetail', { guildId })
         .replace('GUILD_NAME', message.guild.name)
         .replace('CHANNEL_NAME', message.channel.name)
-        .replace('TIME', timeFormatter({ guildId: message.guild.id, time: checkAt }))
+        .replace('TIME', timeFormatter({ guildId, time: checkAt }))
         .replace('MESSAGE_URL', message.url)
         .replace('ALL_COUNT', `${allMembersCount}`)
         .replace('REACTED_COUNT', `${reactedMemberNames.length}`)
@@ -155,66 +156,72 @@ export const makeCheckLists: (
       name: `${message.id}.txt`,
     })
   } else {
-    cache.settings[message.guild.id]?.showReacted !== false &&
+    cache.settings[guildId]?.showReacted !== false &&
       reactedMemberNames.length &&
       Util.splitMessage(reactedMemberNames.map(name => Util.escapeMarkdown(name.slice(0, 16))).join('\n'), {
         maxLength: 1000,
       }).forEach((content, index) => {
         fields.push({
-          name: `:white_check_mark: 簽到名單 第${index + 1}頁`,
+          name: translate('check.text.reactedMembersList', { guildId }).replace('PAGE', `${index + 1}`),
           value: content.replace(/\n/g, '、'),
         })
       })
-    cache.settings[message.guild.id]?.showAbsent !== false &&
+    cache.settings[guildId]?.showAbsent !== false &&
       absentMemberNames.length &&
       Util.splitMessage(absentMemberNames.map(name => Util.escapeMarkdown(name.slice(0, 16))).join('\n'), {
         maxLength: 1000,
       }).forEach((content, index) => {
         fields.push({
-          name: `:x: 缺席名單 第 ${index + 1} 頁`,
+          name: translate('check.text.absentMembersList', { guildId }).replace('PAGE', `${index + 1}`),
           value: content.replace(/\n/g, '、'),
         })
       })
-    cache.settings[message.guild.id]?.showLocked !== false &&
+    cache.settings[guildId]?.showLocked !== false &&
       lockedMemberNames.length &&
       Util.splitMessage(lockedMemberNames.map(name => Util.escapeMarkdown(name.slice(0, 16))).join('\n'), {
         maxLength: 1000,
       }).forEach((content, index) => {
         fields.push({
-          name: `:lock: 無權名單 第 ${index + 1} 頁`,
+          name: translate('check.text.lockedMembersList', { guildId }).replace('PAGE', `${index + 1}`),
           value: content.replace(/\n/g, '、'),
         })
       })
   }
 
-  const isMentionAbsentEnabled = !!cache.modules.mentionAbsent?.[message.guild.id]
+  const isMentionAbsentEnabled = !!cache.modules.mentionAbsent?.[guildId]
   const warnings: string[] = []
   if (lockedMemberNames.length) {
-    warnings.push(`:warning: 被標記的成員當中有 ${lockedMemberNames.length} 人沒有權限看到這則訊息`)
+    warnings.push(
+      translate('check.text.lockedMembersWarning', { guildId }).replace('COUNT', 'lockedMemberNames.length'),
+    )
   }
   if (options?.passedCheckAt) {
-    warnings.push(`:warning: 指定的時間在 <t:${Math.floor(options.passedCheckAt / 1000)}:R>`)
+    warnings.push(
+      translate('check.text.checkTimePassedWarning', { guildId }).replace(
+        'TIMESTAMP',
+        `${Math.floor(options.passedCheckAt / 1000)}`,
+      ),
+    )
   }
 
   return {
     response: {
-      content: ':bar_chart: 已簽到：REACTED_COUNT / ALL_COUNT (**PERCENTAGE%**)\nMENTIONS'
+      content: translate('check.text.checkResult', { guildId })
         .replace('REACTED_COUNT', `${reactedMemberNames.length}`)
         .replace('ALL_COUNT', `${allMembersCount}`)
         .replace('PERCENTAGE', ((reactedMemberNames.length * 100) / allMembersCount).toFixed(2))
         .replace('MENTIONS', isMentionAbsentEnabled ? absentMemberIds.map(memberId => `<@${memberId}>`).join(' ') : '')
         .trim(),
       embed: {
-        description:
-          '結算時間：`TIME` (FROM_NOW)\n結算目標：[訊息連結](MESSAGE_URL)\n標記人數：ALL_COUNT\n簽到人數：REACTED_COUNT\n缺席人數：ABSENT_COUNT\n\nWARNINGS'
-            .replace('TIME', timeFormatter({ guildId: message.guild.id, time: checkAt }))
-            .replace('FROM_NOW', `<t:${Math.floor(checkAt / 1000)}:R>`)
-            .replace('MESSAGE_URL', message.url)
-            .replace('ALL_COUNT', `${allMembersCount}`)
-            .replace('REACTED_COUNT', `${reactedMemberNames.length}`)
-            .replace('ABSENT_COUNT', `${absentMemberNames.length}`)
-            .replace('WARNINGS', warnings.join('\n'))
-            .trim(),
+        description: translate('check.text.checkResultDetail', { guildId })
+          .replace('TIME', timeFormatter({ guildId, time: checkAt }))
+          .replace('FROM_NOW', `<t:${Math.floor(checkAt / 1000)}:R>`)
+          .replace('MESSAGE_URL', message.url)
+          .replace('ALL_COUNT', `${allMembersCount}`)
+          .replace('REACTED_COUNT', `${reactedMemberNames.length}`)
+          .replace('ABSENT_COUNT', `${absentMemberNames.length}`)
+          .replace('WARNINGS', warnings.join('\n'))
+          .trim(),
         fields,
       },
       files,

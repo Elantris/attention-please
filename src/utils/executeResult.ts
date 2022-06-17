@@ -3,6 +3,7 @@ import OpenColor from 'open-color'
 import { CommandResultProps } from '../types'
 import colorFormatter from './colorFormatter'
 import sendLog from './sendLog'
+import { translate } from './translation'
 
 const executeResult = async (
   commandMessage: Message,
@@ -30,7 +31,7 @@ const executeResult = async (
         embeds: [
           {
             color: colorFormatter(OpenColor.orange[5]),
-            title: '加入 eeBots Support（公告、更新）',
+            title: translate('system.text.joinEebotsSupport', { guildId: commandMessage.guildId || '' }),
             url: 'https://discord.gg/Ctwz4BB',
             footer: {
               text: 'Version 2022-03-05',

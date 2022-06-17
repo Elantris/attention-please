@@ -26,6 +26,7 @@ const cache: {
       [key: string]: string | number | boolean
       prefix: string
       timezone: string
+      language: string
       raffle: number
       showReacted: boolean
       showAbsent: boolean

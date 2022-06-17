@@ -4,7 +4,7 @@ export type CommandProps = (options: {
   message: Message
   guildId: string
   args: string[]
-}) => Promise<CommandResultProps>
+}) => Promise<CommandResultProps | void>
 
 export type CommandResultProps = {
   response?: ResponseProps

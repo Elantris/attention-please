@@ -3,9 +3,11 @@ import OpenColor from 'open-color'
 import { makeCheckLists } from '../commands/check'
 import { makeRaffleLists } from '../commands/raffle'
 import cache, { database } from './cache'
+import colorFormatter from './colorFormatter'
 import executeResult from './executeResult'
 import sendLog from './sendLog'
 import timeFormatter from './timeFormatter'
+import { translate } from './translation'
 
 let lock = 0
 
@@ -47,12 +49,12 @@ const executeJobs = async (client: Client) => {
           content: targetMessage.content,
           embeds: [
             {
-              color: 0xff922b,
+              color: colorFormatter(OpenColor.orange[5]),
               author: {
                 name: targetMessage.author.username,
                 iconURL: targetMessage.author.displayAvatarURL() || undefined,
               },
-              description: '發送時間：`TIME` (FROM_NOW)\n訊息連結：[GUILD_NAME/CHANNEL_NAME](MESSAGE_URL)'
+              description: translate('remind.text.directMessageDetail', { guildId: job.command.guildId })
                 .replace('TIME', timeFormatter({ guildId: job.command.guildId, time: targetMessage.createdTimestamp }))
                 .replace('FROM_NOW', `<t:${Math.floor(targetMessage.createdTimestamp / 1000)}:R>`)
                 .replace('GUILD_NAME', Util.escapeMarkdown(targetGuild.name))
@@ -86,7 +88,7 @@ const executeJobs = async (client: Client) => {
         await database.ref(`/jobs/${jobId}`).remove()
       }
     } catch (error: any) {
-      if (job.retryTimes > 3) {
+      if (job.retryTimes > 1) {
         sendLog(client, {
           time: executeAt,
           content: 'Fail to execute job `JOB_ID`'.replace('JOB_ID', jobId),

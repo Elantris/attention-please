@@ -126,7 +126,7 @@ const handleReactionRemove = async (
 ) => {
   const startAt = Date.now()
   const jobId = `remind_${options.userId}_${options.messageId}`
-  if (!cache.remindJobs[jobId]) {
+  if (!cache.jobs[jobId]) {
     return
   }
   await database.ref(`/jobs/${jobId}`).remove()

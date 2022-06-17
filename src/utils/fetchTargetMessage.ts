@@ -2,6 +2,8 @@ import { Message, TextChannel, Util } from 'discord.js'
 import { DateTime } from 'luxon'
 import { ResponseProps } from '../types'
 import cache from './cache'
+import timeFormatter from './timeFormatter'
+import { translate } from './translation'
 
 const fetchTargetMessage: (options: { message: Message; guildId: string; args: string[] }) => Promise<{
   targetMessage?: Message
@@ -12,10 +14,9 @@ const fetchTargetMessage: (options: { message: Message; guildId: string; args: s
   if (!search) {
     return {
       response: {
-        content: ':question: 請指定一則訊息',
+        content: translate('system.error.unknownMessage', { guildId }),
         embed: {
-          description:
-            '1. 右鍵選擇「回覆」，並輸入指令 `ap!check` 或 `ap!raffle`\n2. 右鍵選擇「複製訊息連結」，輸入 `ap!check 訊息連結` 或 `ap!raffle 訊息連結`',
+          description: translate('system.error.unknownMessageHelp', { guildId }),
         },
       },
     }
@@ -28,6 +29,7 @@ const fetchTargetMessage: (options: { message: Message; guildId: string; args: s
   } = {}
 
   if (message.reference?.messageId) {
+    // reply reference
     options.channelId = message.reference.channelId
     options.messageId = message.reference.messageId
     options.time = args.slice(1).join(' ')
@@ -52,10 +54,9 @@ const fetchTargetMessage: (options: { message: Message; guildId: string; args: s
   if (!options.messageId) {
     return {
       response: {
-        content: ':x: 目標訊息格式錯誤',
+        content: translate('system.error.targetMessageSyntax', { guildId }),
         embed: {
-          description:
-            '指定訊息格式：\n1. 右鍵複製訊息連結\n2. 對著訊息按住 shift 右上角有複製 ID 的按鈕\n3. 右鍵選單最底下有複製訊息 ID 的選項',
+          description: translate('system.error.targetMessageSyntaxHelp', { guildId }),
         },
       },
     }
@@ -85,9 +86,9 @@ const fetchTargetMessage: (options: { message: Message; guildId: string; args: s
   if (targetMessage?.guild?.id !== guildId) {
     return {
       response: {
-        content: ':question: 找不到這則訊息',
+        content: translate('system.error.notFoundMessage', { guildId }),
         embed: {
-          description: '1. 機器人可能沒有權限看到這則訊息\n2. 這則訊息可能在別的伺服器',
+          description: translate('system.error.notFoundMessageHelp', { guildId }),
         },
       },
     }
@@ -96,9 +97,9 @@ const fetchTargetMessage: (options: { message: Message; guildId: string; args: s
   if (!targetMessage.mentions.everyone && !targetMessage.mentions.roles.size && !targetMessage.mentions.members?.size) {
     return {
       response: {
-        content: ':x: 這則訊息沒有標記對象',
+        content: translate('system.error.noMentionedMember', { guildId }),
         embed: {
-          description: '請選擇一個有標記對象的訊息，例如：\n1. @everyone\n2. @身份組\n3. @成員',
+          description: translate('system.error.noMentionedMemberHelp', { guildId }),
         },
       },
     }
@@ -113,12 +114,11 @@ const fetchTargetMessage: (options: { message: Message; guildId: string; args: s
     if (Number.isNaN(time)) {
       return {
         response: {
-          content: ':x: 指定時間的格式好像怪怪的',
+          content: translate('system.error.timeFormatSyntax', { guildId }),
           embed: {
-            description: '標準時間格式：`YYYY-MM-DD HH:mm`（西元年-月-日 時:分）\n使用者的輸入：`USER_INPUT`'.replace(
-              'USER_INPUT',
-              Util.escapeMarkdown(options.time),
-            ),
+            description: translate('system.error.timeFormatSyntaxHelp, {guildId}')
+              .replace('USER_INPUT', Util.escapeMarkdown(options.time))
+              .replace('TIME', timeFormatter({ guildId, time: message.createdTimestamp })),
           },
         },
       }

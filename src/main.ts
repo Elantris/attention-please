@@ -28,7 +28,7 @@ client.on('ready', () => {
   )
 
   setInterval(() => {
-    client.user?.setActivity(`on ${client.guilds.cache.size} guilds`)
+    client.user?.setActivity(`on ${client.guilds.cache.size} guilds.`)
     executeJobs(client)
   }, 10000)
 })
