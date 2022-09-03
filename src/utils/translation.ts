@@ -1,30 +1,29 @@
-import { readdirSync } from 'fs'
+import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
+import { LocaleType } from '../types'
 import cache from './cache'
 
 const translations: {
-  [language: string]: {
+  [Locale in LocaleType]?: {
     [key: string]: string
   }
 } = {}
 
-const fileRoot = join(__dirname, '../translation/')
-readdirSync(fileRoot)
-  .filter(filename => filename.endsWith('.json'))
-  .forEach(filename => {
-    translations[filename.split('.')[0]] = require(`${fileRoot}/${filename}`)
-  })
+readdirSync(join(__dirname, '../../translations')).forEach(filename => {
+  if (!filename.endsWith('.json')) {
+    return
+  }
+  const locale = filename.replace('.json', '') as LocaleType
+  translations[locale] = JSON.parse(readFileSync(join(__dirname, '../../translations', filename), { encoding: 'utf8' }))
+})
 
 export const translate = (
   key: string,
   options?: {
     guildId?: string
-    language?: string
+    locale?: LocaleType
   },
 ) => {
-  const language = options?.language || cache.settings[options?.guildId || '']?.language || 'zh_tw'
-  return translations[language]?.[key] ?? translations['zh_tw']?.[key] ?? key
+  const locale = options?.locale || cache.settings[options?.guildId || '']?.locale || 'zh-TW'
+  return translations[locale]?.[key] ?? translations['zh-TW']?.[key] ?? key
 }
-
-export const isLanguageExisted = (language: string) => !!translations[language]
-export const getLanguageKeys = () => Object.keys(translations)

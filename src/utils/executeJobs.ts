@@ -1,12 +1,10 @@
-import { Client, TextChannel, Util } from 'discord.js'
+import { ChannelType, Client } from 'discord.js'
 import OpenColor from 'open-color'
-import { makeCheckLists } from '../commands/check'
-import { makeRaffleLists } from '../commands/raffle'
+import { getCheckResult } from '../commands/check'
 import cache, { database } from './cache'
 import colorFormatter from './colorFormatter'
-import executeResult from './executeResult'
+import initGuild from './initGuild'
 import sendLog from './sendLog'
-import timeFormatter from './timeFormatter'
 import { translate } from './translation'
 
 let lock = 0
@@ -26,76 +24,75 @@ const executeJobs = async (client: Client) => {
     }
 
     try {
+      if (!cache.isInit[job.command.guildId]) {
+        initGuild(client, job.command.guildId)
+      }
+
       const targetGuild = client.guilds.cache.get(job.command.guildId)
       const targetChannel = client.channels.cache.get(job.target.channelId)
-      if (!targetGuild || !(targetChannel instanceof TextChannel)) {
-        throw new Error('target channel not found')
+      const commandChannel = client.channels.cache.get(job.command.channelId)
+      if (
+        !targetGuild ||
+        !targetChannel?.isTextBased() ||
+        !commandChannel?.isTextBased() ||
+        commandChannel.type === ChannelType.DM
+      ) {
+        throw new Error('Channel is not found')
       }
       const targetMessage = await targetChannel.messages.fetch(job.target.messageId)
 
-      if (job.type === 'check') {
-        const commandChannel = client.channels.cache.get(job.command.channelId) as TextChannel
-        const commandMessage = await commandChannel.messages.fetch(job.command.messageId || '')
-        const result = await makeCheckLists(targetMessage)
-        await executeResult(commandMessage, result, {
-          createdAt: executeAt,
-          color: OpenColor.yellow[5],
-          content: `Execute check job \`${jobId}\``,
+      const jobType = jobId.split('_')[0]
+      if (jobType === 'check') {
+        const commandResult = await getCheckResult(targetMessage)
+        if (!commandResult) {
+          throw new Error('No command result')
+        }
+        const responseMessage = await commandChannel.send({
+          content: commandResult.content,
+          embeds: commandResult.embed
+            ? [
+                {
+                  color: colorFormatter(OpenColor.orange[5]),
+                  title: translate('system.text.support', { guildId: job.command.guildId }),
+                  url: 'https://discord.gg/Ctwz4BB',
+                  footer: { text: 'Version 2022-08-31' },
+                  ...commandResult.embed,
+                },
+              ]
+            : undefined,
+          files: commandResult.files,
         })
         await database.ref(`/jobs/${jobId}`).remove()
-      } else if (job.type === 'remind') {
-        const user = await client.users.fetch(job.command.userId)
-        const remindMessage = await user.send({
-          content: targetMessage.content,
-          embeds: [
-            {
-              color: colorFormatter(OpenColor.orange[5]),
-              author: {
-                name: targetMessage.author.username,
-                iconURL: targetMessage.author.displayAvatarURL() || undefined,
-              },
-              description: translate('remind.text.directMessageDetail', { guildId: job.command.guildId })
-                .replace('TIME', timeFormatter({ guildId: job.command.guildId, time: targetMessage.createdTimestamp }))
-                .replace('FROM_NOW', `<t:${Math.floor(targetMessage.createdTimestamp / 1000)}:R>`)
-                .replace('GUILD_NAME', Util.escapeMarkdown(targetGuild.name))
-                .replace('CHANNEL_NAME', Util.escapeMarkdown(targetChannel.name))
-                .replace('MESSAGE_URL', targetMessage.url),
-            },
-          ],
-        })
-        await remindMessage.react('✅').catch(() => {})
-        await database.ref(`/jobs/${jobId}`).remove()
-
-        sendLog(client, {
-          color: OpenColor.yellow[5],
+        await sendLog({
           time: executeAt,
-          content: `Execute remind job \`${jobId}\``,
-          embeds: remindMessage.embeds,
+          processTime: responseMessage.createdTimestamp - executeAt,
+          command: 'Execute job {JOB_ID}'.replace('{JOB_ID}', jobId),
+          content: commandResult.content,
+          embeds: commandResult.embed ? [commandResult.embed] : undefined,
+          files: commandResult.files,
           guildId: job.command.guildId,
+          guildName: client.guilds.cache.get(job.command.guildId)?.name,
           channelId: job.command.channelId,
+          channelName: commandChannel.name,
           userId: job.command.userId,
-          processTime: remindMessage.createdTimestamp - executeAt,
+          userName: client.users.cache.get(job.command.userId)?.tag,
         })
-      } else if (job.type === 'raffle') {
-        const commandChannel = client.channels.cache.get(job.command.channelId) as TextChannel
-        const commandMessage = await commandChannel.messages.fetch(job.command.messageId || '')
-        const result = await makeRaffleLists(targetMessage)
-        await executeResult(commandMessage, result, {
-          createdAt: executeAt,
-          color: OpenColor.yellow[5],
-          content: `Execute raffle job \`${jobId}\``,
-        })
-        await database.ref(`/jobs/${jobId}`).remove()
+      } else if (jobType === 'raffle') {
       }
     } catch (error: any) {
       if (job.retryTimes > 1) {
-        sendLog(client, {
-          time: executeAt,
-          content: 'Fail to execute job `JOB_ID`'.replace('JOB_ID', jobId),
-          guildId: job.command.guildId,
-          channelId: job.command.channelId,
-          userId: job.command.userId,
+        const commandChannel = client.channels.cache.get(job.command.channelId)
+        await sendLog({
+          time: job.executeAt,
           processTime: Date.now() - executeAt,
+          command: `${jobId}`,
+          content: 'ERROR to execute job {JOB_ID}'.replace('{JOB_ID}', jobId),
+          guildId: job.command.guildId,
+          guildName: client.guilds.cache.get(job.command.guildId)?.name,
+          channelId: job.command.channelId,
+          channelName: commandChannel?.type === ChannelType.DM ? undefined : commandChannel?.name || undefined,
+          userId: job.command.userId,
+          userName: client.users.cache.get(job.command.userId)?.tag,
           error,
         })
         await database.ref(`/jobs/${jobId}`).remove()

@@ -1,133 +1,100 @@
-import { Message, TextChannel, Util } from 'discord.js'
-import { DateTime } from 'luxon'
-import { ResponseProps } from '../types'
-import cache from './cache'
-import timeFormatter from './timeFormatter'
+import { Guild, Message, TextBasedChannel } from 'discord.js'
+import { ResultProps } from '../types'
 import { translate } from './translation'
 
-const fetchTargetMessage: (options: { message: Message; guildId: string; args: string[] }) => Promise<{
-  targetMessage?: Message
-  time?: number
-  response?: ResponseProps
-}> = async ({ message, guildId, args }) => {
-  const search = message.reference?.messageId || args[1]
+const fetchTargetMessage: (options: { guild: Guild; search: string | null }) => Promise<{
+  message?: Message
+  response?: ResultProps
+}> = async ({ guild, search }) => {
   if (!search) {
-    return {
-      response: {
-        content: translate('system.error.unknownMessage', { guildId }),
-        embed: {
-          description: translate('system.error.unknownMessageHelp', { guildId }),
-        },
-      },
-    }
+    return {}
   }
 
-  const options: {
+  const target: {
     channelId?: string
     messageId?: string
-    time?: string
+    message?: Message
   } = {}
 
-  if (message.reference?.messageId) {
-    // reply reference
-    options.channelId = message.reference.channelId
-    options.messageId = message.reference.messageId
-    options.time = args.slice(1).join(' ')
-  } else if (/^https:\/\/\S*\/channels\/\d+\/\d+\/\d+$/.test(search)) {
+  if (/^https:\/\/\S*\/channels\/\d+\/\d+\/\d+$/.test(search)) {
     // full message link
     const [channelId, messageId] = search.split('/').slice(-2)
-    options.channelId = channelId
-    options.messageId = messageId
-    options.time = args.slice(2).join(' ')
+    target.channelId = channelId
+    target.messageId = messageId
   } else if (/^\d+\-\d+$/.test(search)) {
     // channel id - message id
     const [channelId, messageId] = search.split('-')
-    options.channelId = channelId
-    options.messageId = messageId
-    options.time = args.slice(2).join(' ')
+    target.channelId = channelId
+    target.messageId = messageId
   } else if (/^\d+$/.test(search)) {
     // message id
-    options.messageId = search
-    options.time = args.slice(2).join(' ')
+    target.messageId = search
   }
 
-  if (!options.messageId) {
+  if (!target.messageId) {
     return {
       response: {
-        content: translate('system.error.targetMessageSyntax', { guildId }),
+        content: translate('system.error.messageFormat', { guildId: guild.id }),
         embed: {
-          description: translate('system.error.targetMessageSyntaxHelp', { guildId }),
+          description: translate('system.error.messageFormatHelp', { guildId: guild.id }),
         },
       },
     }
   }
 
-  let targetMessage: Message | undefined = undefined
-  if (options.channelId) {
-    const targetChannel = message.client.channels.cache.get(options.channelId)
-    if (targetChannel instanceof TextChannel) {
-      targetMessage = await targetChannel.messages.fetch(options.messageId)
+  if (target.channelId) {
+    const targetChannel = guild.channels.cache.get(target.channelId)
+    if (targetChannel?.isTextBased()) {
+      try {
+        target.message = await targetChannel.messages.fetch(target.messageId)
+      } catch {}
     }
   } else {
-    const guildChannels: TextChannel[] = []
-    message.guild?.channels.cache.forEach(channel => {
-      if (channel instanceof TextChannel) {
+    const guildChannels: TextBasedChannel[] = []
+    guild.channels.cache.forEach(channel => {
+      if (channel.isTextBased()) {
         guildChannels.push(channel)
       }
     })
     for (const channel of guildChannels) {
       try {
-        targetMessage = await channel.messages.fetch(options.messageId)
+        target.message = await channel.messages.fetch(target.messageId)
         break
       } catch {}
     }
   }
 
-  if (targetMessage?.guild?.id !== guildId) {
+  if (!target.message) {
     return {
       response: {
-        content: translate('system.error.notFoundMessage', { guildId }),
+        content: translate('system.error.unknownMessage', { guildId: guild.id }),
         embed: {
-          description: translate('system.error.notFoundMessageHelp', { guildId }),
+          description: translate('system.error.unknownMessageHelp', { guildId: guild.id }),
         },
       },
     }
   }
 
-  if (!targetMessage.mentions.everyone && !targetMessage.mentions.roles.size && !targetMessage.mentions.members?.size) {
+  if (
+    !target.message.mentions.everyone &&
+    !target.message.mentions.roles.size &&
+    !target.message.mentions.members?.size
+  ) {
     return {
       response: {
-        content: translate('system.error.noMentionedMember', { guildId }),
+        content: translate('system.error.noMentionedMember', { guildId: guild.id }),
         embed: {
-          description: translate('system.error.noMentionedMemberHelp', { guildId }),
+          description: translate('system.error.noMentionedMemberHelp', { guildId: guild.id }).replace(
+            '{MESSAGE_LINK}',
+            target.message.url,
+          ),
         },
       },
-    }
-  }
-
-  let time: number | undefined = undefined
-  if (options.time) {
-    time = DateTime.fromFormat(options.time, 'yyyy-MM-dd HH:mm', {
-      zone: cache.settings[guildId]?.timezone || 'Asia/Taipei',
-    }).toMillis()
-
-    if (Number.isNaN(time)) {
-      return {
-        response: {
-          content: translate('system.error.timeFormatSyntax', { guildId }),
-          embed: {
-            description: translate('system.error.timeFormatSyntaxHelp, {guildId}')
-              .replace('USER_INPUT', Util.escapeMarkdown(options.time))
-              .replace('TIME', timeFormatter({ guildId, time: message.createdTimestamp })),
-          },
-        },
-      }
     }
   }
 
   return {
-    targetMessage,
-    time,
+    message: target.message,
   }
 }
 

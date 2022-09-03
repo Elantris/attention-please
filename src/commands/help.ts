@@ -1,18 +1,31 @@
+import { SlashCommandBuilder } from 'discord.js'
 import { CommandProps } from '../types'
-import cache from '../utils/cache'
 import { translate } from '../utils/translation'
 
-const commandHelp: CommandProps = async ({ guildId }) => {
-  const prefix = cache.settings[guildId]?.prefix || 'ap!'
+const build: CommandProps['build'] = new SlashCommandBuilder()
+  .setName('help')
+  .setDescription('Attention Please 使用說明')
+  .setDescriptionLocalizations({
+    'en-US': 'Manuals of Attention Please.',
+  })
+  .toJSON()
+
+const exec: CommandProps['exec'] = async interaction => {
+  const guildId = interaction.guildId
+  if (!guildId) {
+    return
+  }
 
   return {
-    response: {
-      content: translate('help.text.summary', { guildId })
-        .replace('PREFIX', prefix)
-        .replace('MANUAL', 'https://hackmd.io/@eelayntris/attention-please')
-        .replace('DISCORD', 'https://discord.gg/Ctwz4BB'),
-    },
+    content: translate('help.text.summary', { guildId })
+      .replace('{MANUAL}', 'https://hackmd.io/@eelayntris/attention-please')
+      .replace('{DISCORD}', 'https://discord.gg/Ctwz4BB'),
   }
 }
 
-export default commandHelp
+const command: CommandProps = {
+  build,
+  exec,
+}
+
+export default command

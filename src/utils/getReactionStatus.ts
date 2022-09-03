@@ -1,4 +1,4 @@
-import { Message } from 'discord.js'
+import { ChannelType, Message } from 'discord.js'
 
 const getReactionStatus: (message: Message) => Promise<{
   [MemberID: string]: {
@@ -6,11 +6,9 @@ const getReactionStatus: (message: Message) => Promise<{
     status: 'reacted' | 'absent' | 'locked'
   }
 }> = async message => {
-  if (message.channel.type === 'DM' || !message.guild) {
-    throw new Error('Invalid Message')
+  if (!message.channel.isTextBased() || message.channel.type === ChannelType.DM || !message.guild) {
+    return {}
   }
-
-  await message.guild.members.fetch()
 
   const mentionedMembers: {
     [MemberID: string]: {
@@ -50,13 +48,14 @@ const getReactionStatus: (message: Message) => Promise<{
   }
 
   if (Object.keys(mentionedMembers).length === 0) {
-    return mentionedMembers
+    return {}
   }
 
   const messageReactions = message.reactions.cache.values()
   for (const messageReaction of messageReactions) {
-    const users = (await messageReaction.users.fetch()).values()
-    for (const user of users) {
+    // await messageReaction.fetch()
+    await messageReaction.users.fetch()
+    for (const user of messageReaction.users.cache.values()) {
       if (mentionedMembers[user.id]) {
         mentionedMembers[user.id].status = 'reacted'
       }
@@ -68,8 +67,8 @@ const getReactionStatus: (message: Message) => Promise<{
       const member = message.guild.members.cache.get(memberId)
       if (
         !member ||
-        !message.channel.permissionsFor(member).has('VIEW_CHANNEL') ||
-        !message.channel.permissionsFor(member).has('READ_MESSAGE_HISTORY')
+        !message.channel.permissionsFor(member).has('ViewChannel') ||
+        !message.channel.permissionsFor(member).has('ReadMessageHistory')
       ) {
         mentionedMembers[memberId].status = 'locked'
       }

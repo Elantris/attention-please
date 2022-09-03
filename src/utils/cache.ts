@@ -1,51 +1,56 @@
-import { WebhookClient } from 'discord.js'
+import { RESTPostAPIApplicationCommandsJSONBody, TextChannel } from 'discord.js'
 import admin, { ServiceAccount } from 'firebase-admin'
-import config from '../config'
-import { JobProps } from '../types'
-
-export const loggerHook = new WebhookClient(config.DISCORD.LOGGER_HOOK)
+import { readdirSync } from 'fs'
+import { join } from 'path'
+import appConfig from '../appConfig'
+import { CommandProps, JobProps, LocaleType } from '../types'
 
 admin.initializeApp({
-  credential: admin.credential.cert(config.FIREBASE.serviceAccount as ServiceAccount),
-  databaseURL: config.FIREBASE.databaseURL,
+  credential: admin.credential.cert(appConfig.FIREBASE.serviceAccount as ServiceAccount),
+  databaseURL: appConfig.FIREBASE.databaseURL,
 })
 export const database = admin.database()
 
 const cache: {
   [key: string]: any
+  logChannel?: TextChannel
+  isInit: {
+    [GuildID in string]?: boolean
+  }
+  isCooling: {
+    [GuildID in string]?: boolean
+  }
+  isProcessing: {
+    [GuildID in string]?: boolean
+  }
   banned: {
     [ID in string]?: number
   }
-  remindSettings: {
-    [UserId in string]?: {
-      [emoji in string]: number
-    }
-  }
   settings: {
-    [GuildID in string]?: {
+    [GuildID in string]: {
       [key: string]: string | number | boolean
-      prefix: string
-      timezone: string
-      language: string
+      // nameList
+      reacted: boolean
+      absent: boolean
+      locked: boolean
+      // offset
+      offset: string
+      // raffle
       raffle: number
-      showReacted: boolean
-      showAbsent: boolean
-      showLocked: boolean
+      // locale
+      locale: LocaleType
     }
-  }
-  modules: {
-    mentionAbsent: { [GuildID in string]?: boolean }
   }
   jobs: {
     [JobID in string]?: JobProps
   }
 } = {
+  isInit: {},
+  isCooling: {},
+  isProcessing: {},
   banned: {},
   remindSettings: {},
   settings: {},
-  modules: {
-    mentionAbsent: {},
-  },
   jobs: {},
 }
 
@@ -65,17 +70,26 @@ const removeCache = (snapshot: admin.database.DataSnapshot) => {
 database.ref('/banned').on('child_added', updateCache)
 database.ref('/banned').on('child_changed', updateCache)
 database.ref('/banned').on('child_removed', removeCache)
-database.ref('/modules').on('child_added', updateCache)
-database.ref('/modules').on('child_changed', updateCache)
-database.ref('/modules').on('child_removed', removeCache)
-database.ref('/remindSettings').on('child_added', updateCache)
-database.ref('/remindSettings').on('child_changed', updateCache)
-database.ref('/remindSettings').on('child_removed', removeCache)
-database.ref('/settings').on('child_added', updateCache)
-database.ref('/settings').on('child_changed', updateCache)
-database.ref('/settings').on('child_removed', removeCache)
 database.ref('/jobs').on('child_added', updateCache)
 database.ref('/jobs').on('child_changed', updateCache)
 database.ref('/jobs').on('child_removed', removeCache)
+
+// load commands
+export const commands: { [CommandName in string]?: CommandProps } = {}
+export const commandBuilds: RESTPostAPIApplicationCommandsJSONBody[] = []
+
+readdirSync(join(__dirname, '../commands')).forEach(async filename => {
+  if (!filename.endsWith('.js') && !filename.endsWith('.ts')) {
+    return
+  }
+  const commandName = filename.split('.')[0]
+  const {
+    default: command,
+  }: {
+    default: CommandProps
+  } = await import(join(__dirname, '../commands', filename))
+  commands[commandName] = command
+  commandBuilds.push(command.build)
+})
 
 export default cache

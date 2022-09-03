@@ -1,55 +1,61 @@
-import { Client, FileOptions, MessageAttachment, MessageEmbed, MessageEmbedOptions, TextChannel } from 'discord.js'
+import { APIEmbed, escapeMarkdown, MessageOptions } from 'discord.js'
 import OpenColor from 'open-color'
-import { loggerHook } from './cache'
+import cache from './cache'
 import colorFormatter from './colorFormatter'
 import timeFormatter from './timeFormatter'
 
-const sendLog = async (
-  client: Client,
-  options: {
-    color?: string
-    time?: number
-    content?: string
-    embeds?: (MessageEmbed | MessageEmbedOptions)[]
-    files?: MessageAttachment[] | FileOptions[]
-    guildId?: string
-    channelId?: string
-    userId?: string
-    error?: Error
-    processTime?: number
-  },
-) => {
-  const guild = options.guildId ? client.guilds.cache.get(options.guildId) : undefined
-  const channel = options.channelId ? client.channels.cache.get(options.channelId) : undefined
-  const user = options.userId ? client.users.cache.get(options.userId) : undefined
-
-  await loggerHook.send({
-    content: '[`TIME`] CONTENT'
-      .replace('TIME', timeFormatter({ time: options.time, format: 'yyyy-MM-dd HH:mm:ss' }))
-      .replace('CONTENT', options.content?.trim() || ''),
+const sendLog = async (options: {
+  time: number
+  processTime: number
+  command: string
+  content: string
+  embeds?: APIEmbed[]
+  files?: MessageOptions['files']
+  guildId: string
+  guildName?: string
+  channelId: string
+  channelName?: string
+  userId: string
+  userName?: string
+  error?: Error
+}) => {
+  await cache.logChannel?.send({
+    content: '[`{TIME}`] `{COMMAND}`\n{CONTENT}'
+      .replace('{TIME}', timeFormatter({ time: options.time, format: 'yyyy-MM-dd HH:mm:ss' }))
+      .replace('{COMMAND}', options.command)
+      .replace('{CONTENT}', options.content),
     embeds: [
-      ...(options?.embeds || []),
+      ...(options.embeds || []),
       {
-        color: colorFormatter(options.error ? OpenColor.red[5] : options.color || OpenColor.orange[5]),
-        description: options.error ? '```ERROR```'.replace('ERROR', options.error.stack || '') : undefined,
+        color: options.error ? colorFormatter(OpenColor.red[5]) : undefined,
+        description: options.error ? '```{ERROR}```'.replace('{ERROR}', `${options.error}`) : undefined,
         fields: [
           {
             name: 'Guild',
-            value: guild ? `${guild.id}\n${guild.name}` : options.guildId || '--',
+            value: '{ID}\n{NAME}'
+              .replace('{ID}', options.guildId)
+              .replace('{NAME}', escapeMarkdown(options.guildName || '--')),
             inline: true,
           },
           {
             name: 'Channel',
-            value: channel instanceof TextChannel ? `${channel.id}\n${channel.name}` : channel?.id || '--',
+            value: '{ID}\n{NAME}'
+              .replace('{ID}', options.channelId)
+              .replace('{NAME}', escapeMarkdown(options.channelName || '--')),
             inline: true,
           },
           {
             name: 'User',
-            value: user ? `${user.id}\n${user.tag}` : options.userId || '--',
+            value: '{ID}\n{NAME}'
+              .replace('{ID}', options.userId)
+              .replace('{NAME}', escapeMarkdown(options.userName || '--')),
             inline: true,
           },
         ],
-        footer: options.processTime ? { text: `${options.processTime} ms` } : undefined,
+        footer: {
+          text: `${options.processTime || Date.now() - options.time}ms`,
+        },
+        timestamp: new Date(options.time).toISOString(),
       },
     ],
     files: options.files,
