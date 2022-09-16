@@ -106,3 +106,4 @@ dist
 build
 appConfig.ts
 tmp
+files

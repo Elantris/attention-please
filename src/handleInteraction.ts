@@ -17,9 +17,7 @@ const handleInteraction = async (interaction: Interaction) => {
   cache.isProcessing[guildId] = true
 
   try {
-    if (!cache.isInit[guildId]) {
-      await initGuild(interaction.client, guildId)
-    }
+    await initGuild(interaction.client, guildId)
   } catch (error: any) {
     cache.logChannel?.send({
       content: '[`{TIME}`] Error: init guild {GUILD_ID}'
@@ -80,53 +78,46 @@ const handleChatInputCommand = async (interaction: ChatInputCommandInteraction) 
     return
   }
 
+  const responseOptions = {
+    content: commandResult.content,
+    embeds: commandResult.embed
+      ? [
+          {
+            color: colorFormatter(OpenColor.orange[5]),
+            title: translate('system.text.support', { guildId }),
+            url: 'https://discord.gg/Ctwz4BB',
+            footer: { text: 'Version 2022-09-14' },
+            ...commandResult.embed,
+          },
+        ]
+      : undefined,
+    files: commandResult.files,
+  }
   const responseMessage =
     interaction.commandName === 'check'
-      ? await interaction.editReply({
-          content: commandResult.content,
-          embeds: commandResult.embed
-            ? [
-                {
-                  color: colorFormatter(OpenColor.orange[5]),
-                  title: translate('system.text.support', { guildId }),
-                  url: 'https://discord.gg/Ctwz4BB',
-                  footer: { text: 'Version 2022-09-03' },
-                  ...commandResult.embed,
-                },
-              ]
-            : undefined,
-          files: commandResult.files,
-        })
+      ? await interaction.editReply(responseOptions)
       : await interaction.reply({
-          content: commandResult.content,
-          embeds: commandResult.embed
-            ? [
-                {
-                  color: colorFormatter(OpenColor.orange[5]),
-                  title: translate('system.text.support', { guildId }),
-                  url: 'https://discord.gg/Ctwz4BB',
-                  footer: { text: 'Version 2022-09-03' },
-                  ...commandResult.embed,
-                },
-              ]
-            : undefined,
-          files: commandResult.files,
+          ...responseOptions,
           fetchReply: true,
         })
 
   await sendLog({
-    time: interaction.createdTimestamp,
-    processTime: (responseMessage.editedTimestamp || responseMessage.createdTimestamp) - createdTimestamp,
-    command: `${interaction}`,
-    content: commandResult.content,
-    embeds: commandResult.embed ? [commandResult.embed] : undefined,
-    files: commandResult.files,
-    guildId,
-    guildName: guild.name,
-    channelId: interaction.channelId,
-    channelName: channel.name,
-    userId: interaction.user.id,
-    userName: interaction.user.tag,
+    command: {
+      createdAt: interaction.createdTimestamp,
+      content: `${interaction}`,
+      guildId,
+      guildName: guild.name,
+      channelId: interaction.channelId,
+      channelName: channel.name,
+      userId: interaction.user.id,
+      userName: interaction.user.tag,
+    },
+    result: {
+      createdAt: responseMessage.editedTimestamp || responseMessage.createdTimestamp,
+      content: commandResult.content,
+      embed: commandResult.embed,
+      files: commandResult.files,
+    },
   })
 }
 

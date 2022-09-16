@@ -29,11 +29,7 @@ const exec: CommandProps['exec'] = async interaction => {
     return
   }
 
-  const jobId = interaction.options.getString('id')
-  if (!jobId) {
-    return
-  }
-
+  const jobId = interaction.options.getString('id', true)
   const job = cache.jobs[jobId]
   if (!job) {
     return {

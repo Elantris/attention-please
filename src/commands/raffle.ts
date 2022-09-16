@@ -11,11 +11,11 @@ import splitMessage from '../utils/splitMessage'
 import timeFormatter from '../utils/timeFormatter'
 import { translate } from '../utils/translation'
 
-const build: CommandProps['build'] = new SlashCommandBuilder()
-  .setName('check')
-  .setDescription('查看一則訊息中被標記的成員是否有按表情回應')
+const build = new SlashCommandBuilder()
+  .setName('raffle')
+  .setDescription('從一則訊息中被標記的人當中抽出有點選表情回應的成員')
   .setDescriptionLocalizations({
-    'en-US': 'Check reactions of mentioned members in a message.',
+    'en-US': 'Random pick reacted and mentioned members from a message.',
   })
   .addStringOption(option =>
     option
@@ -23,6 +23,15 @@ const build: CommandProps['build'] = new SlashCommandBuilder()
       .setDescription('目標訊息，複製訊息連結或 ID')
       .setDescriptionLocalizations({
         'en-US': 'Link or ID of target message.',
+      })
+      .setRequired(true),
+  )
+  .addIntegerOption(option =>
+    option
+      .setName('count')
+      .setDescription('中獎人數')
+      .setDescriptionLocalizations({
+        'en-US': 'The count of picked members.',
       })
       .setRequired(true),
   )
@@ -47,6 +56,7 @@ const exec: CommandProps['exec'] = async interaction => {
   const target: {
     message?: Message
     time?: number
+    count?: number
   } = {}
 
   if (interaction.isChatInputCommand()) {
@@ -63,10 +73,19 @@ const exec: CommandProps['exec'] = async interaction => {
       return timeResult.response
     }
 
+    const count = interaction.options.getInteger('count', true)
+    if (count < 1) {
+      return {
+        content: translate('raffle.error.raffleCount', { guildId }),
+      }
+    }
+
     target.message = messageResult.message
     target.time = timeResult.time
+    target.count = count
   } else if (interaction.isMessageContextMenuCommand()) {
     target.message = interaction.targetMessage
+    target.count = 30
   }
 
   if (!target.message) {
@@ -75,27 +94,35 @@ const exec: CommandProps['exec'] = async interaction => {
 
   if (target.time) {
     if (target.time < interaction.createdTimestamp) {
-      return await getCheckResult(target.message, { passedCheckAt: target.time })
+      return {
+        content: translate('raffle.error.raffleJobTime', { guildId }),
+        embed: {
+          description: translate('raffle.error.raffleJobTimeHelp', { guildId }).replace(
+            '{TIMESTAMP}',
+            `${Math.floor(target.time / 1000)}`,
+          ),
+        },
+      }
     }
 
-    const jobId = `check_${target.message.id}`
+    const jobId = `raffle_${target.message.id}`
     const isDuplicated = !!cache.jobs[jobId]
 
     if (!isDuplicated) {
       let existedJobsCount = 0
       for (const jobId in cache.jobs) {
         const job = cache.jobs[jobId]
-        if (job && job.clientId === clientId && jobId.startsWith('check_') && job.command.guildId === guildId) {
+        if (job && job.clientId === clientId && jobId.startsWith('raffle_') && job.command.guildId === guildId) {
           existedJobsCount += 1
         }
       }
       if (existedJobsCount > 4) {
         return {
-          content: translate('check.error.checkJobLimit', { guildId }),
+          content: translate('raffle.error.raffleJobLimit', { guildId }),
           embed: {
-            description: translate('check.error.checkJobLimitHelp', { guildId }).replace(
-              '{CHECK_JOBS}',
-              getAllJobs(clientId, guild, 'check'),
+            description: translate('raffle.error.raffleJobLimitHelp', { guildId }).replace(
+              '{RAFFLE_JOBS}',
+              getAllJobs(clientId, guild, 'raffle'),
             ),
           },
         }
@@ -109,6 +136,7 @@ const exec: CommandProps['exec'] = async interaction => {
         guildId,
         channelId: interaction.channelId,
         userId: interaction.user.id,
+        raffleCount: target.count,
       },
       target: {
         messageId: target.message.id,
@@ -120,29 +148,29 @@ const exec: CommandProps['exec'] = async interaction => {
 
     return {
       content: (isDuplicated
-        ? translate('check.text.checkJobUpdated', { guildId })
-        : translate('check.text.checkJobCreated', { guildId })
+        ? translate('raffle.text.raffleJobUpdated', { guildId })
+        : translate('raffle.text.raffleJobCreated', { guildId })
       )
         .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
         .replace('{JOB_ID}', jobId),
       embed: {
-        description: translate('check.text.checkJobDescription', { guildId })
+        description: translate('raffle.text.raffleJobDescription', { guildId })
           .replace('{TIME}', timeFormatter({ time: target.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
           .replace('{FROM_NOW}', `<t:${Math.floor(target.time / 1000)}:R>`)
           .replace('{TARGET_URL}', target.message.url)
           .replace('{JOB_ID}', jobId)
-          .replace('{CHECK_JOBS}', getAllJobs(clientId, guild, 'check')),
+          .replace('{RAFFLE_JOBS}', getAllJobs(clientId, guild, 'raffle')),
       },
     }
   }
 
-  return await getCheckResult(target.message)
+  return getRaffleResult(target.message, { count: target.count })
 }
 
-export const getCheckResult: (
+export const getRaffleResult: (
   message: Message,
   options?: {
-    passedCheckAt?: number
+    count?: number
   },
 ) => Promise<ResultProps | void> = async (message, options) => {
   if (message.channel.type === ChannelType.DM || !message.guild) {
@@ -150,7 +178,7 @@ export const getCheckResult: (
   }
 
   const guildId = message.guild.id
-  const checkAt = Date.now()
+  const raffleAt = Date.now()
   const mentionedMembers = await getReactionStatus(message)
   const allMembersCount = Object.keys(mentionedMembers).length
 
@@ -179,26 +207,38 @@ export const getCheckResult: (
     }
   }
 
-  reactedMemberNames.sort((a, b) => a.localeCompare(b))
-  absentMemberNames.sort((a, b) => a.localeCompare(b))
-  lockedMemberNames.sort((a, b) => a.localeCompare(b))
+  const reactedMemberCount = reactedMemberNames.length
+  if (reactedMemberCount === 0) {
+    return {
+      content: translate('raffle.error.noReactedMembers', { guildId }),
+      embed: {
+        description: translate('raffle.error.noReactedMembersHelp', { guildId }),
+      },
+    }
+  }
+
+  for (let i = 0; i < reactedMemberCount - 1; i++) {
+    const choose = Math.floor(Math.random() * i)
+    ;[reactedMemberNames[i], reactedMemberNames[choose]] = [reactedMemberNames[choose], reactedMemberNames[i]]
+  }
+  const raffleCount = options?.count || 30
+  const luckyMemberNames = reactedMemberNames.splice(0, raffleCount)
 
   const fields: APIEmbed['fields'] = []
   const files: MessageOptions['files'] = []
-  if (allMembersCount > 200) {
+  if (reactedMemberCount > 100 || raffleCount > 100) {
     const filePath = join(__dirname, '../../files/', `${message.id}.txt`)
     writeFileSync(
       filePath,
-      translate('check.text.checkResultFile', { guildId })
+      translate('raffle.text.raffleResultFile', { guildId })
         .replace('{GUILD_NAME}', message.guild.name)
         .replace('{CHANNEL_NAME}', message.channel.name)
-        .replace('{TIME}', timeFormatter({ time: checkAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
+        .replace('{TIME}', timeFormatter({ time: raffleAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
         .replace('{MESSAGE_URL}', message.url)
         .replace('{ALL_COUNT}', `${allMembersCount}`)
         .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
-        .replace('{ABSENT_COUNT}', `${absentMemberNames.length}`)
-        .replace('{LOCKED_COUNT}', `${lockedMemberNames.length}`)
         .replace('{PERCENTAGE}', ((reactedMemberNames.length * 100) / allMembersCount).toFixed(2))
+        .replace('{LUCKY_MEMBERS}', luckyMemberNames.join('\r\n'))
         .replace('{REACTED_MEMBERS}', reactedMemberNames.join('\r\n'))
         .replace('{ABSENT_MEMBERS}', absentMemberNames.join('\r\n'))
         .replace('{LOCKED_MEMBERS}', lockedMemberNames.join('\r\n')),
@@ -209,36 +249,22 @@ export const getCheckResult: (
       name: `${message.id}.txt`,
     })
   } else {
-    cache.settings[guildId]?.reacted !== false &&
-      reactedMemberNames.length &&
-      splitMessage(reactedMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
-        length: 1000,
-      }).forEach((content, index) => {
-        fields.push({
-          name: translate('check.text.reactedMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
-          value: content.replace(/\n/g, '、'),
-        })
+    splitMessage(luckyMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
+      length: 1000,
+    }).forEach((content, index) => {
+      fields.push({
+        name: translate('raffle.text.luckyMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
+        value: content.replace(/\n/g, '、'),
       })
-    cache.settings[guildId]?.absent !== false &&
-      absentMemberNames.length &&
-      splitMessage(absentMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
-        length: 1000,
-      }).forEach((content, index) => {
-        fields.push({
-          name: translate('check.text.absentMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
-          value: content.replace(/\n/g, '、'),
-        })
+    })
+    splitMessage(reactedMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
+      length: 1000,
+    }).forEach((content, index) => {
+      fields.push({
+        name: translate('raffle.text.missedMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
+        value: content.replace(/\n/g, '、'),
       })
-    cache.settings[guildId]?.locked !== false &&
-      lockedMemberNames.length &&
-      splitMessage(lockedMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
-        length: 1000,
-      }).forEach((content, index) => {
-        fields.push({
-          name: translate('check.text.lockedMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
-          value: content.replace(/\n/g, '、'),
-        })
-      })
+    })
   }
 
   const warnings: string[] = []
@@ -247,28 +273,22 @@ export const getCheckResult: (
       translate('check.text.lockedMembersWarning', { guildId }).replace('{COUNT}', `${lockedMemberNames.length}`),
     )
   }
-  if (options?.passedCheckAt) {
-    warnings.push(
-      translate('check.text.checkTimePassedWarning', { guildId }).replace(
-        '{TIMESTAMP}',
-        `${Math.floor(options.passedCheckAt / 1000)}`,
-      ),
-    )
-  }
 
   return {
-    content: translate('check.text.checkResult', { guildId })
+    content: translate('raffle.text.raffleResult', { guildId })
       .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
       .replace('{ALL_COUNT}', `${allMembersCount}`)
       .replace('{PERCENTAGE}', ((reactedMemberNames.length * 100) / allMembersCount).toFixed(2))
       .trim(),
     embed: {
-      description: translate('check.text.checkResultDescription', { guildId })
-        .replace('{TIME}', timeFormatter({ time: checkAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
-        .replace('{FROM_NOW}', `<t:${Math.floor(checkAt / 1000)}:R>`)
+      description: translate('raffle.text.raffleResultDescription', { guildId })
+        .replace('{TIME}', timeFormatter({ time: raffleAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
+        .replace('{FROM_NOW}', `<t:${Math.floor(raffleAt / 1000)}:R>`)
         .replace('{MESSAGE_URL}', message.url)
         .replace('{ALL_COUNT}', `${allMembersCount}`)
-        .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
+        .replace('{REACTED_COUNT}', `${reactedMemberCount}`)
+        .replace('{LUCKY_COUNT}', `${luckyMemberNames.length}`)
+        .replace('{MISSED_COUNT}', `${reactedMemberNames.length}`)
         .replace('{ABSENT_COUNT}', `${absentMemberNames.length}`)
         .replace('{WARNINGS}', warnings.join('\n'))
         .trim(),

@@ -23,7 +23,6 @@ const getAllJobs = (clientId: string, guild: Guild, type: 'check' | 'raffle') =>
   jobs.sort((a, b) => a.executeAt - b.executeAt)
 
   return translate('cancel.text.allJobs', { guildId: guild.id })
-    .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
     .replace('{COUNT}', `${jobs.length}`)
     .replace(
       '{ALL_JOBS}',

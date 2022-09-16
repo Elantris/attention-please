@@ -53,7 +53,6 @@ const getReactionStatus: (message: Message) => Promise<{
 
   const messageReactions = message.reactions.cache.values()
   for (const messageReaction of messageReactions) {
-    // await messageReaction.fetch()
     await messageReaction.users.fetch()
     for (const user of messageReaction.users.cache.values()) {
       if (mentionedMembers[user.id]) {

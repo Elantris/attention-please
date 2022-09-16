@@ -13,9 +13,10 @@ export const database = admin.database()
 
 const cache: {
   [key: string]: any
-  logChannel?: TextChannel
+  logChannel: TextChannel | null
+  isReady: boolean
   isInit: {
-    [GuildID in string]?: boolean
+    [GuildID in string]?: number
   }
   isCooling: {
     [GuildID in string]?: boolean
@@ -45,11 +46,12 @@ const cache: {
     [JobID in string]?: JobProps
   }
 } = {
+  logChannel: null,
+  isReady: false,
   isInit: {},
   isCooling: {},
   isProcessing: {},
   banned: {},
-  remindSettings: {},
   settings: {},
   jobs: {},
 }
@@ -83,11 +85,7 @@ readdirSync(join(__dirname, '../commands')).forEach(async filename => {
     return
   }
   const commandName = filename.split('.')[0]
-  const {
-    default: command,
-  }: {
-    default: CommandProps
-  } = await import(join(__dirname, '../commands', filename))
+  const { default: command }: { default: CommandProps } = await import(join(__dirname, '../commands', filename))
   commands[commandName] = command
   commandBuilds.push(command.build)
 })

@@ -18,6 +18,7 @@ export type JobProps = {
     guildId: string
     channelId: string
     userId: string
+    raffleCount?: number
   }
   target: {
     channelId: string

@@ -18,21 +18,21 @@ const handleReady = async (client: Client) => {
   } catch (error: any) {
     await logChannel.send(
       '`{TIME}` Register slash commands error\n```{ERROR}```'
-        .replace('{TIME}', timeFormatter({ format: 'yyyy-MM-dd HH:mm:ss' }))
+        .replace('{TIME}', timeFormatter())
         .replace('{ERROR}', error),
     )
   }
 
   logChannel.send(
-    '`TIME` USER_TAG'
-      .replace('TIME', timeFormatter({ format: 'yyyy-MM-dd HH:mm:ss' }))
-      .replace('USER_TAG', client.user?.tag || ''),
+    '`{TIME}` {USER_TAG}'.replace('{TIME}', timeFormatter()).replace('{USER_TAG}', client.user?.tag || ''),
   )
 
   setInterval(() => {
     client.user?.setActivity(`on ${client.guilds.cache.size} guilds.`)
     executeJobs(client)
   }, 10000)
+
+  cache.isReady = true
 }
 
 export default handleReady

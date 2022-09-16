@@ -2,14 +2,10 @@ import { Guild, Message, TextBasedChannel } from 'discord.js'
 import { ResultProps } from '../types'
 import { translate } from './translation'
 
-const fetchTargetMessage: (options: { guild: Guild; search: string | null }) => Promise<{
+const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise<{
   message?: Message
   response?: ResultProps
 }> = async ({ guild, search }) => {
-  if (!search) {
-    return {}
-  }
-
   const target: {
     channelId?: string
     messageId?: string
@@ -69,7 +65,10 @@ const fetchTargetMessage: (options: { guild: Guild; search: string | null }) => 
       response: {
         content: translate('system.error.unknownMessage', { guildId: guild.id }),
         embed: {
-          description: translate('system.error.unknownMessageHelp', { guildId: guild.id }),
+          description: translate('system.error.unknownMessageHelp', { guildId: guild.id }).replace(
+            '{USER_INPUT}',
+            search,
+          ),
         },
       },
     }

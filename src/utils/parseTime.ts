@@ -3,7 +3,7 @@ import { ResultProps } from '../types'
 import timeFormatter from './timeFormatter'
 import { translate } from './translation'
 
-const getTime: (options: { guildId: string; time: string | null }) => {
+const parseTime: (options: { guildId: string; time: string | null }) => {
   time?: number
   response?: ResultProps
 } = ({ time, guildId }) => {
@@ -15,15 +15,19 @@ const getTime: (options: { guildId: string; time: string | null }) => {
   if (!targetTime.isValid) {
     return {
       response: {
-        content: translate('system.error.timeFormat', { guildId }).replace('{TIME}', timeFormatter({ guildId })),
+        content: translate('system.error.timeFormat', { guildId }),
         embed: {
-          description: translate('system.error.timeFormatHelp', { guildId }),
+          description: translate('system.error.timeFormatHelp', { guildId })
+            .replace('{TIME}', timeFormatter({ guildId, format: 'yyyy-MM-dd HH:mm' }))
+            .replace('{USER_INPUT}', time),
         },
       },
     }
   }
 
-  return { time: targetTime.toMillis() }
+  return {
+    time: targetTime.toMillis(),
+  }
 }
 
-export default getTime
+export default parseTime
