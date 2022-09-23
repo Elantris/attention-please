@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
 import { ResultProps } from '../types'
+import cache from './cache'
 import timeFormatter from './timeFormatter'
 import { translate } from './translation'
 
@@ -11,7 +12,9 @@ const parseTime: (options: { guildId: string; time: string | null }) => {
     return {}
   }
 
-  const targetTime = DateTime.fromFormat(time, 'yyyy-MM-dd HH:mm')
+  const offset = cache.settings[guildId].offset ?? 8
+
+  const targetTime = DateTime.fromFormat(`${time} ${offset >= 0 ? '+' : ''}${offset}`, 'yyyy-MM-dd HH:mm Z')
   if (!targetTime.isValid) {
     return {
       response: {

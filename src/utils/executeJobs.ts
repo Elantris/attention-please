@@ -1,4 +1,4 @@
-import { ChannelType, Client } from 'discord.js'
+import { Client } from 'discord.js'
 import OpenColor from 'open-color'
 import { getCheckResult } from '../commands/check'
 import { getRaffleResult } from '../commands/raffle'
@@ -27,14 +27,9 @@ const executeJobs = async (client: Client) => {
       await initGuild(client, job.command.guildId)
 
       const targetGuild = client.guilds.cache.get(job.command.guildId)
-      const targetChannel = client.channels.cache.get(job.target.channelId)
-      const commandChannel = client.channels.cache.get(job.command.channelId)
-      if (
-        !targetGuild ||
-        !targetChannel?.isTextBased() ||
-        !commandChannel?.isTextBased() ||
-        commandChannel.type === ChannelType.DM
-      ) {
+      const targetChannel = targetGuild?.channels.cache.get(job.target.channelId)
+      const commandChannel = targetGuild?.channels.cache.get(job.command.channelId)
+      if (!targetGuild || !targetChannel?.isTextBased() || !commandChannel?.isTextBased()) {
         throw new Error('Channel is not found')
       }
       const targetMessage = await targetChannel.messages.fetch(job.target.messageId)
@@ -58,7 +53,7 @@ const executeJobs = async (client: Client) => {
                 color: colorFormatter(OpenColor.orange[5]),
                 title: translate('system.text.support', { guildId: job.command.guildId }),
                 url: 'https://discord.gg/Ctwz4BB',
-                footer: { text: 'Version 2022-09-14' },
+                footer: { text: 'Version 2022-09-24' },
                 ...commandResult.embed,
               },
             ]
@@ -86,15 +81,16 @@ const executeJobs = async (client: Client) => {
       })
     } catch (error: any) {
       if (job.retryTimes > 1) {
-        const commandChannel = client.channels.cache.get(job.command.channelId)
+        const guild = client.guilds.cache.get(job.command.guildId)
+        const commandChannel = guild?.channels.cache.get(job.command.channelId)
         await sendLog({
           command: {
             createdAt: executeAt,
             content: `Execute job ${jobId}`,
             guildId: job.command.guildId,
-            guildName: client.guilds.cache.get(job.command.guildId)?.name,
+            guildName: guild?.name,
             channelId: job.command.channelId,
-            channelName: commandChannel?.type === ChannelType.DM ? undefined : commandChannel?.name || undefined,
+            channelName: commandChannel?.name,
             userId: job.command.userId,
             userName: client.users.cache.get(job.command.userId)?.tag,
           },

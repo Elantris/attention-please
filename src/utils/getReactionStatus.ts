@@ -1,15 +1,11 @@
-import { ChannelType, Message } from 'discord.js'
+import { Message } from 'discord.js'
 
-const getReactionStatus: (message: Message) => Promise<{
+const getReactionStatus: (message: Message<true>) => Promise<{
   [MemberID: string]: {
     name: string
     status: 'reacted' | 'absent' | 'locked'
   }
 }> = async message => {
-  if (!message.channel.isTextBased() || message.channel.type === ChannelType.DM || !message.guild) {
-    return {}
-  }
-
   const mentionedMembers: {
     [MemberID: string]: {
       name: string

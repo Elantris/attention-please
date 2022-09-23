@@ -1,4 +1,4 @@
-import { APIEmbed, ChannelType, escapeMarkdown, Message, MessageOptions, SlashCommandBuilder } from 'discord.js'
+import { APIEmbed, escapeMarkdown, Message, MessageCreateOptions, SlashCommandBuilder } from 'discord.js'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
 import { CommandProps, JobProps, ResultProps } from '../types'
@@ -45,7 +45,7 @@ const exec: CommandProps['exec'] = async interaction => {
   }
 
   const target: {
-    message?: Message
+    message?: Message<true>
     time?: number
   } = {}
 
@@ -65,8 +65,6 @@ const exec: CommandProps['exec'] = async interaction => {
 
     target.message = messageResult.message
     target.time = timeResult.time
-  } else if (interaction.isMessageContextMenuCommand()) {
-    target.message = interaction.targetMessage
   }
 
   if (!target.message) {
@@ -119,18 +117,15 @@ const exec: CommandProps['exec'] = async interaction => {
     await database.ref(`/jobs/${jobId}`).set(job)
 
     return {
-      content: (isDuplicated
-        ? translate('check.text.checkJobUpdated', { guildId })
-        : translate('check.text.checkJobCreated', { guildId })
-      )
+      content: translate(isDuplicated ? 'check.text.checkJobUpdated' : 'check.text.checkJobCreated', { guildId })
         .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
         .replace('{JOB_ID}', jobId),
       embed: {
         description: translate('check.text.checkJobDescription', { guildId })
+          .replace('{JOB_ID}', jobId)
           .replace('{TIME}', timeFormatter({ time: target.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
           .replace('{FROM_NOW}', `<t:${Math.floor(target.time / 1000)}:R>`)
           .replace('{TARGET_URL}', target.message.url)
-          .replace('{JOB_ID}', jobId)
           .replace('{CHECK_JOBS}', getAllJobs(clientId, guild, 'check')),
       },
     }
@@ -140,15 +135,11 @@ const exec: CommandProps['exec'] = async interaction => {
 }
 
 export const getCheckResult: (
-  message: Message,
+  message: Message<true>,
   options?: {
     passedCheckAt?: number
   },
 ) => Promise<ResultProps | void> = async (message, options) => {
-  if (message.channel.type === ChannelType.DM || !message.guild) {
-    return
-  }
-
   const guildId = message.guild.id
   const checkAt = Date.now()
   const mentionedMembers = await getReactionStatus(message)
@@ -184,7 +175,7 @@ export const getCheckResult: (
   lockedMemberNames.sort((a, b) => a.localeCompare(b))
 
   const fields: APIEmbed['fields'] = []
-  const files: MessageOptions['files'] = []
+  const files: MessageCreateOptions['files'] = []
   if (allMembersCount > 200) {
     const filePath = join(__dirname, '../../files/', `${message.id}.txt`)
     writeFileSync(
@@ -206,7 +197,7 @@ export const getCheckResult: (
     )
     files.push({
       attachment: filePath,
-      name: `${message.id}.txt`,
+      name: `check-${message.id}.txt`,
     })
   } else {
     cache.settings[guildId]?.reacted !== false &&

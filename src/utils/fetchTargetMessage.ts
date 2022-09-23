@@ -1,15 +1,15 @@
-import { Guild, Message, TextBasedChannel } from 'discord.js'
+import { Guild, GuildTextBasedChannel, Message } from 'discord.js'
 import { ResultProps } from '../types'
 import { translate } from './translation'
 
 const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise<{
-  message?: Message
+  message?: Message<true>
   response?: ResultProps
 }> = async ({ guild, search }) => {
   const target: {
     channelId?: string
     messageId?: string
-    message?: Message
+    message?: Message<true>
   } = {}
 
   if (/^https:\/\/\S*\/channels\/\d+\/\d+\/\d+$/.test(search)) {
@@ -46,7 +46,7 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
       } catch {}
     }
   } else {
-    const guildChannels: TextBasedChannel[] = []
+    const guildChannels: GuildTextBasedChannel[] = []
     guild.channels.cache.forEach(channel => {
       if (channel.isTextBased()) {
         guildChannels.push(channel)

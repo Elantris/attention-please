@@ -1,4 +1,4 @@
-import { APIEmbed, Interaction, MessageOptions, RESTPostAPIApplicationCommandsJSONBody } from 'discord.js'
+import { APIEmbed, Interaction, MessageCreateOptions, RESTPostAPIApplicationCommandsJSONBody } from 'discord.js'
 
 export type CommandProps = {
   build: RESTPostAPIApplicationCommandsJSONBody
@@ -8,7 +8,7 @@ export type CommandProps = {
 export type ResultProps = {
   content: string
   embed?: APIEmbed
-  files?: MessageOptions['files']
+  files?: MessageCreateOptions['files']
 }
 
 export type JobProps = {

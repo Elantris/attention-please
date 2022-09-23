@@ -35,7 +35,7 @@ const exec: CommandProps['exec'] = async interaction => {
     return {
       content: translate('cancel.error.jobNotFound', { guildId }),
       embed: {
-        description: getAllJobs(clientId, guild, 'check'),
+        description: getAllJobs(clientId, guild, 'all'),
       },
     }
   }
@@ -46,7 +46,7 @@ const exec: CommandProps['exec'] = async interaction => {
       .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
       .replace('{JOB_ID}', jobId),
     embed: {
-      description: getAllJobs(clientId, guild, 'check'),
+      description: getAllJobs(clientId, guild, 'all'),
     },
   }
 }

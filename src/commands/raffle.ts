@@ -1,4 +1,4 @@
-import { APIEmbed, ChannelType, escapeMarkdown, Message, MessageOptions, SlashCommandBuilder } from 'discord.js'
+import { escapeMarkdown, Message, SlashCommandBuilder } from 'discord.js'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
 import { CommandProps, JobProps, ResultProps } from '../types'
@@ -7,7 +7,6 @@ import fetchTargetMessage from '../utils/fetchTargetMessage'
 import getAllJobs from '../utils/getAllJobs'
 import getReactionStatus from '../utils/getReactionStatus'
 import parseTime from '../utils/parseTime'
-import splitMessage from '../utils/splitMessage'
 import timeFormatter from '../utils/timeFormatter'
 import { translate } from '../utils/translation'
 
@@ -54,7 +53,7 @@ const exec: CommandProps['exec'] = async interaction => {
   }
 
   const target: {
-    message?: Message
+    message?: Message<true>
     time?: number
     count?: number
   } = {}
@@ -83,9 +82,6 @@ const exec: CommandProps['exec'] = async interaction => {
     target.message = messageResult.message
     target.time = timeResult.time
     target.count = count
-  } else if (interaction.isMessageContextMenuCommand()) {
-    target.message = interaction.targetMessage
-    target.count = 30
   }
 
   if (!target.message) {
@@ -147,18 +143,15 @@ const exec: CommandProps['exec'] = async interaction => {
     await database.ref(`/jobs/${jobId}`).set(job)
 
     return {
-      content: (isDuplicated
-        ? translate('raffle.text.raffleJobUpdated', { guildId })
-        : translate('raffle.text.raffleJobCreated', { guildId })
-      )
+      content: translate(isDuplicated ? 'raffle.text.raffleJobUpdated' : 'raffle.text.raffleJobCreated', { guildId })
         .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
         .replace('{JOB_ID}', jobId),
       embed: {
         description: translate('raffle.text.raffleJobDescription', { guildId })
+          .replace('{JOB_ID}', jobId)
           .replace('{TIME}', timeFormatter({ time: target.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
           .replace('{FROM_NOW}', `<t:${Math.floor(target.time / 1000)}:R>`)
           .replace('{TARGET_URL}', target.message.url)
-          .replace('{JOB_ID}', jobId)
           .replace('{RAFFLE_JOBS}', getAllJobs(clientId, guild, 'raffle')),
       },
     }
@@ -168,15 +161,11 @@ const exec: CommandProps['exec'] = async interaction => {
 }
 
 export const getRaffleResult: (
-  message: Message,
+  message: Message<true>,
   options?: {
     count?: number
   },
 ) => Promise<ResultProps | void> = async (message, options) => {
-  if (message.channel.type === ChannelType.DM || !message.guild) {
-    return
-  }
-
   const guildId = message.guild.id
   const raffleAt = Date.now()
   const mentionedMembers = await getReactionStatus(message)
@@ -224,48 +213,23 @@ export const getRaffleResult: (
   const raffleCount = options?.count || 30
   const luckyMemberNames = reactedMemberNames.splice(0, raffleCount)
 
-  const fields: APIEmbed['fields'] = []
-  const files: MessageOptions['files'] = []
-  if (reactedMemberCount > 100 || raffleCount > 100) {
-    const filePath = join(__dirname, '../../files/', `${message.id}.txt`)
-    writeFileSync(
-      filePath,
-      translate('raffle.text.raffleResultFile', { guildId })
-        .replace('{GUILD_NAME}', message.guild.name)
-        .replace('{CHANNEL_NAME}', message.channel.name)
-        .replace('{TIME}', timeFormatter({ time: raffleAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
-        .replace('{MESSAGE_URL}', message.url)
-        .replace('{ALL_COUNT}', `${allMembersCount}`)
-        .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
-        .replace('{PERCENTAGE}', ((reactedMemberNames.length * 100) / allMembersCount).toFixed(2))
-        .replace('{LUCKY_MEMBERS}', luckyMemberNames.join('\r\n'))
-        .replace('{REACTED_MEMBERS}', reactedMemberNames.join('\r\n'))
-        .replace('{ABSENT_MEMBERS}', absentMemberNames.join('\r\n'))
-        .replace('{LOCKED_MEMBERS}', lockedMemberNames.join('\r\n')),
-      { encoding: 'utf8' },
-    )
-    files.push({
-      attachment: filePath,
-      name: `${message.id}.txt`,
-    })
-  } else {
-    splitMessage(luckyMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
-      length: 1000,
-    }).forEach((content, index) => {
-      fields.push({
-        name: translate('raffle.text.luckyMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
-        value: content.replace(/\n/g, '、'),
-      })
-    })
-    splitMessage(reactedMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
-      length: 1000,
-    }).forEach((content, index) => {
-      fields.push({
-        name: translate('raffle.text.missedMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
-        value: content.replace(/\n/g, '、'),
-      })
-    })
-  }
+  const filePath = join(__dirname, '../../files/', `${message.id}.txt`)
+  writeFileSync(
+    filePath,
+    translate('raffle.text.raffleResultFile', { guildId })
+      .replace('{GUILD_NAME}', message.guild.name)
+      .replace('{CHANNEL_NAME}', message.channel.name)
+      .replace('{TIME}', timeFormatter({ time: raffleAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
+      .replace('{MESSAGE_URL}', message.url)
+      .replace('{ALL_COUNT}', `${allMembersCount}`)
+      .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
+      .replace('{PERCENTAGE}', ((reactedMemberNames.length * 100) / allMembersCount).toFixed(2))
+      .replace('{LUCKY_MEMBERS}', luckyMemberNames.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{REACTED_MEMBERS}', reactedMemberNames.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{ABSENT_MEMBERS}', absentMemberNames.join('\r\n'))
+      .replace('{LOCKED_MEMBERS}', lockedMemberNames.join('\r\n')),
+    { encoding: 'utf8' },
+  )
 
   const warnings: string[] = []
   if (lockedMemberNames.length) {
@@ -292,9 +256,13 @@ export const getRaffleResult: (
         .replace('{ABSENT_COUNT}', `${absentMemberNames.length}`)
         .replace('{WARNINGS}', warnings.join('\n'))
         .trim(),
-      fields,
     },
-    files,
+    files: [
+      {
+        attachment: filePath,
+        name: `raffle-${message.id}.txt`,
+      },
+    ],
   }
 }
 

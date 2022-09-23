@@ -1,15 +1,20 @@
-import { APIEmbed, SlashCommandBuilder } from 'discord.js'
+import { APIEmbed, escapeMarkdown, SlashCommandBuilder } from 'discord.js'
 import { CommandProps, isLocaleType } from '../types'
 import cache, { database } from '../utils/cache'
 import { translate } from '../utils/translation'
 
 const nameLists = ['reacted', 'absent', 'locked'] as const
 type NameListType = typeof nameLists[number]
-const isNameList = (target: string | null): target is NameListType => !!nameLists.find(v => v === target)
+const isNameList = (target: string): target is NameListType => !!nameLists.find(v => v === target)
 
 const build: CommandProps['build'] = new SlashCommandBuilder()
   .setName('config')
   .setDescription('偏好設定')
+  .addSubcommand(subcommand =>
+    subcommand.setName('all').setDescription('查看當前所有設定').setDescriptionLocalizations({
+      'en-US': 'Show all configs.',
+    }),
+  )
   .addSubcommand(subcommand =>
     subcommand
       .setName('list')
@@ -42,29 +47,23 @@ const build: CommandProps['build'] = new SlashCommandBuilder()
           .addChoices({ name: 'on', value: 'on' }, { name: 'off', value: 'off' }),
       ),
   )
-  // .addSubcommand(subcommand =>
-  //   subcommand
-  //     .setName('offset')
-  //     .setDescription('設定時區偏移量')
-  //     .setDescriptionLocalizations({
-  //       'en-US': 'Set time offset.',
-  //     })
-  //     .addNumberOption(option =>
-  //       option
-  //         .setName('offset')
-  //         .setDescription('介於 -12 ~ 12 之間的數字')
-  //         .setDescriptionLocalizations({
-  //           'en-US': 'A number in range of -12 ~ 12.',
-  //         })
-  //         .setRequired(true),
-  //     ),
-  // )
-  // .addSubcommand(subcommand =>
-  //   subcommand
-  //     .setName('raffle')
-  //     .setDescription('設定中獎人數')
-  //     .addIntegerOption(option => option.setName('raffle').setDescription('輸入一個正整數').setRequired(true)),
-  // )
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName('offset')
+      .setDescription('設定時間偏移量')
+      .setDescriptionLocalizations({
+        'en-US': 'Set time offset.',
+      })
+      .addNumberOption(option =>
+        option
+          .setName('offset')
+          .setDescription('介於 -12 ~ 12 之間的數字，例如 GMT+8 則輸入 8')
+          .setDescriptionLocalizations({
+            'en-US': 'A number in range of -12 ~ 12. Example: GMT+8, enter 8.',
+          })
+          .setRequired(true),
+      ),
+  )
   // .addSubcommand(subcommand =>
   //   subcommand
   //     .setName('locale')
@@ -96,16 +95,12 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
       value: translate(`config.label.${cache.settings[guildId].locked === false ? 'hidden' : 'show'}`, { guildId }),
       inline: true,
     },
+    {
+      name: 'Offset',
+      value: `${cache.settings[guildId].offset ?? 8}`,
+    },
     // {
-    //   name: 'offset',
-    //   value: cache.settings[guildId].offset || 'GMT+8',
-    // },
-    // {
-    //   name: 'raffle',
-    //   value: cache.settings[guildId].raffle || 30,
-    // },
-    // {
-    //   name: 'locale',
+    //   name: 'Locale',
     //   value: cache.settings[guildId].locale || 'zh-TW',
     // },
   ]
@@ -113,15 +108,23 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
 
 const exec: CommandProps['exec'] = async interaction => {
   const guildId = interaction.guildId
-  if (!interaction.isChatInputCommand() || !guildId) {
+  const guild = interaction.guild
+  if (!interaction.isChatInputCommand() || !guildId || !guild) {
     return
   }
 
   const subcommand = interaction.options.getSubcommand()
 
-  if (subcommand === 'list') {
-    const type = interaction.options.getString('type')
-    const action = interaction.options.getString('action')
+  if (subcommand === 'all') {
+    return {
+      content: translate('config.text.allConfigs', { guildId }).replace('{GUILD_NAME}', escapeMarkdown(guild.name)),
+      embed: {
+        fields: getAllConfigs(guildId),
+      },
+    }
+  } else if (subcommand === 'list') {
+    const type = interaction.options.getString('type', true)
+    const action = interaction.options.getString('action', true)
     if (!isNameList(type) || (action !== 'on' && action !== 'off')) {
       return
     }
@@ -138,45 +141,25 @@ const exec: CommandProps['exec'] = async interaction => {
       },
     }
   } else if (subcommand === 'offset') {
-    const offset = interaction.options.getNumber('offset')
-    if (offset === null || offset < -12 || offset > 12) {
+    const offset = interaction.options.getNumber('offset', true)
+    if (offset < -12 || offset > 12) {
       return {
         content: translate('config.text.invalidOffset', { guildId }),
       }
     }
 
-    const newValue = offset < 0 ? `GMT${offset}` : `GMT+${offset}`
+    const newValue = Math.round(offset * 4) / 4
     await database.ref(`/settings/${guildId}/offset`).set(newValue)
     cache.settings[guildId].offset = newValue
 
     return {
-      content: translate('config.text.offsetUpdated', { guildId }).replace(
-        '{OFFSET}',
-        offset >= 0 ? `+${offset}` : `${offset}`,
-      ),
-      embed: {
-        fields: getAllConfigs(guildId),
-      },
-    }
-  } else if (subcommand === 'raffle') {
-    const raffle = interaction.options.getInteger('raffle')
-    if (!raffle || raffle < 1) {
-      return {
-        content: translate('config.text.invalidRaffle', { guildId }),
-      }
-    }
-
-    await database.ref(`/settings/${guildId}/raffle`).set(raffle)
-    cache.settings[guildId].raffle = raffle
-
-    return {
-      content: translate('config.text.raffleUpdated', { guildId }).replace('{RAFFLE}', `${raffle}`),
+      content: translate('config.text.offsetUpdated', { guildId }).replace('{OFFSET}', `${newValue}`),
       embed: {
         fields: getAllConfigs(guildId),
       },
     }
   } else if (subcommand === 'locale') {
-    const locale = interaction.options.getString('locale')
+    const locale = interaction.options.getString('locale', true)
     if (!isLocaleType(locale)) {
       return
     }

@@ -35,9 +35,7 @@ const cache: {
       absent: boolean
       locked: boolean
       // offset
-      offset: string
-      // raffle
-      raffle: number
+      offset: number
       // locale
       locale: LocaleType
     }

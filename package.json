@@ -8,7 +8,8 @@
     "pm2": "pm2 start build/main.js --name attention-please --restart-delay 60000 && pm2 monit",
     "build": "rm -rf ./build/* && ./node_modules/.bin/tsc",
     "restart": "pm2 stop attention-please && pm2 reset attention-please && pm2 start attention-please && pm2 monit",
-    "dev": "NODE_ENV=development ts-node src/main.ts"
+    "dev": "NODE_ENV=development ts-node src/main.ts",
+    "push": "rsync -r build package.json pnpm-lock.yaml translations elantris@gcp:/home/elantris/project/attention-please"
   },
   "repository": {
     "type": "git",
@@ -22,7 +23,7 @@
   },
   "homepage": "https://github.com/Elantris/attention-please#readme",
   "dependencies": {
-    "discord.js": "^14.3.0",
+    "discord.js": "^14.4.0",
     "firebase-admin": "^11.0.1",
     "luxon": "^3.0.3",
     "open-color": "^1.9.1"
@@ -30,7 +31,7 @@
   "devDependencies": {
     "@firebase/app-types": "^0.7.0",
     "@types/luxon": "^3.0.1",
-    "@types/node": "^18.7.17",
+    "@types/node": "^18.7.18",
     "@types/ws": "^8.5.3",
     "typescript": "^4.8.3"
   }

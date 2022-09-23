@@ -1,4 +1,4 @@
-import { ChannelType, ChatInputCommandInteraction, Interaction } from 'discord.js'
+import { ChatInputCommandInteraction, Interaction } from 'discord.js'
 import OpenColor from 'open-color'
 import cache, { commands } from './utils/cache'
 import colorFormatter from './utils/colorFormatter'
@@ -65,11 +65,11 @@ const handleChatInputCommand = async (interaction: ChatInputCommandInteraction) 
   const guild = interaction.guild
   const channel = interaction.channel
   const createdTimestamp = interaction.createdTimestamp
-  if (!guildId || !guild || !channel || channel.type === ChannelType.DM) {
+  if (!guildId || !guild || !channel || channel.isDMBased()) {
     return
   }
 
-  if (interaction.commandName === 'check') {
+  if (interaction.commandName === 'check' || interaction.commandName === 'raffle') {
     await interaction.deferReply()
   }
 
@@ -86,7 +86,7 @@ const handleChatInputCommand = async (interaction: ChatInputCommandInteraction) 
             color: colorFormatter(OpenColor.orange[5]),
             title: translate('system.text.support', { guildId }),
             url: 'https://discord.gg/Ctwz4BB',
-            footer: { text: 'Version 2022-09-14' },
+            footer: { text: 'Version 2022-09-24' },
             ...commandResult.embed,
           },
         ]
@@ -94,7 +94,7 @@ const handleChatInputCommand = async (interaction: ChatInputCommandInteraction) 
     files: commandResult.files,
   }
   const responseMessage =
-    interaction.commandName === 'check'
+    interaction.commandName === 'check' || interaction.commandName === 'raffle'
       ? await interaction.editReply(responseOptions)
       : await interaction.reply({
           ...responseOptions,
@@ -103,7 +103,7 @@ const handleChatInputCommand = async (interaction: ChatInputCommandInteraction) 
 
   await sendLog({
     command: {
-      createdAt: interaction.createdTimestamp,
+      createdAt: createdTimestamp,
       content: `${interaction}`,
       guildId,
       guildName: guild.name,
