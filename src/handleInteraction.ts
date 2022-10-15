@@ -37,6 +37,8 @@ const handleInteraction = async (interaction: Interaction) => {
   try {
     if (interaction.isChatInputCommand()) {
       await handleChatInputCommand(interaction)
+    } else {
+      return
     }
   } catch (error: any) {
     cache.logChannel?.send({
@@ -96,10 +98,7 @@ const handleChatInputCommand = async (interaction: ChatInputCommandInteraction) 
   const responseMessage =
     interaction.commandName === 'check' || interaction.commandName === 'raffle'
       ? await interaction.editReply(responseOptions)
-      : await interaction.reply({
-          ...responseOptions,
-          fetchReply: true,
-        })
+      : await interaction.reply({ ...responseOptions, fetchReply: true })
 
   await sendLog({
     command: {

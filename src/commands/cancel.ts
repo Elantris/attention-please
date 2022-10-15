@@ -6,16 +6,16 @@ import { translate } from '../utils/translation'
 
 const build: CommandProps['build'] = new SlashCommandBuilder()
   .setName('cancel')
-  .setDescription('取消預約結算')
+  .setDescription('Cancel check job.')
   .setDescriptionLocalizations({
-    'en-US': 'Cancel check job.',
+    'zh-TW': '取消預約結算',
   })
   .addStringOption(option =>
     option
       .setName('id')
-      .setDescription('預約結算 ID')
+      .setDescription('Job ID')
       .setDescriptionLocalizations({
-        'en-US': 'Check job ID.',
+        'zh-TW': '預約 ID',
       })
       .setRequired(true),
   )

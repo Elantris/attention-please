@@ -1,4 +1,4 @@
-import { escapeMarkdown, Message, SlashCommandBuilder } from 'discord.js'
+import { AuditLogOptionsType, escapeMarkdown, Message, SlashCommandBuilder } from 'discord.js'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
 import { CommandProps, JobProps, ResultProps } from '../types'
@@ -12,34 +12,34 @@ import { translate } from '../utils/translation'
 
 const build = new SlashCommandBuilder()
   .setName('raffle')
-  .setDescription('從一則訊息中被標記的人當中抽出有點選表情回應的成員')
+  .setDescription('Random pick reacted and mentioned members from the message.')
   .setDescriptionLocalizations({
-    'en-US': 'Random pick reacted and mentioned members from a message.',
+    'zh-TW': '從一則訊息中被標記的人當中抽出有點選表情回應的成員',
   })
   .addStringOption(option =>
     option
-      .setName('message')
-      .setDescription('目標訊息，複製訊息連結或 ID')
+      .setName('target')
+      .setDescription('Link or ID of target message.')
       .setDescriptionLocalizations({
-        'en-US': 'Link or ID of target message.',
+        'zh-TW': '目標訊息，複製訊息連結或 ID',
       })
       .setRequired(true),
   )
   .addIntegerOption(option =>
     option
       .setName('count')
-      .setDescription('中獎人數')
+      .setDescription('The count of picked members.')
       .setDescriptionLocalizations({
-        'en-US': 'The count of picked members.',
+        'zh-TW': '中獎人數',
       })
       .setRequired(true),
   )
   .addStringOption(option =>
     option
       .setName('time')
-      .setDescription('指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2022-09-01 01:23')
+      .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2022-09-01 01:23')
       .setDescriptionLocalizations({
-        'en-US': 'Time in format: YYYY-MM-DD HH:mm. Example: 2022-09-01 01:23',
+        'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2022-09-01 01:23',
       }),
   )
   .toJSON()
@@ -52,8 +52,8 @@ const exec: CommandProps['exec'] = async interaction => {
     return
   }
 
-  const target: {
-    message?: Message<true>
+  const options: {
+    target?: Message<true>
     time?: number
     count?: number
   } = {}
@@ -61,7 +61,7 @@ const exec: CommandProps['exec'] = async interaction => {
   if (interaction.isChatInputCommand()) {
     const messageResult = await fetchTargetMessage({
       guild: interaction.guild,
-      search: interaction.options.getString('message', true),
+      search: interaction.options.getString('target', true),
     })
     if (messageResult.response) {
       return messageResult.response
@@ -79,29 +79,29 @@ const exec: CommandProps['exec'] = async interaction => {
       }
     }
 
-    target.message = messageResult.message
-    target.time = timeResult.time
-    target.count = count
+    options.target = messageResult.message
+    options.time = timeResult.time
+    options.count = count
   }
 
-  if (!target.message) {
+  if (!options.target) {
     return
   }
 
-  if (target.time) {
-    if (target.time < interaction.createdTimestamp) {
+  if (options.time) {
+    if (options.time < interaction.createdTimestamp) {
       return {
         content: translate('raffle.error.raffleJobTime', { guildId }),
         embed: {
           description: translate('raffle.error.raffleJobTimeHelp', { guildId }).replace(
             '{TIMESTAMP}',
-            `${Math.floor(target.time / 1000)}`,
+            `${Math.floor(options.time / 1000)}`,
           ),
         },
       }
     }
 
-    const jobId = `raffle_${target.message.id}`
+    const jobId = `raffle_${options.target.id}`
     const isDuplicated = !!cache.jobs[jobId]
 
     if (!isDuplicated) {
@@ -127,16 +127,16 @@ const exec: CommandProps['exec'] = async interaction => {
 
     const job: JobProps = {
       clientId: interaction.client.user?.id || '',
-      executeAt: target.time,
+      executeAt: options.time,
       command: {
         guildId,
         channelId: interaction.channelId,
         userId: interaction.user.id,
-        raffleCount: target.count,
+        raffleCount: options.count,
       },
       target: {
-        messageId: target.message.id,
-        channelId: target.message.channel.id,
+        messageId: options.target.id,
+        channelId: options.target.channel.id,
       },
       retryTimes: 0,
     }
@@ -147,17 +147,17 @@ const exec: CommandProps['exec'] = async interaction => {
         .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
         .replace('{JOB_ID}', jobId),
       embed: {
-        description: translate('raffle.text.raffleJobDescription', { guildId })
+        description: translate('raffle.text.raffleJobDetail', { guildId })
           .replace('{JOB_ID}', jobId)
-          .replace('{TIME}', timeFormatter({ time: target.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
-          .replace('{FROM_NOW}', `<t:${Math.floor(target.time / 1000)}:R>`)
-          .replace('{TARGET_URL}', target.message.url)
+          .replace('{TIME}', timeFormatter({ time: options.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
+          .replace('{FROM_NOW}', `<t:${Math.floor(options.time / 1000)}:R>`)
+          .replace('{TARGET_URL}', options.target.url)
           .replace('{RAFFLE_JOBS}', getAllJobs(clientId, guild, 'raffle')),
       },
     }
   }
 
-  return getRaffleResult(target.message, { count: target.count })
+  return getRaffleResult(options.target, { count: options.count })
 }
 
 export const getRaffleResult: (
@@ -222,8 +222,8 @@ export const getRaffleResult: (
       .replace('{TIME}', timeFormatter({ time: raffleAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
       .replace('{MESSAGE_URL}', message.url)
       .replace('{ALL_COUNT}', `${allMembersCount}`)
-      .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
-      .replace('{PERCENTAGE}', ((reactedMemberNames.length * 100) / allMembersCount).toFixed(2))
+      .replace('{REACTED_COUNT}', `${reactedMemberCount}`)
+      .replace('{PERCENTAGE}', ((reactedMemberCount * 100) / allMembersCount).toFixed(2))
       .replace('{LUCKY_MEMBERS}', luckyMemberNames.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
       .replace('{REACTED_MEMBERS}', reactedMemberNames.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
       .replace('{ABSENT_MEMBERS}', absentMemberNames.join('\r\n'))
@@ -240,12 +240,12 @@ export const getRaffleResult: (
 
   return {
     content: translate('raffle.text.raffleResult', { guildId })
-      .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
+      .replace('{REACTED_COUNT}', `${reactedMemberCount}`)
       .replace('{ALL_COUNT}', `${allMembersCount}`)
-      .replace('{PERCENTAGE}', ((reactedMemberNames.length * 100) / allMembersCount).toFixed(2))
+      .replace('{PERCENTAGE}', ((reactedMemberCount * 100) / allMembersCount).toFixed(2))
       .trim(),
     embed: {
-      description: translate('raffle.text.raffleResultDescription', { guildId })
+      description: translate('raffle.text.raffleResultDetail', { guildId })
         .replace('{TIME}', timeFormatter({ time: raffleAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
         .replace('{FROM_NOW}', `<t:${Math.floor(raffleAt / 1000)}:R>`)
         .replace('{MESSAGE_URL}', message.url)

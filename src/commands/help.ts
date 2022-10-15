@@ -4,9 +4,9 @@ import { translate } from '../utils/translation'
 
 const build: CommandProps['build'] = new SlashCommandBuilder()
   .setName('help')
-  .setDescription('Attention Please 使用說明')
+  .setDescription('Manuals of Attention Please.')
   .setDescriptionLocalizations({
-    'en-US': 'Manuals of Attention Please.',
+    'zh-TW': 'Attention Please 使用說明',
   })
   .toJSON()
 

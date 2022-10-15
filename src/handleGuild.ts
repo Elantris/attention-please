@@ -1,14 +1,11 @@
 import { escapeMarkdown, Guild } from 'discord.js'
 import cache from './utils/cache'
-import initGuild from './utils/initGuild'
 import timeFormatter from './utils/timeFormatter'
 
-const handleGuild = async (guild: Guild, action: 'create' | 'delete') => {
+export const handleGuildCreate = async (guild: Guild) => {
   if (!cache.isReady) {
     return
   }
-
-  await initGuild(guild.client, guild.id)
 
   const count = {
     textChannels: 0,
@@ -39,17 +36,15 @@ const handleGuild = async (guild: Guild, action: 'create' | 'delete') => {
   const owner = await guild.fetchOwner()
 
   cache.logChannel?.send({
-    content: (action === 'create' ? '[`{TIME}`] Joined new guild.' : '[`{TIME}`] Leaved guild.').replace(
-      '{TIME}',
-      timeFormatter({ time: guild.joinedTimestamp }),
-    ),
+    content: '[`{TIME}`] Guild Create'.replace('{TIME}', timeFormatter({ time: guild.joinedTimestamp })),
     embeds: [
       {
         description:
-          'Guild: `{GUILD_ID}` **{GUILD_NAME}** <t:{GUILD_FROM_NOW}:R>\nOwner: `{OWNER_ID}` {OWNER_NAME} <t:{OWNER_FROM_NOW}:R>\nChannels: {CHANNELS_COUNT}\nMembers: {MEMBERS_COUNT}'
+          'Guild: `{GUILD_ID}` {GUILD_NAME} <t:{GUILD_FROM_NOW}:R> ({GUILD_COUNT})\nOwner: `{OWNER_ID}` {OWNER_NAME} <t:{OWNER_FROM_NOW}:R>\nChannels: {CHANNELS_COUNT}\nMembers: {MEMBERS_COUNT}'
             .replace('{GUILD_ID}', guild.id)
             .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
             .replace('{GUILD_FROM_NOW}', `${Math.floor(guild.createdTimestamp / 1000)}`)
+            .replace('{GUILD_COUNT}', `${guild.client.guilds.cache.size}`)
             .replace('{OWNER_ID}', owner.id)
             .replace('{OWNER_NAME}', escapeMarkdown(owner.user.tag))
             .replace('{OWNER_FROM_NOW}', `${Math.floor(owner.user.createdTimestamp / 1000)}`)
@@ -63,4 +58,16 @@ const handleGuild = async (guild: Guild, action: 'create' | 'delete') => {
   })
 }
 
-export default handleGuild
+export const handleGuildDelete = (guild: Guild) => {
+  cache.logChannel?.send({
+    content: '[`{TIME}`] Guild Delete.'.replace('{TIME}', timeFormatter()),
+    embeds: [
+      {
+        description: 'Guild: `{GUILD_ID}` {GUILD_NAME} ({GUILD_COUNT})'
+          .replace('{GUILD_ID}', guild.id)
+          .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
+          .replace('{GUILD_COUNT}', `${guild.client.guilds.cache.size}`),
+      },
+    ],
+  })
+}

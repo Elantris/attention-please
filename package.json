@@ -23,16 +23,16 @@
   },
   "homepage": "https://github.com/Elantris/attention-please#readme",
   "dependencies": {
-    "discord.js": "^14.4.0",
-    "firebase-admin": "^11.0.1",
-    "luxon": "^3.0.3",
+    "discord.js": "^14.6.0",
+    "firebase-admin": "^11.1.0",
+    "luxon": "^3.0.4",
     "open-color": "^1.9.1"
   },
   "devDependencies": {
-    "@firebase/app-types": "^0.7.0",
+    "@firebase/app-types": "^0.8.0",
     "@types/luxon": "^3.0.1",
-    "@types/node": "^18.7.18",
+    "@types/node": "^18.11.0",
     "@types/ws": "^8.5.3",
-    "typescript": "^4.8.3"
+    "typescript": "^4.8.4"
   }
 }

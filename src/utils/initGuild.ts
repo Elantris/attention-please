@@ -12,8 +12,9 @@ const initGuild = async (client: Client, guildId: string) => {
   }
 
   await guild.members.fetch()
+  await guild.roles.fetch()
   cache.settings[guildId] = (await database.ref(`/settings/${guildId}`).once('value')).val() || {}
-  cache.isInit[guildId] = Date.now() + 3600000
+  cache.isInit[guildId] = Date.now() + 600000
 }
 
 export default initGuild

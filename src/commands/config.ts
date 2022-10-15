@@ -9,25 +9,28 @@ const isNameList = (target: string): target is NameListType => !!nameLists.find(
 
 const build: CommandProps['build'] = new SlashCommandBuilder()
   .setName('config')
-  .setDescription('偏好設定')
+  .setDescription('Bot preferences.')
+  .setDescriptionLocalizations({
+    'zh-TW': '偏好設定',
+  })
   .addSubcommand(subcommand =>
-    subcommand.setName('all').setDescription('查看當前所有設定').setDescriptionLocalizations({
-      'en-US': 'Show all configs.',
+    subcommand.setName('all').setDescription('Show all configs.').setDescriptionLocalizations({
+      'zh-TW': '查看當前所有設定',
     }),
   )
   .addSubcommand(subcommand =>
     subcommand
       .setName('list')
-      .setDescription('設定顯示名單')
+      .setDescription('Set visibility of name list.')
       .setDescriptionLocalizations({
-        'en-US': 'Set visibility of name list.',
+        'zh-TW': '設定顯示名單',
       })
       .addStringOption(option =>
         option
           .setName('type')
-          .setDescription('名單類型')
+          .setDescription('Name list type.')
           .setDescriptionLocalizations({
-            'en-US': 'Name list type.',
+            'zh-TW': '名單類型',
           })
           .setRequired(true)
           .addChoices(
@@ -39,9 +42,9 @@ const build: CommandProps['build'] = new SlashCommandBuilder()
       .addStringOption(option =>
         option
           .setName('action')
-          .setDescription('顯示或隱藏')
+          .setDescription('Display or not.')
           .setDescriptionLocalizations({
-            'en-US': 'Display or not.',
+            'zh-TW': '顯示或隱藏',
           })
           .setRequired(true)
           .addChoices({ name: 'on', value: 'on' }, { name: 'off', value: 'off' }),
@@ -50,32 +53,38 @@ const build: CommandProps['build'] = new SlashCommandBuilder()
   .addSubcommand(subcommand =>
     subcommand
       .setName('offset')
-      .setDescription('設定時間偏移量')
+      .setDescription('Set time offset.')
       .setDescriptionLocalizations({
-        'en-US': 'Set time offset.',
+        'zh-TW': '設定時間偏移量',
       })
       .addNumberOption(option =>
         option
           .setName('offset')
-          .setDescription('介於 -12 ~ 12 之間的數字，例如 GMT+8 則輸入 8')
+          .setDescription('A number in range of -12 ~ 12. Example: GMT+8, enter 8.')
           .setDescriptionLocalizations({
-            'en-US': 'A number in range of -12 ~ 12. Example: GMT+8, enter 8.',
+            'zh-TW': '介於 -12 ~ 12 之間的數字，例如 GMT+8 則輸入 8',
           })
           .setRequired(true),
       ),
   )
-  // .addSubcommand(subcommand =>
-  //   subcommand
-  //     .setName('locale')
-  //     .setDescription('設定機器人語言')
-  //     .addStringOption(option =>
-  //       option
-  //         .setName('locale')
-  //         .setDescription('語言環境')
-  //         .setRequired(true)
-  //         .setChoices({ name: 'zh-TW', value: 'zh-TW' }, { name: 'en-US', value: 'en-US' }),
-  //     ),
-  // )
+  .addSubcommand(subcommand =>
+    subcommand
+      .setName('locale')
+      .setDescription('Set locale of bot.')
+      .setNameLocalizations({
+        'zh-TW': '設定機器人語言',
+      })
+      .addStringOption(option =>
+        option
+          .setName('locale')
+          .setDescription('Locale')
+          .setDescriptionLocalizations({
+            'zh-TW': '語言環境',
+          })
+          .setRequired(true)
+          .setChoices({ name: 'zh-TW', value: 'zh-TW' }, { name: 'en-US', value: 'en-US' }),
+      ),
+  )
   .toJSON()
 
 const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {

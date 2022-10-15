@@ -27,7 +27,7 @@ export type JobProps = {
   retryTimes: number
 }
 
-export const locales = ['zh-TW', 'en-US'] as const
-export type LocaleType = typeof locales[number]
+const LOCALES = ['zh-TW', 'en-US'] as const
+export type LocaleType = typeof LOCALES[number]
 export const isLocaleType = (target: LocaleType | string | null): target is LocaleType =>
-  !!locales.find(locale => locale === target)
+  !!LOCALES.find(locale => locale === target)

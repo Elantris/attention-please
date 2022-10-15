@@ -1,4 +1,4 @@
 # Attention Please
-A discord bot for finding who did not react to the announcement.
+A discord bot for finding members who did not read the announcement.
 
 https://hackmd.io/@eelayntris/attention-please
