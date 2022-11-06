@@ -34,15 +34,18 @@ const cache: {
       reacted: boolean
       absent: boolean
       locked: boolean
-      // offset
+      // timezone
       offset: number
       // locale
       locale: LocaleType
+      // name list length
+      length: number
     }
   }
   jobs: {
     [JobID in string]?: JobProps
   }
+  footer: string
 } = {
   logChannel: null,
   isReady: false,
@@ -52,6 +55,7 @@ const cache: {
   banned: {},
   settings: {},
   jobs: {},
+  footer: 'Version 2022-10-27',
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {
@@ -85,7 +89,7 @@ readdirSync(join(__dirname, '../commands')).forEach(async filename => {
   const commandName = filename.split('.')[0]
   const { default: command }: { default: CommandProps } = await import(join(__dirname, '../commands', filename))
   commands[commandName] = command
-  commandBuilds.push(command.build)
+  commandBuilds.push(...command.builds)
 })
 
 export default cache

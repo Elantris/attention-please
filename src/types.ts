@@ -1,7 +1,7 @@
 import { APIEmbed, Interaction, MessageCreateOptions, RESTPostAPIApplicationCommandsJSONBody } from 'discord.js'
 
 export type CommandProps = {
-  build: RESTPostAPIApplicationCommandsJSONBody
+  builds: RESTPostAPIApplicationCommandsJSONBody[]
   exec: (interaction: Interaction) => Promise<ResultProps | void | undefined>
 }
 
@@ -9,6 +9,7 @@ export type ResultProps = {
   content: string
   embed?: APIEmbed
   files?: MessageCreateOptions['files']
+  error?: Error
 }
 
 export type JobProps = {
@@ -25,6 +26,22 @@ export type JobProps = {
     messageId: string
   }
   retryTimes: number
+}
+
+export const isKeyValueProps = (
+  target: any,
+): target is {
+  [key: string]: string
+} => {
+  if (!target) {
+    return false
+  }
+  for (const key in target) {
+    if (typeof key !== 'string' || typeof target[key] !== 'string') {
+      return false
+    }
+  }
+  return true
 }
 
 const LOCALES = ['zh-TW', 'en-US'] as const

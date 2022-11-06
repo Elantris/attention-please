@@ -17,6 +17,8 @@ readdirSync(join(__dirname, '../../translations')).forEach(filename => {
   translations[locale] = JSON.parse(readFileSync(join(__dirname, '../../translations', filename), { encoding: 'utf8' }))
 })
 
+export const isTranslateKey = (key: string) => !!translations['zh-TW']?.[key]
+
 export const translate = (
   key: string,
   options?: {

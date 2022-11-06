@@ -2,13 +2,15 @@ import { SlashCommandBuilder } from 'discord.js'
 import { CommandProps } from '../types'
 import { translate } from '../utils/translation'
 
-const build: CommandProps['build'] = new SlashCommandBuilder()
-  .setName('help')
-  .setDescription('Manuals of Attention Please.')
-  .setDescriptionLocalizations({
-    'zh-TW': 'Attention Please 使用說明',
-  })
-  .toJSON()
+const builds: CommandProps['builds'] = [
+  new SlashCommandBuilder()
+    .setName('help')
+    .setDescription('Manuals of Attention Please.')
+    .setDescriptionLocalizations({
+      'zh-TW': 'Attention Please 使用說明',
+    })
+    .toJSON(),
+]
 
 const exec: CommandProps['exec'] = async interaction => {
   const guildId = interaction.guildId
@@ -24,7 +26,7 @@ const exec: CommandProps['exec'] = async interaction => {
 }
 
 const command: CommandProps = {
-  build,
+  builds,
   exec,
 }
 

@@ -1,11 +1,9 @@
 import { Guild, GuildTextBasedChannel, Message } from 'discord.js'
-import { ResultProps } from '../types'
-import { translate } from './translation'
 
-const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise<{
-  message?: Message<true>
-  response?: ResultProps
-}> = async ({ guild, search }) => {
+const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise<Message<true>> = async ({
+  guild,
+  search,
+}) => {
   const target: {
     channelId?: string
     messageId?: string
@@ -28,14 +26,7 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
   }
 
   if (!target.messageId) {
-    return {
-      response: {
-        content: translate('system.error.messageFormat', { guildId: guild.id }),
-        embed: {
-          description: translate('system.error.messageFormatHelp', { guildId: guild.id }),
-        },
-      },
-    }
+    throw new Error('INVALID_MESSAGE_FORMAT')
   }
 
   if (target.channelId) {
@@ -61,17 +52,11 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
   }
 
   if (!target.message) {
-    return {
-      response: {
-        content: translate('system.error.unknownMessage', { guildId: guild.id }),
-        embed: {
-          description: translate('system.error.unknownMessageHelp', { guildId: guild.id }).replace(
-            '{USER_INPUT}',
-            search,
-          ),
-        },
+    throw new Error('UNKNOWN_MESSAGE', {
+      cause: {
+        USER_INPUT: search,
       },
-    }
+    })
   }
 
   if (
@@ -79,22 +64,14 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
     !target.message.mentions.roles.size &&
     !target.message.mentions.members?.size
   ) {
-    return {
-      response: {
-        content: translate('system.error.noMentionedMember', { guildId: guild.id }),
-        embed: {
-          description: translate('system.error.noMentionedMemberHelp', { guildId: guild.id }).replace(
-            '{MESSAGE_LINK}',
-            target.message.url,
-          ),
-        },
+    throw new Error('NO_MENTIONED_MEMBER', {
+      cause: {
+        MESSAGE_LINK: target.message.url,
       },
-    }
+    })
   }
 
-  return {
-    message: target.message,
-  }
+  return target.message
 }
 
 export default fetchTargetMessage

@@ -25,6 +25,8 @@ export const handleGuildCreate = async (guild: Guild) => {
     }
   })
 
+  await guild.members.fetch({ force: true })
+  const owner = await guild.fetchOwner()
   guild.members.cache.forEach(member => {
     if (member.user.bot) {
       count.bots++
@@ -32,8 +34,6 @@ export const handleGuildCreate = async (guild: Guild) => {
       count.members++
     }
   })
-
-  const owner = await guild.fetchOwner()
 
   cache.logChannel?.send({
     content: '[`{TIME}`] Guild Create'.replace('{TIME}', timeFormatter({ time: guild.joinedTimestamp })),

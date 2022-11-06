@@ -30,7 +30,7 @@ const executeJobs = async (client: Client) => {
       const targetChannel = targetGuild?.channels.cache.get(job.target.channelId)
       const commandChannel = targetGuild?.channels.cache.get(job.command.channelId)
       if (!targetGuild || !targetChannel?.isTextBased() || !commandChannel?.isTextBased()) {
-        throw new Error('Channel is not found')
+        throw new Error('CHANNEL_NOT_FOUND')
       }
       const targetMessage = await targetChannel.messages.fetch(job.target.messageId)
 
@@ -43,7 +43,7 @@ const executeJobs = async (client: Client) => {
           ? await getRaffleResult(targetMessage, { count: job.command.raffleCount || 30 })
           : undefined
       if (!commandResult) {
-        throw new Error('No command result')
+        throw new Error('NO_COMMAND_RESULT')
       }
       const responseMessage = await commandChannel.send({
         content: commandResult.content,
@@ -53,7 +53,7 @@ const executeJobs = async (client: Client) => {
                 color: colorFormatter(OpenColor.orange[5]),
                 title: translate('system.text.support', { guildId: job.command.guildId }),
                 url: 'https://discord.gg/Ctwz4BB',
-                footer: { text: 'Version 2022-09-24' },
+                footer: { text: cache.footer },
                 ...commandResult.embed,
               },
             ]

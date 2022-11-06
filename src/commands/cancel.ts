@@ -4,22 +4,24 @@ import cache, { database } from '../utils/cache'
 import getAllJobs from '../utils/getAllJobs'
 import { translate } from '../utils/translation'
 
-const build: CommandProps['build'] = new SlashCommandBuilder()
-  .setName('cancel')
-  .setDescription('Cancel check job.')
-  .setDescriptionLocalizations({
-    'zh-TW': '取消預約結算',
-  })
-  .addStringOption(option =>
-    option
-      .setName('id')
-      .setDescription('Job ID')
-      .setDescriptionLocalizations({
-        'zh-TW': '預約 ID',
-      })
-      .setRequired(true),
-  )
-  .toJSON()
+const builds: CommandProps['builds'] = [
+  new SlashCommandBuilder()
+    .setName('cancel')
+    .setDescription('Cancel check job.')
+    .setDescriptionLocalizations({
+      'zh-TW': '取消預約結算',
+    })
+    .addStringOption(option =>
+      option
+        .setName('id')
+        .setDescription('Job ID')
+        .setDescriptionLocalizations({
+          'zh-TW': '預約 ID',
+        })
+        .setRequired(true),
+    )
+    .toJSON(),
+]
 
 const exec: CommandProps['exec'] = async interaction => {
   const clientId = interaction.client.user?.id
@@ -32,12 +34,11 @@ const exec: CommandProps['exec'] = async interaction => {
   const jobId = interaction.options.getString('id', true)
   const job = cache.jobs[jobId]
   if (!job) {
-    return {
-      content: translate('cancel.error.jobNotFound', { guildId }),
-      embed: {
-        description: getAllJobs(clientId, guild, 'all'),
+    throw new Error('JOB_NOT_FOUND', {
+      cause: {
+        ALL_JOBS: getAllJobs(clientId, guild, 'all'),
       },
-    }
+    })
   }
 
   await database.ref(`/jobs/${jobId}`).remove()
@@ -52,7 +53,7 @@ const exec: CommandProps['exec'] = async interaction => {
 }
 
 const command: CommandProps = {
-  build,
+  builds,
   exec,
 }
 

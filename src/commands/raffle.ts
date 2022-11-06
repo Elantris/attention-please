@@ -1,4 +1,10 @@
-import { AuditLogOptionsType, escapeMarkdown, Message, SlashCommandBuilder } from 'discord.js'
+import {
+  ApplicationCommandType,
+  ContextMenuCommandBuilder,
+  escapeMarkdown,
+  Message,
+  SlashCommandBuilder,
+} from 'discord.js'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
 import { CommandProps, JobProps, ResultProps } from '../types'
@@ -10,39 +16,42 @@ import parseTime from '../utils/parseTime'
 import timeFormatter from '../utils/timeFormatter'
 import { translate } from '../utils/translation'
 
-const build = new SlashCommandBuilder()
-  .setName('raffle')
-  .setDescription('Random pick reacted and mentioned members from the message.')
-  .setDescriptionLocalizations({
-    'zh-TW': '從一則訊息中被標記的人當中抽出有點選表情回應的成員',
-  })
-  .addStringOption(option =>
-    option
-      .setName('target')
-      .setDescription('Link or ID of target message.')
-      .setDescriptionLocalizations({
-        'zh-TW': '目標訊息，複製訊息連結或 ID',
-      })
-      .setRequired(true),
-  )
-  .addIntegerOption(option =>
-    option
-      .setName('count')
-      .setDescription('The count of picked members.')
-      .setDescriptionLocalizations({
-        'zh-TW': '中獎人數',
-      })
-      .setRequired(true),
-  )
-  .addStringOption(option =>
-    option
-      .setName('time')
-      .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2022-09-01 01:23')
-      .setDescriptionLocalizations({
-        'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2022-09-01 01:23',
-      }),
-  )
-  .toJSON()
+const builds: CommandProps['builds'] = [
+  new SlashCommandBuilder()
+    .setName('raffle')
+    .setDescription('Random pick reacted and mentioned members from the message.')
+    .setDescriptionLocalizations({
+      'zh-TW': '從一則訊息中被標記的人當中抽出有點選表情回應的成員',
+    })
+    .addStringOption(option =>
+      option
+        .setName('target')
+        .setDescription('Link or ID of target message.')
+        .setDescriptionLocalizations({
+          'zh-TW': '目標訊息，複製訊息連結或 ID',
+        })
+        .setRequired(true),
+    )
+    .addIntegerOption(option =>
+      option
+        .setName('count')
+        .setDescription('The count of picked members.')
+        .setDescriptionLocalizations({
+          'zh-TW': '中獎人數',
+        })
+        .setRequired(true),
+    )
+    .addStringOption(option =>
+      option
+        .setName('time')
+        .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2022-09-01 01:23')
+        .setDescriptionLocalizations({
+          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2022-09-01 01:23',
+        }),
+    )
+    .toJSON(),
+  new ContextMenuCommandBuilder().setName('raffle').setType(ApplicationCommandType.Message),
+]
 
 const exec: CommandProps['exec'] = async interaction => {
   const clientId = interaction.client.user?.id
@@ -59,29 +68,22 @@ const exec: CommandProps['exec'] = async interaction => {
   } = {}
 
   if (interaction.isChatInputCommand()) {
-    const messageResult = await fetchTargetMessage({
+    options.time = parseTime({ guildId, time: interaction.options.getString('time') })
+
+    options.count = interaction.options.getInteger('count', true)
+    if (options.count < 1) {
+      throw new Error('INVALID_RAFFLE_COUNT')
+    }
+
+    options.target = await fetchTargetMessage({
       guild: interaction.guild,
       search: interaction.options.getString('target', true),
     })
-    if (messageResult.response) {
-      return messageResult.response
+  } else if (interaction.isMessageContextMenuCommand()) {
+    if (interaction.targetMessage.inGuild()) {
+      options.target = interaction.targetMessage
+      options.count = 1
     }
-
-    const timeResult = parseTime({ guildId, time: interaction.options.getString('time') })
-    if (timeResult.response) {
-      return timeResult.response
-    }
-
-    const count = interaction.options.getInteger('count', true)
-    if (count < 1) {
-      return {
-        content: translate('raffle.error.raffleCount', { guildId }),
-      }
-    }
-
-    options.target = messageResult.message
-    options.time = timeResult.time
-    options.count = count
   }
 
   if (!options.target) {
@@ -90,15 +92,11 @@ const exec: CommandProps['exec'] = async interaction => {
 
   if (options.time) {
     if (options.time < interaction.createdTimestamp) {
-      return {
-        content: translate('raffle.error.raffleJobTime', { guildId }),
-        embed: {
-          description: translate('raffle.error.raffleJobTimeHelp', { guildId }).replace(
-            '{TIMESTAMP}',
-            `${Math.floor(options.time / 1000)}`,
-          ),
+      throw new Error('INVALID_RAFFLE_TIME', {
+        cause: {
+          TIMESTAMP: `${Math.floor(options.time / 1000)}`,
         },
-      }
+      })
     }
 
     const jobId = `raffle_${options.target.id}`
@@ -113,15 +111,11 @@ const exec: CommandProps['exec'] = async interaction => {
         }
       }
       if (existedJobsCount > 4) {
-        return {
-          content: translate('raffle.error.raffleJobLimit', { guildId }),
-          embed: {
-            description: translate('raffle.error.raffleJobLimitHelp', { guildId }).replace(
-              '{RAFFLE_JOBS}',
-              getAllJobs(clientId, guild, 'raffle'),
-            ),
+        throw new Error('RAFFLE_JOB_LIMIT', {
+          cause: {
+            RAFFLE_JOBS: getAllJobs(clientId, guild, 'raffle'),
           },
-        }
+        })
       }
     }
 
@@ -172,15 +166,11 @@ export const getRaffleResult: (
   const allMembersCount = Object.keys(mentionedMembers).length
 
   if (allMembersCount === 0) {
-    return {
-      content: translate('system.error.noMentionedMember', { guildId }),
-      embed: {
-        description: translate('system.error.noMentionedMemberHelp', { guildId }).replace(
-          '{MESSAGE_LINK}',
-          message.url,
-        ),
+    throw new Error('NO_MENTIONED_MEMBER', {
+      cause: {
+        MESSAGE_LINK: message.url,
       },
-    }
+    })
   }
 
   const reactedMemberNames: string[] = []
@@ -199,9 +189,9 @@ export const getRaffleResult: (
   const reactedMemberCount = reactedMemberNames.length
   if (reactedMemberCount === 0) {
     return {
-      content: translate('raffle.error.noReactedMembers', { guildId }),
+      content: translate('error.NO_RAFFLE_PARTICIPANT', { guildId }),
       embed: {
-        description: translate('raffle.error.noReactedMembersHelp', { guildId }),
+        description: translate('error.help.NO_RAFFLE_PARTICIPANT', { guildId }),
       },
     }
   }
@@ -213,7 +203,7 @@ export const getRaffleResult: (
   const raffleCount = options?.count || 30
   const luckyMemberNames = reactedMemberNames.splice(0, raffleCount)
 
-  const filePath = join(__dirname, '../../files/', `${message.id}.txt`)
+  const filePath = join(__dirname, '../../files/', `raffle-${message.id}.txt`)
   writeFileSync(
     filePath,
     translate('raffle.text.raffleResultFile', { guildId })
@@ -267,7 +257,7 @@ export const getRaffleResult: (
 }
 
 const command: CommandProps = {
-  build,
+  builds,
   exec,
 }
 

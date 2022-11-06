@@ -1,4 +1,12 @@
-import { APIEmbed, escapeMarkdown, Message, MessageCreateOptions, SlashCommandBuilder } from 'discord.js'
+import {
+  APIEmbed,
+  ApplicationCommandType,
+  ContextMenuCommandBuilder,
+  escapeMarkdown,
+  Message,
+  MessageCreateOptions,
+  SlashCommandBuilder,
+} from 'discord.js'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
 import { CommandProps, JobProps, ResultProps } from '../types'
@@ -11,30 +19,33 @@ import splitMessage from '../utils/splitMessage'
 import timeFormatter from '../utils/timeFormatter'
 import { translate } from '../utils/translation'
 
-const build: CommandProps['build'] = new SlashCommandBuilder()
-  .setName('check')
-  .setDescription('Check reactions count by mentioned members of the message.')
-  .setDescriptionLocalizations({
-    'zh-TW': '查看一則訊息中被標記的成員是否有按表情回應',
-  })
-  .addStringOption(option =>
-    option
-      .setName('target')
-      .setDescription('Link or ID of the target message.')
-      .setDescriptionLocalizations({
-        'zh-TW': '目標訊息，複製訊息連結或 ID',
-      })
-      .setRequired(true),
-  )
-  .addStringOption(option =>
-    option
-      .setName('time')
-      .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2022-09-01 01:23')
-      .setDescriptionLocalizations({
-        'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2022-09-01 01:23',
-      }),
-  )
-  .toJSON()
+const builds: CommandProps['builds'] = [
+  new SlashCommandBuilder()
+    .setName('check')
+    .setDescription('Check reactions count by mentioned members of the message.')
+    .setDescriptionLocalizations({
+      'zh-TW': '查看一則訊息中被標記的成員是否有按表情回應',
+    })
+    .addStringOption(option =>
+      option
+        .setName('target')
+        .setDescription('Link or ID of the target message.')
+        .setDescriptionLocalizations({
+          'zh-TW': '目標訊息，複製訊息連結或 ID',
+        })
+        .setRequired(true),
+    )
+    .addStringOption(option =>
+      option
+        .setName('time')
+        .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2022-09-01 01:23')
+        .setDescriptionLocalizations({
+          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2022-09-01 01:23',
+        }),
+    )
+    .toJSON(),
+  new ContextMenuCommandBuilder().setName('check').setType(ApplicationCommandType.Message),
+]
 
 const exec: CommandProps['exec'] = async interaction => {
   const clientId = interaction.client.user?.id
@@ -50,21 +61,15 @@ const exec: CommandProps['exec'] = async interaction => {
   } = {}
 
   if (interaction.isChatInputCommand()) {
-    const messageResult = await fetchTargetMessage({
+    options.time = parseTime({ guildId, time: interaction.options.getString('time') })
+    options.target = await fetchTargetMessage({
       guild: interaction.guild,
       search: interaction.options.getString('target', true),
     })
-    if (messageResult.response) {
-      return messageResult.response
+  } else if (interaction.isMessageContextMenuCommand()) {
+    if (interaction.targetMessage.inGuild()) {
+      options.target = interaction.targetMessage
     }
-
-    const timeResult = parseTime({ guildId, time: interaction.options.getString('time') })
-    if (timeResult.response) {
-      return timeResult.response
-    }
-
-    options.target = messageResult.message
-    options.time = timeResult.time
   }
 
   if (!options.target) {
@@ -88,15 +93,11 @@ const exec: CommandProps['exec'] = async interaction => {
         }
       }
       if (existedJobsCount > 4) {
-        return {
-          content: translate('check.error.checkJobLimit', { guildId }),
-          embed: {
-            description: translate('check.error.checkJobLimitHelp', { guildId }).replace(
-              '{CHECK_JOBS}',
-              getAllJobs(clientId, guild, 'check'),
-            ),
+        throw new Error('CHECK_JOB_LIMIT', {
+          cause: {
+            CHECK_JOBS: getAllJobs(clientId, guild, 'check'),
           },
-        }
+        })
       }
     }
 
@@ -146,15 +147,11 @@ export const getCheckResult: (
   const allMembersCount = Object.keys(mentionedMembers).length
 
   if (allMembersCount === 0) {
-    return {
-      content: translate('system.error.noMentionedMember', { guildId }),
-      embed: {
-        description: translate('system.error.noMentionedMemberHelp', { guildId }).replace(
-          '{MESSAGE_LINK}',
-          message.url,
-        ),
+    throw new Error('NO_MENTIONED_MEMBER', {
+      cause: {
+        MESSAGE_LINK: message.url,
       },
-    }
+    })
   }
 
   const reactedMemberNames: string[] = []
@@ -174,10 +171,11 @@ export const getCheckResult: (
   absentMemberNames.sort((a, b) => a.localeCompare(b))
   lockedMemberNames.sort((a, b) => a.localeCompare(b))
 
+  const checkLength = cache.settings[guildId].length ?? 200
   const fields: APIEmbed['fields'] = []
   const files: MessageCreateOptions['files'] = []
-  if (allMembersCount > 200) {
-    const filePath = join(__dirname, '../../files/', `${message.id}.txt`)
+  if (allMembersCount > checkLength) {
+    const filePath = join(__dirname, '../../files/', `check-${message.id}.txt`)
     writeFileSync(
       filePath,
       translate('check.text.checkResultFile', { guildId })
@@ -270,7 +268,7 @@ export const getCheckResult: (
 }
 
 const command: CommandProps = {
-  build,
+  builds,
   exec,
 }
 
