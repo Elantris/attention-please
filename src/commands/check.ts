@@ -63,7 +63,7 @@ const exec: CommandProps['exec'] = async interaction => {
   if (interaction.isChatInputCommand()) {
     options.time = parseTime({ guildId, time: interaction.options.getString('time') })
     options.target = await fetchTargetMessage({
-      guild: interaction.guild,
+      guild,
       search: interaction.options.getString('target', true),
     })
   } else if (interaction.isMessageContextMenuCommand()) {
@@ -171,7 +171,7 @@ export const getCheckResult: (
   absentMemberNames.sort((a, b) => a.localeCompare(b))
   lockedMemberNames.sort((a, b) => a.localeCompare(b))
 
-  const checkLength = cache.settings[guildId].length ?? 200
+  const checkLength = cache.settings[guildId].length ?? 100
   const fields: APIEmbed['fields'] = []
   const files: MessageCreateOptions['files'] = []
   if (allMembersCount > checkLength) {
@@ -200,7 +200,7 @@ export const getCheckResult: (
   } else {
     cache.settings[guildId]?.reacted !== false &&
       reactedMemberNames.length &&
-      splitMessage(reactedMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
+      splitMessage(reactedMemberNames.map(name => escapeMarkdown(name)).join('\n'), {
         length: 1000,
       }).forEach((content, index) => {
         fields.push({
@@ -210,7 +210,7 @@ export const getCheckResult: (
       })
     cache.settings[guildId]?.absent !== false &&
       absentMemberNames.length &&
-      splitMessage(absentMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
+      splitMessage(absentMemberNames.map(name => escapeMarkdown(name)).join('\n'), {
         length: 1000,
       }).forEach((content, index) => {
         fields.push({
@@ -220,7 +220,7 @@ export const getCheckResult: (
       })
     cache.settings[guildId]?.locked !== false &&
       lockedMemberNames.length &&
-      splitMessage(lockedMemberNames.map(name => escapeMarkdown(name.slice(0, 16))).join('\n'), {
+      splitMessage(lockedMemberNames.map(name => escapeMarkdown(name)).join('\n'), {
         length: 1000,
       }).forEach((content, index) => {
         fields.push({

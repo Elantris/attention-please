@@ -130,7 +130,7 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
     },
     {
       name: 'Length',
-      value: `${cache.settings[guildId].length ?? 200}`,
+      value: `${cache.settings[guildId].length ?? 100}`,
       inline: true,
     },
     {

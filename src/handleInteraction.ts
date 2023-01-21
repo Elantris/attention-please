@@ -1,4 +1,9 @@
-import { ChatInputCommandInteraction, Interaction, MessageContextMenuCommandInteraction } from 'discord.js'
+import {
+  ApplicationCommandType,
+  ChatInputCommandInteraction,
+  Interaction,
+  MessageContextMenuCommandInteraction,
+} from 'discord.js'
 import OpenColor from 'open-color'
 import { isKeyValueProps, ResultProps } from './types'
 import cache, { commands } from './utils/cache'
@@ -82,7 +87,10 @@ const handleInteraction = async (interaction: Interaction) => {
     await sendLog({
       command: {
         createdAt: createdTimestamp,
-        content: `${interaction}`,
+        content:
+          interaction.commandType === ApplicationCommandType.Message
+            ? `/${interaction.commandName} target:${interaction.targetMessage.url}`
+            : `${interaction}`,
         guildId,
         guildName: guild.name,
         channelId: interaction.channelId,
@@ -102,7 +110,12 @@ const handleInteraction = async (interaction: Interaction) => {
     cache.logChannel?.send({
       content: '[`{TIME}`] Error: `{COMMAND}`'
         .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
-        .replace('{COMMAND}', `${interaction}`),
+        .replace(
+          '{COMMAND}',
+          interaction.commandType === ApplicationCommandType.Message
+            ? `/${interaction.commandName} target:${interaction.targetMessage.url}`
+            : `${interaction}`,
+        ),
       embeds: [
         {
           color: colorFormatter(OpenColor.red[5]),

@@ -82,7 +82,7 @@ const exec: CommandProps['exec'] = async interaction => {
   } else if (interaction.isMessageContextMenuCommand()) {
     if (interaction.targetMessage.inGuild()) {
       options.target = interaction.targetMessage
-      options.count = 1
+      options.count = 100
     }
   }
 
@@ -189,7 +189,7 @@ export const getRaffleResult: (
   const reactedMemberCount = reactedMemberNames.length
   if (reactedMemberCount === 0) {
     return {
-      content: translate('error.NO_RAFFLE_PARTICIPANT', { guildId }),
+      content: translate('error.text.NO_RAFFLE_PARTICIPANT', { guildId }),
       embed: {
         description: translate('error.help.NO_RAFFLE_PARTICIPANT', { guildId }),
       },
@@ -200,7 +200,7 @@ export const getRaffleResult: (
     const choose = Math.floor(Math.random() * i)
     ;[reactedMemberNames[i], reactedMemberNames[choose]] = [reactedMemberNames[choose], reactedMemberNames[i]]
   }
-  const raffleCount = options?.count || 30
+  const raffleCount = options?.count || 100
   const luckyMemberNames = reactedMemberNames.splice(0, raffleCount)
 
   const filePath = join(__dirname, '../../files/', `raffle-${message.id}.txt`)
