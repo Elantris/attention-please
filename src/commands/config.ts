@@ -38,6 +38,8 @@ const builds: CommandProps['builds'] = [
               { name: 'reacted', value: 'reacted' },
               { name: 'absent', value: 'absent' },
               { name: 'locked', value: 'locked' },
+              { name: 'irrelevant', value: 'irrelevant' },
+              { name: 'leaved', value: 'leaved' },
             ),
         )
         .addStringOption(option =>
@@ -80,7 +82,7 @@ const builds: CommandProps['builds'] = [
             .setName('length')
             .setDescription('A number between 0 and 300. Set the members count in a response with name lists.')
             .setDescriptionLocalizations({
-              'zh-TW': '介於 0 ~ 300 之間的數字，設定機器人回應的名單內能夠含有的最大成員數量',
+              'zh-TW': '介於 0 ~ 300 之間的數字，設定機器人回應的名單內能夠含有的最大成員數量，超過時會輸出成檔案',
             })
             .setRequired(true),
         ),
@@ -121,6 +123,16 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
     {
       name: 'Locked',
       value: translate(`config.label.${cache.settings[guildId].locked === false ? 'hidden' : 'show'}`, { guildId }),
+      inline: true,
+    },
+    {
+      name: 'Irrelevant',
+      value: translate(`config.label.${cache.settings[guildId].irrelevant === false ? 'hidden' : 'show'}`, { guildId }),
+      inline: true,
+    },
+    {
+      name: 'Leaved',
+      value: translate(`config.label.${cache.settings[guildId].leaved === false ? 'hidden' : 'show'}`, { guildId }),
       inline: true,
     },
     {
@@ -216,7 +228,10 @@ const exec: CommandProps['exec'] = async interaction => {
     cache.settings[guildId].length = length
 
     return {
-      content: translate('config.text.lengthUpdated', { guildId }).replace('{LENGTH}', `${length}`),
+      content: translate('config.text.lengthUpdated', { guildId }).replace(/\{LENGTH\}/g, `${length}`),
+      embed: {
+        fields: getAllConfigs(guildId),
+      },
     }
   }
   return

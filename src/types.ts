@@ -28,6 +28,8 @@ export type JobProps = {
   retryTimes: number
 }
 
+export type MemberStatus = 'reacted' | 'absent' | 'locked' | 'irrelevant' | 'leaved'
+
 export const isKeyValueProps = (
   target: any,
 ): target is {

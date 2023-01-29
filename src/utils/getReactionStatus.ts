@@ -1,21 +1,19 @@
 import { Message } from 'discord.js'
+import { MemberStatus } from '../types'
 
-const getReactionStatus: (message: Message<true>) => Promise<{
+type ReactionStatusProps = {
   [MemberID: string]: {
     name: string
-    status: 'reacted' | 'absent' | 'locked'
+    status: MemberStatus
   }
-}> = async message => {
-  const mentionedMembers: {
-    [MemberID: string]: {
-      name: string
-      status: 'reacted' | 'absent' | 'locked'
-    }
-  } = {}
+}
+
+const getReactionStatus: (message: Message<true>) => Promise<ReactionStatusProps> = async message => {
+  const reactionStatus: ReactionStatusProps = {}
   if (message.mentions.everyone) {
     message.guild.members.cache.each(member => {
       if (!member.user.bot) {
-        mentionedMembers[member.id] = {
+        reactionStatus[member.id] = {
           name: member.displayName,
           status: 'absent',
         }
@@ -24,7 +22,7 @@ const getReactionStatus: (message: Message<true>) => Promise<{
   } else {
     message.mentions.members?.each(member => {
       if (!member.user.bot) {
-        mentionedMembers[member.id] = {
+        reactionStatus[member.id] = {
           name: member.displayName,
           status: 'absent',
         }
@@ -34,7 +32,7 @@ const getReactionStatus: (message: Message<true>) => Promise<{
     message.mentions.roles.each(role => {
       role.members.each(member => {
         if (!member.user.bot) {
-          mentionedMembers[member.id] = {
+          reactionStatus[member.id] = {
             name: member.displayName,
             status: 'absent',
           }
@@ -42,35 +40,58 @@ const getReactionStatus: (message: Message<true>) => Promise<{
       })
     })
   }
-
-  if (Object.keys(mentionedMembers).length === 0) {
+  if (Object.keys(reactionStatus).length === 0) {
     return {}
   }
 
   const messageReactions = message.reactions.cache.values()
   for (const messageReaction of messageReactions) {
-    await messageReaction.users.fetch()
+    let lastUserId = ''
+    while (1) {
+      const reactionUsers = await messageReaction.users.fetch({ limit: 100, after: lastUserId || undefined })
+      if (reactionUsers.size < 100) {
+        break
+      }
+      lastUserId = reactionUsers.last()?.id || ''
+    }
+
     for (const user of messageReaction.users.cache.values()) {
-      if (mentionedMembers[user.id]) {
-        mentionedMembers[user.id].status = 'reacted'
+      if (user.bot) {
+        continue
+      }
+      if (typeof reactionStatus[user.id] === 'undefined') {
+        const member = message.guild.members.cache.get(user.id)
+        if (member) {
+          reactionStatus[user.id] = {
+            name: member.displayName,
+            status: 'irrelevant',
+          }
+        } else {
+          reactionStatus[user.id] = {
+            name: user.username,
+            status: 'leaved',
+          }
+        }
+      } else if (reactionStatus[user.id].status === 'absent') {
+        reactionStatus[user.id].status = 'reacted'
       }
     }
   }
 
-  for (const memberId in mentionedMembers) {
-    if (mentionedMembers[memberId].status === 'absent') {
+  for (const memberId in reactionStatus) {
+    if (reactionStatus[memberId].status === 'absent') {
       const member = message.guild.members.cache.get(memberId)
       if (
         !member ||
         !message.channel.permissionsFor(member).has('ViewChannel') ||
         !message.channel.permissionsFor(member).has('ReadMessageHistory')
       ) {
-        mentionedMembers[memberId].status = 'locked'
+        reactionStatus[memberId].status = 'locked'
       }
     }
   }
 
-  return mentionedMembers
+  return reactionStatus
 }
 
 export default getReactionStatus

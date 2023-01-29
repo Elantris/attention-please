@@ -1,13 +1,17 @@
 import { RESTPostAPIApplicationCommandsJSONBody, TextChannel } from 'discord.js'
-import admin, { ServiceAccount } from 'firebase-admin'
+import admin from 'firebase-admin'
 import { readdirSync } from 'fs'
 import { join } from 'path'
 import appConfig from '../appConfig'
 import { CommandProps, JobProps, LocaleType } from '../types'
 
 admin.initializeApp({
-  credential: admin.credential.cert(appConfig.FIREBASE.serviceAccount as ServiceAccount),
   databaseURL: appConfig.FIREBASE.databaseURL,
+  credential: admin.credential.cert({
+    projectId: appConfig.FIREBASE.projectId,
+    clientEmail: appConfig.FIREBASE.clientEmail,
+    privateKey: appConfig.FIREBASE.privateKey,
+  }),
 })
 export const database = admin.database()
 
@@ -34,6 +38,8 @@ const cache: {
       reacted: boolean
       absent: boolean
       locked: boolean
+      irrelevant: boolean
+      leaved: boolean
       // timezone
       offset: number
       // locale
@@ -55,7 +61,7 @@ const cache: {
   banned: {},
   settings: {},
   jobs: {},
-  footer: 'Version 2022-12-25',
+  footer: 'Version 2023-01-29',
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {

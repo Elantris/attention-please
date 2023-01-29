@@ -9,7 +9,7 @@ import {
 } from 'discord.js'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
-import { CommandProps, JobProps, ResultProps } from '../types'
+import { CommandProps, JobProps, MemberStatus, ResultProps } from '../types'
 import cache, { database } from '../utils/cache'
 import fetchTargetMessage from '../utils/fetchTargetMessage'
 import getAllJobs from '../utils/getAllJobs'
@@ -143,9 +143,18 @@ export const getCheckResult: (
 ) => Promise<ResultProps | void> = async (message, options) => {
   const guildId = message.guild.id
   const checkAt = Date.now()
-  const mentionedMembers = await getReactionStatus(message)
-  const allMembersCount = Object.keys(mentionedMembers).length
-
+  const reactionStatus = await getReactionStatus(message)
+  const memberNames: Record<MemberStatus, string[]> = {
+    reacted: [],
+    absent: [],
+    locked: [],
+    irrelevant: [],
+    leaved: [],
+  }
+  for (const memberId in reactionStatus) {
+    memberNames[reactionStatus[memberId].status].push(reactionStatus[memberId].name)
+  }
+  const allMembersCount = memberNames.reacted.length + memberNames.absent.length + memberNames.locked.length
   if (allMembersCount === 0) {
     throw new Error('NO_MENTIONED_MEMBER', {
       cause: {
@@ -154,26 +163,12 @@ export const getCheckResult: (
     })
   }
 
-  const reactedMemberNames: string[] = []
-  const absentMemberNames: string[] = []
-  const lockedMemberNames: string[] = []
-  for (const memberId in mentionedMembers) {
-    if (mentionedMembers[memberId].status === 'reacted') {
-      reactedMemberNames.push(mentionedMembers[memberId].name)
-    } else if (mentionedMembers[memberId].status === 'absent') {
-      absentMemberNames.push(mentionedMembers[memberId].name)
-    } else if (mentionedMembers[memberId].status === 'locked') {
-      lockedMemberNames.push(mentionedMembers[memberId].name)
-    }
-  }
-
-  reactedMemberNames.sort((a, b) => a.localeCompare(b))
-  absentMemberNames.sort((a, b) => a.localeCompare(b))
-  lockedMemberNames.sort((a, b) => a.localeCompare(b))
-
   const checkLength = cache.settings[guildId].length ?? 100
   const fields: APIEmbed['fields'] = []
   const files: MessageCreateOptions['files'] = []
+  for (const status in memberNames) {
+    memberNames[status as MemberStatus].sort((a, b) => a.localeCompare(b))
+  }
   if (allMembersCount > checkLength) {
     const filePath = join(__dirname, '../../files/', `check-${message.id}.txt`)
     writeFileSync(
@@ -184,13 +179,17 @@ export const getCheckResult: (
         .replace('{TIME}', timeFormatter({ time: checkAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
         .replace('{MESSAGE_URL}', message.url)
         .replace('{ALL_COUNT}', `${allMembersCount}`)
-        .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
-        .replace('{ABSENT_COUNT}', `${absentMemberNames.length}`)
-        .replace('{LOCKED_COUNT}', `${lockedMemberNames.length}`)
-        .replace('{PERCENTAGE}', ((reactedMemberNames.length * 100) / allMembersCount).toFixed(2))
-        .replace('{REACTED_MEMBERS}', reactedMemberNames.join('\r\n'))
-        .replace('{ABSENT_MEMBERS}', absentMemberNames.join('\r\n'))
-        .replace('{LOCKED_MEMBERS}', lockedMemberNames.join('\r\n')),
+        .replace('{REACTED_COUNT}', `${memberNames.reacted.length}`)
+        .replace('{ABSENT_COUNT}', `${memberNames.absent.length}`)
+        .replace('{LOCKED_COUNT}', `${memberNames.locked.length}`)
+        .replace('{IRRELEVANT_COUNT}', `${memberNames.irrelevant.length}`)
+        .replace('{LEAVED_COUNT}', `${memberNames.leaved.length}`)
+        .replace('{PERCENTAGE}', ((memberNames.reacted.length * 100) / allMembersCount).toFixed(2))
+        .replace('{REACTED_MEMBERS}', memberNames.reacted.join('\r\n'))
+        .replace('{ABSENT_MEMBERS}', memberNames.absent.join('\r\n'))
+        .replace('{LOCKED_MEMBERS}', memberNames.locked.join('\r\n'))
+        .replace('{IRRELEVANT_MEMBERS}', memberNames.irrelevant.join('\r\n'))
+        .replace('{LEAVED_MEMBERS}', memberNames.leaved.join('\r\n')),
       { encoding: 'utf8' },
     )
     files.push({
@@ -198,42 +197,39 @@ export const getCheckResult: (
       name: `check-${message.id}.txt`,
     })
   } else {
-    cache.settings[guildId]?.reacted !== false &&
-      reactedMemberNames.length &&
-      splitMessage(reactedMemberNames.map(name => escapeMarkdown(name)).join('\n'), {
-        length: 1000,
-      }).forEach((content, index) => {
-        fields.push({
-          name: translate('check.text.reactedMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
-          value: content.replace(/\n/g, '、'),
-        })
-      })
-    cache.settings[guildId]?.absent !== false &&
-      absentMemberNames.length &&
-      splitMessage(absentMemberNames.map(name => escapeMarkdown(name)).join('\n'), {
-        length: 1000,
-      }).forEach((content, index) => {
-        fields.push({
-          name: translate('check.text.absentMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
-          value: content.replace(/\n/g, '、'),
-        })
-      })
-    cache.settings[guildId]?.locked !== false &&
-      lockedMemberNames.length &&
-      splitMessage(lockedMemberNames.map(name => escapeMarkdown(name)).join('\n'), {
-        length: 1000,
-      }).forEach((content, index) => {
-        fields.push({
-          name: translate('check.text.lockedMembersList', { guildId }).replace('{PAGE}', `${index + 1}`),
-          value: content.replace(/\n/g, '、'),
-        })
-      })
+    for (const status in memberNames) {
+      const memberStatus = status as MemberStatus
+      if (cache.settings[guildId]?.[status] === false || !memberNames[memberStatus].length) {
+        continue
+      }
+      splitMessage(memberNames[memberStatus].map(name => escapeMarkdown(name)).join('\n'), { length: 1000 }).forEach(
+        (content, index) => {
+          fields.push({
+            name: translate(`check.text.${status}MembersList`, { guildId }).replace('{PAGE}', `${index + 1}`),
+            value: content.replace(/\n/g, '、'),
+          })
+        },
+      )
+    }
   }
 
   const warnings: string[] = []
-  if (lockedMemberNames.length) {
+  if (memberNames.locked.length) {
     warnings.push(
-      translate('check.text.lockedMembersWarning', { guildId }).replace('{COUNT}', `${lockedMemberNames.length}`),
+      translate('check.text.lockedMembersWarning', { guildId }).replace('{COUNT}', `${memberNames.locked.length}`),
+    )
+  }
+  if (memberNames.irrelevant.length) {
+    warnings.push(
+      translate('check.text.irrelevantMembersWarning', { guildId }).replace(
+        '{COUNT}',
+        `${memberNames.irrelevant.length}`,
+      ),
+    )
+  }
+  if (memberNames.leaved.length) {
+    warnings.push(
+      translate('check.text.leavedMembersWarning', { guildId }).replace('{COUNT}', `${memberNames.leaved.length}`),
     )
   }
   if (options?.passedCheckAt) {
@@ -247,9 +243,9 @@ export const getCheckResult: (
 
   return {
     content: translate('check.text.checkResult', { guildId })
-      .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
+      .replace('{REACTED_COUNT}', `${memberNames.reacted.length}`)
       .replace('{ALL_COUNT}', `${allMembersCount}`)
-      .replace('{PERCENTAGE}', ((reactedMemberNames.length * 100) / allMembersCount).toFixed(2))
+      .replace('{PERCENTAGE}', ((memberNames.reacted.length * 100) / allMembersCount).toFixed(2))
       .trim(),
     embed: {
       description: translate('check.text.checkResultDetail', { guildId })
@@ -257,8 +253,8 @@ export const getCheckResult: (
         .replace('{FROM_NOW}', `<t:${Math.floor(checkAt / 1000)}:R>`)
         .replace('{MESSAGE_URL}', message.url)
         .replace('{ALL_COUNT}', `${allMembersCount}`)
-        .replace('{REACTED_COUNT}', `${reactedMemberNames.length}`)
-        .replace('{ABSENT_COUNT}', `${absentMemberNames.length}`)
+        .replace('{REACTED_COUNT}', `${memberNames.reacted.length}`)
+        .replace('{ABSENT_COUNT}', `${memberNames.absent.length}`)
         .replace('{WARNINGS}', warnings.join('\n'))
         .trim(),
       fields,
