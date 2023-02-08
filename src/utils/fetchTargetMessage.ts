@@ -1,4 +1,5 @@
 import { Guild, GuildTextBasedChannel, Message } from 'discord.js'
+import { translate } from './translation'
 
 const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise<Message<true>> = async ({
   guild,
@@ -31,7 +32,19 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
 
   if (target.channelId) {
     const targetChannel = guild.channels.cache.get(target.channelId)
-    if (targetChannel?.isTextBased()) {
+    const clientMember = guild.members.cache.get(guild.client.user.id)
+
+    if (targetChannel?.isTextBased() && clientMember) {
+      if (!targetChannel.permissionsFor(clientMember).has(['ViewChannel', 'ReadMessageHistory'])) {
+        throw new Error('NO_PERMISSION_IN_CHANNEL', {
+          cause: {
+            CHANNEL_ID: target.channelId,
+            PERMISSIONS: ['ViewChannel', 'ReadMessageHistory']
+              .map((v, i) => `${i + 1}. ${translate(`permission.label.${v}`, { guildId: guild.id })}`)
+              .join('\n'),
+          },
+        })
+      }
       try {
         target.message = await targetChannel.messages.fetch(target.messageId)
       } catch {}

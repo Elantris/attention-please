@@ -25,7 +25,7 @@
   "config.label.leaved": "退群名單",
   "config.label.show": ":white_check_mark: 顯示",
   "config.label.hidden": ":no_entry: 隱藏",
-  "config.text.offsetUpdated": ":gear: **時間偏移**已設定為 **{OFFSET}**",
+  "config.text.offsetUpdated": ":gear: **時間偏移**已設定為 **{OFFSET}**，請確認現在時間是否為 `{TIME}`",
   "config.text.localeUpdated": ":gear: Attention Please 現在會說 **正體中文（zh-TW）**",
   "config.text.lengthUpdated": ":gear: **名單長度** 已設定為 **{LENGTH}**，標記人數超過 **{LENGTH}** 人時會輸出成檔案",
   "cancel.text.allJobs": ":alarm_clock: 已排程的預約：\n{ALL_JOBS}",
@@ -39,7 +39,7 @@
   "raffle.text.raffleResult": ":confetti_ball: 抽獎參與人數：{REACTED_COUNT} / {ALL_COUNT} (**{PERCENTAGE}%**)",
   "raffle.text.raffleResultDetail": "抽獎時間：`{TIME}` ({FROM_NOW})\n抽獎目標：[訊息連結]({MESSAGE_URL})\n標記人數：{ALL_COUNT}\n參與人數：{REACTED_COUNT}\n中獎人數：{LUCKY_COUNT}\n備取人數：{MISSED_COUNT}\n缺席人數：{ABSENT_COUNT}\n\n{WARNINGS}",
   "error.text.UNKNOWN_ERROR": ":fire: 好像發生了一點小問題，請稍後再嘗試看看",
-  "error.help.UNKNOWN_ERROR": "請確認機器人是否擁有正確權限，如果狀況還是沒有改善，請加入 [客服群組](https://discord.gg/Ctwz4BB) 回報問題",
+  "error.help.UNKNOWN_ERROR": "如果狀況還是沒有改善，請加入 [客服群組](https://discord.gg/Ctwz4BB) 回報問題",
   "error.text.INVALID_MESSAGE_FORMAT": ":x: 訊息格式錯誤",
   "error.help.INVALID_MESSAGE_FORMAT": "指定訊息支援以下格式：\n1. 複製訊息連結\n2. 複製訊息 ID",
   "error.text.UNKNOWN_MESSAGE": ":question: 未知的訊息",
@@ -60,5 +60,10 @@
   "error.text.RAFFLE_JOB_LIMIT": ":warning: 預約抽獎數量已達上限",
   "error.help.RAFFLE_JOB_LIMIT": "當前伺服器已經建立太多預約抽獎了，請等待之前的預約抽獎處理完畢或使用 `/cancel` 指令取消\n\n{RAFFLE_JOBS}",
   "error.text.NO_RAFFLE_PARTICIPANT": ":x: 目前有抽獎資格的成員都還沒有參加抽獎",
-  "error.help.NO_RAFFLE_PARTICIPANT": "被標記到的人具有抽獎資格，按下任意表情符號回應即可參加抽獎"
+  "error.help.NO_RAFFLE_PARTICIPANT": "被標記到的人具有抽獎資格，按下任意表情符號回應即可參加抽獎",
+  "error.text.NO_PERMISSION_IN_CHANNEL": ":lock: 權限不足",
+  "error.help.NO_PERMISSION_IN_CHANNEL": "Attention Please 在 <#{CHANNEL_ID}> 需要權限：\n{PERMISSIONS}",
+  "permission.label.ViewChannel": "檢視頻道",
+  "permission.label.ReadMessageHistory": "讀取歷史訊息",
+  "permission.label.SendMessages": "傳送訊息和建立貼文"
 }

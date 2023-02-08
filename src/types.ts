@@ -28,7 +28,8 @@ export type JobProps = {
   retryTimes: number
 }
 
-export type MemberStatus = 'reacted' | 'absent' | 'locked' | 'irrelevant' | 'leaved'
+export const memberStatusLabels = ['reacted', 'absent', 'locked', 'irrelevant', 'leaved'] as const
+export type MemberStatus = typeof memberStatusLabels[number]
 
 export const isKeyValueProps = (
   target: any,

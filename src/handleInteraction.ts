@@ -18,10 +18,7 @@ const handleInteraction = async (interaction: Interaction) => {
     return
   }
 
-  const guildId = interaction.guildId
-  const guild = interaction.guild
-  const channel = interaction.channel
-  const createdTimestamp = interaction.createdTimestamp
+  const { guildId, guild, channel, createdTimestamp } = interaction
   if (
     !guildId ||
     !guild ||
@@ -113,7 +110,7 @@ const handleInteraction = async (interaction: Interaction) => {
         .replace(
           '{COMMAND}',
           interaction.commandType === ApplicationCommandType.Message
-            ? `/${interaction.commandName} target:${interaction.targetMessage.url}`
+            ? `/${interaction.commandName} target:${interaction.targetMessage.url} (context menu)`
             : `${interaction}`,
         ),
       embeds: [
@@ -126,7 +123,6 @@ const handleInteraction = async (interaction: Interaction) => {
   }
 
   cache.isProcessing[guildId] = false
-
   cache.isCooling[guildId] = true
   setTimeout(() => {
     cache.isCooling[guildId] = false

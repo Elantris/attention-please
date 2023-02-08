@@ -9,7 +9,7 @@ import {
 } from 'discord.js'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
-import { CommandProps, JobProps, MemberStatus, ResultProps } from '../types'
+import { CommandProps, JobProps, MemberStatus, memberStatusLabels, ResultProps } from '../types'
 import cache, { database } from '../utils/cache'
 import fetchTargetMessage from '../utils/fetchTargetMessage'
 import getAllJobs from '../utils/getAllJobs'
@@ -48,10 +48,9 @@ const builds: CommandProps['builds'] = [
 ]
 
 const exec: CommandProps['exec'] = async interaction => {
-  const clientId = interaction.client.user?.id
-  const guildId = interaction.guildId
-  const guild = interaction.guild
-  if (!clientId || !guildId || !guild || !interaction.channelId) {
+  const { guild, guildId } = interaction
+  const clientMember = guild?.members.cache.get(interaction.client.user.id)
+  if (!guildId || !guild || !clientMember || !interaction.channelId) {
     return
   }
 
@@ -77,6 +76,15 @@ const exec: CommandProps['exec'] = async interaction => {
   }
 
   if (options.time) {
+    if (!options.target.channel.permissionsFor(clientMember).has('SendMessages')) {
+      throw new Error('NO_PERMISSION_IN_CHANNEL', {
+        cause: {
+          CHANNEL_ID: options.target.channelId,
+          PERMISSIONS: `1. ${translate('permission.label.SendMessages', { guildId })}`,
+        },
+      })
+    }
+
     if (options.time < interaction.createdTimestamp) {
       return await getCheckResult(options.target, { passedCheckAt: options.time })
     }
@@ -88,14 +96,14 @@ const exec: CommandProps['exec'] = async interaction => {
       let existedJobsCount = 0
       for (const jobId in cache.jobs) {
         const job = cache.jobs[jobId]
-        if (job && job.clientId === clientId && jobId.startsWith('check_') && job.command.guildId === guildId) {
+        if (job && job.clientId === clientMember.id && jobId.startsWith('check_') && job.command.guildId === guildId) {
           existedJobsCount += 1
         }
       }
       if (existedJobsCount > 4) {
         throw new Error('CHECK_JOB_LIMIT', {
           cause: {
-            CHECK_JOBS: getAllJobs(clientId, guild, 'check'),
+            CHECK_JOBS: getAllJobs(clientMember.id, guild, 'check'),
           },
         })
       }
@@ -127,7 +135,7 @@ const exec: CommandProps['exec'] = async interaction => {
           .replace('{TIME}', timeFormatter({ time: options.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
           .replace('{FROM_NOW}', `<t:${Math.floor(options.time / 1000)}:R>`)
           .replace('{TARGET_URL}', options.target.url)
-          .replace('{CHECK_JOBS}', getAllJobs(clientId, guild, 'check')),
+          .replace('{CHECK_JOBS}', getAllJobs(clientMember.id, guild, 'check')),
       },
     }
   }
@@ -166,8 +174,8 @@ export const getCheckResult: (
   const checkLength = cache.settings[guildId].length ?? 100
   const fields: APIEmbed['fields'] = []
   const files: MessageCreateOptions['files'] = []
-  for (const status in memberNames) {
-    memberNames[status as MemberStatus].sort((a, b) => a.localeCompare(b))
+  for (const status of memberStatusLabels) {
+    memberNames[status].sort((a, b) => a.localeCompare(b))
   }
   if (allMembersCount > checkLength) {
     const filePath = join(__dirname, '../../files/', `check-${message.id}.txt`)
@@ -197,8 +205,7 @@ export const getCheckResult: (
       name: `check-${message.id}.txt`,
     })
   } else {
-    for (const status in memberNames) {
-      const memberStatus = status as MemberStatus
+    for (const memberStatus of memberStatusLabels) {
       if (cache.settings[guildId]?.[status] === false || !memberNames[memberStatus].length) {
         continue
       }
@@ -214,12 +221,12 @@ export const getCheckResult: (
   }
 
   const warnings: string[] = []
-  if (memberNames.locked.length) {
+  if (memberNames.locked.length && cache.settings[guildId].locked) {
     warnings.push(
       translate('check.text.lockedMembersWarning', { guildId }).replace('{COUNT}', `${memberNames.locked.length}`),
     )
   }
-  if (memberNames.irrelevant.length) {
+  if (memberNames.irrelevant.length && cache.settings[guildId].irrelevant) {
     warnings.push(
       translate('check.text.irrelevantMembersWarning', { guildId }).replace(
         '{COUNT}',
@@ -227,7 +234,7 @@ export const getCheckResult: (
       ),
     )
   }
-  if (memberNames.leaved.length) {
+  if (memberNames.leaved.length && cache.settings[guildId].leaved) {
     warnings.push(
       translate('check.text.leavedMembersWarning', { guildId }).replace('{COUNT}', `${memberNames.leaved.length}`),
     )

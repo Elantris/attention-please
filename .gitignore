@@ -107,3 +107,5 @@ build
 appConfig.ts
 tmp
 files
+scripts
+tsconfig.*.json

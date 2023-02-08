@@ -1,6 +1,7 @@
 import { APIEmbed, escapeMarkdown, SlashCommandBuilder } from 'discord.js'
-import { CommandProps, isLocaleType } from '../types'
+import { CommandProps, isLocaleType, memberStatusLabels } from '../types'
 import cache, { database } from '../utils/cache'
+import timeFormatter from '../utils/timeFormatter'
 import { translate } from '../utils/translation'
 
 const nameLists = ['reacted', 'absent', 'locked'] as const
@@ -35,11 +36,13 @@ const builds: CommandProps['builds'] = [
             })
             .setRequired(true)
             .addChoices(
-              { name: 'reacted', value: 'reacted' },
-              { name: 'absent', value: 'absent' },
-              { name: 'locked', value: 'locked' },
-              { name: 'irrelevant', value: 'irrelevant' },
-              { name: 'leaved', value: 'leaved' },
+              ...memberStatusLabels.map(memberStatus => ({
+                name: memberStatus,
+                name_localizations: {
+                  'zh-TW': translate(`config.label.${memberStatus}`, { locale: 'zh-TW' }),
+                },
+                value: memberStatus,
+              })),
             ),
         )
         .addStringOption(option =>
@@ -50,7 +53,10 @@ const builds: CommandProps['builds'] = [
               'zh-TW': '顯示或隱藏',
             })
             .setRequired(true)
-            .addChoices({ name: 'on', value: 'on' }, { name: 'off', value: 'off' }),
+            .addChoices(
+              { name: 'on', name_localizations: { 'zh-TW': '顯示' }, value: 'on' },
+              { name: 'off', name_localizations: { 'zh-TW': '隱藏' }, value: 'off' },
+            ),
         ),
     )
     .addSubcommand(subcommand =>
@@ -111,31 +117,6 @@ const builds: CommandProps['builds'] = [
 const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
   return [
     {
-      name: 'Reacted',
-      value: translate(`config.label.${cache.settings[guildId].reacted === false ? 'hidden' : 'show'}`, { guildId }),
-      inline: true,
-    },
-    {
-      name: 'Absent',
-      value: translate(`config.label.${cache.settings[guildId].absent === false ? 'hidden' : 'show'}`, { guildId }),
-      inline: true,
-    },
-    {
-      name: 'Locked',
-      value: translate(`config.label.${cache.settings[guildId].locked === false ? 'hidden' : 'show'}`, { guildId }),
-      inline: true,
-    },
-    {
-      name: 'Irrelevant',
-      value: translate(`config.label.${cache.settings[guildId].irrelevant === false ? 'hidden' : 'show'}`, { guildId }),
-      inline: true,
-    },
-    {
-      name: 'Leaved',
-      value: translate(`config.label.${cache.settings[guildId].leaved === false ? 'hidden' : 'show'}`, { guildId }),
-      inline: true,
-    },
-    {
       name: 'Offset',
       value: `${cache.settings[guildId].offset ?? 8}`,
       inline: true,
@@ -148,6 +129,19 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
     {
       name: 'Locale',
       value: cache.settings[guildId].locale || 'zh-TW',
+      inline: true,
+    },
+    {
+      name: 'List',
+      value: memberStatusLabels
+        .map(
+          memberStatus =>
+            `\`${translate(`config.label.${memberStatus}`, { guildId })}\` ${translate(
+              `config.label.${cache.settings[guildId][memberStatus] ? 'show' : 'hidden'}`,
+              { guildId },
+            )}`,
+        )
+        .join('\n'),
       inline: true,
     },
   ]
@@ -198,7 +192,9 @@ const exec: CommandProps['exec'] = async interaction => {
     cache.settings[guildId].offset = newValue
 
     return {
-      content: translate('config.text.offsetUpdated', { guildId }).replace('{OFFSET}', `${newValue}`),
+      content: translate('config.text.offsetUpdated', { guildId })
+        .replace('{OFFSET}', `${newValue}`)
+        .replace(`{TIME}`, timeFormatter({ guildId, format: 'yyyy-MM-dd HH:mm' })),
       embed: {
         fields: getAllConfigs(guildId),
       },
