@@ -18,7 +18,8 @@ const builds: CommandProps['builds'] = [
         .setDescriptionLocalizations({
           'zh-TW': '預約 ID',
         })
-        .setRequired(true),
+        .setRequired(true)
+        .setAutocomplete(true),
     )
     .toJSON(),
 ]

@@ -1,10 +1,10 @@
 import { Message } from 'discord.js'
-import { MemberStatus } from '../types'
+import { MemberStatusType } from '../types'
 
 type ReactionStatusProps = {
   [MemberID: string]: {
     name: string
-    status: MemberStatus
+    status: MemberStatusType
   }
 }
 

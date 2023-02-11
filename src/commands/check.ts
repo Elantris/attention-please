@@ -9,7 +9,15 @@ import {
 } from 'discord.js'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
-import { CommandProps, JobProps, MemberStatus, memberStatusLabels, ResultProps } from '../types'
+import {
+  CommandProps,
+  isRepeatType,
+  JobProps,
+  memberStatusLabels,
+  MemberStatusType,
+  RepeatType,
+  ResultProps,
+} from '../types'
 import cache, { database } from '../utils/cache'
 import fetchTargetMessage from '../utils/fetchTargetMessage'
 import getAllJobs from '../utils/getAllJobs'
@@ -43,28 +51,47 @@ const builds: CommandProps['builds'] = [
           'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2022-09-01 01:23',
         }),
     )
+    .addStringOption(option =>
+      option
+        .setName('repeat')
+        .setDescription('Repeat check command in days.')
+        .setDescriptionLocalizations({ 'zh-TW': '設定重複的結算週期' })
+        .addChoices(
+          // { name: 'none', name_localizations: { 'zh-TW': '不重複' }, value: 'none' },
+          { name: '1 week', name_localizations: { 'zh-TW': '一週（7 天後）' }, value: 'week' },
+          { name: '1 month', name_localizations: { 'zh-TW': '一月（下個月的同一日期）' }, value: 'month' },
+          { name: '1 season', name_localizations: { 'zh-TW': '一季（三個月後的同一日期）' }, value: 'season' },
+        ),
+    )
     .toJSON(),
   new ContextMenuCommandBuilder().setName('check').setType(ApplicationCommandType.Message),
 ]
 
 const exec: CommandProps['exec'] = async interaction => {
-  const { guild, guildId } = interaction
+  const { guild, guildId, channelId } = interaction
   const clientMember = guild?.members.cache.get(interaction.client.user.id)
-  if (!guildId || !guild || !clientMember || !interaction.channelId) {
+  if (!guildId || !guild || !channelId || !clientMember) {
     return
   }
 
   const options: {
     target?: Message<true>
     time?: number
+    repeat?: RepeatType
   } = {}
 
   if (interaction.isChatInputCommand()) {
     options.time = parseTime({ guildId, time: interaction.options.getString('time') })
+
     options.target = await fetchTargetMessage({
       guild,
       search: interaction.options.getString('target', true),
     })
+
+    const repeat = interaction.options.getString('repeat')
+    if (isRepeatType(repeat)) {
+      options.repeat = repeat
+    }
   } else if (interaction.isMessageContextMenuCommand()) {
     if (interaction.targetMessage.inGuild()) {
       options.target = interaction.targetMessage
@@ -86,7 +113,11 @@ const exec: CommandProps['exec'] = async interaction => {
     }
 
     if (options.time < interaction.createdTimestamp) {
-      return await getCheckResult(options.target, { passedCheckAt: options.time })
+      throw new Error('INVALID_CHECK_TIME', {
+        cause: {
+          TIMESTAMP: `${Math.floor(options.time / 1000)}`,
+        },
+      })
     }
 
     const jobId = `check_${options.target.id}`
@@ -114,7 +145,7 @@ const exec: CommandProps['exec'] = async interaction => {
       executeAt: options.time,
       command: {
         guildId,
-        channelId: interaction.channelId,
+        channelId,
         userId: interaction.user.id,
       },
       target: {
@@ -122,6 +153,7 @@ const exec: CommandProps['exec'] = async interaction => {
         channelId: options.target.channel.id,
       },
       retryTimes: 0,
+      repeat: options.repeat,
     }
     await database.ref(`/jobs/${jobId}`).set(job)
 
@@ -135,6 +167,10 @@ const exec: CommandProps['exec'] = async interaction => {
           .replace('{TIME}', timeFormatter({ time: options.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
           .replace('{FROM_NOW}', `<t:${Math.floor(options.time / 1000)}:R>`)
           .replace('{TARGET_URL}', options.target.url)
+          .replace(
+            '{REPEAT_PERIOD}',
+            translate(options.repeat ? `check.label.${options.repeat}` : 'check.label.noRepeat', { guildId }),
+          )
           .replace('{CHECK_JOBS}', getAllJobs(clientMember.id, guild, 'check')),
       },
     }
@@ -146,13 +182,13 @@ const exec: CommandProps['exec'] = async interaction => {
 export const getCheckResult: (
   message: Message<true>,
   options?: {
-    passedCheckAt?: number
+    repeatAt?: number
   },
 ) => Promise<ResultProps | void> = async (message, options) => {
   const guildId = message.guild.id
   const checkAt = Date.now()
   const reactionStatus = await getReactionStatus(message)
-  const memberNames: Record<MemberStatus, string[]> = {
+  const memberNames: Record<MemberStatusType, string[]> = {
     reacted: [],
     absent: [],
     locked: [],
@@ -174,8 +210,8 @@ export const getCheckResult: (
   const checkLength = cache.settings[guildId].length ?? 100
   const fields: APIEmbed['fields'] = []
   const files: MessageCreateOptions['files'] = []
-  for (const status of memberStatusLabels) {
-    memberNames[status].sort((a, b) => a.localeCompare(b))
+  for (const memberStatus of memberStatusLabels) {
+    memberNames[memberStatus].sort((a, b) => a.localeCompare(b))
   }
   if (allMembersCount > checkLength) {
     const filePath = join(__dirname, '../../files/', `check-${message.id}.txt`)
@@ -206,13 +242,13 @@ export const getCheckResult: (
     })
   } else {
     for (const memberStatus of memberStatusLabels) {
-      if (cache.settings[guildId]?.[status] === false || !memberNames[memberStatus].length) {
+      if (cache.settings[guildId]?.[memberStatus] === false || !memberNames[memberStatus].length) {
         continue
       }
       splitMessage(memberNames[memberStatus].map(name => escapeMarkdown(name)).join('\n'), { length: 1000 }).forEach(
         (content, index) => {
           fields.push({
-            name: translate(`check.text.${status}MembersList`, { guildId }).replace('{PAGE}', `${index + 1}`),
+            name: translate(`check.text.${memberStatus}MembersList`, { guildId }).replace('{PAGE}', `${index + 1}`),
             value: content.replace(/\n/g, '、'),
           })
         },
@@ -239,11 +275,11 @@ export const getCheckResult: (
       translate('check.text.leavedMembersWarning', { guildId }).replace('{COUNT}', `${memberNames.leaved.length}`),
     )
   }
-  if (options?.passedCheckAt) {
+  if (options?.repeatAt) {
     warnings.push(
-      translate('check.text.checkTimePassedWarning', { guildId }).replace(
-        '{TIMESTAMP}',
-        `${Math.floor(options.passedCheckAt / 1000)}`,
+      translate('check.text.newRepeatedJob', { guildId }).replace(
+        '{REPEAT_AT}',
+        timeFormatter({ time: options.repeatAt, guildId, format: 'yyyy-MM-dd HH:mm' }),
       ),
     )
   }

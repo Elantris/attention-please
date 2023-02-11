@@ -19,7 +19,7 @@ const handleReady = async (client: Client) => {
     await logChannel.send(
       '`{TIME}` Register slash commands error\n```{ERROR}```'
         .replace('{TIME}', timeFormatter())
-        .replace('{ERROR}', error),
+        .replace('{ERROR}', error.stack),
     )
   }
 

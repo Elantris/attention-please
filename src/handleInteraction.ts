@@ -14,6 +14,24 @@ import timeFormatter from './utils/timeFormatter'
 import { isTranslateKey, translate } from './utils/translation'
 
 const handleInteraction = async (interaction: Interaction) => {
+  if (interaction.isAutocomplete()) {
+    if (interaction.command?.name === 'cancel') {
+      const { guildId } = interaction
+      await interaction.respond(
+        Object.keys(cache.jobs)
+          .filter(jobId => {
+            const job = cache.jobs[jobId]
+            return job?.clientId === interaction.client.user.id && job.command.guildId === guildId
+          })
+          .map(jobId => ({
+            name: `${jobId}`,
+            value: jobId,
+          })),
+      )
+    }
+    return
+  }
+
   if (!interaction.isChatInputCommand() && !interaction.isMessageContextMenuCommand()) {
     return
   }
@@ -116,7 +134,7 @@ const handleInteraction = async (interaction: Interaction) => {
       embeds: [
         {
           color: colorFormatter(OpenColor.red[5]),
-          description: '```{ERROR}```'.replace('{ERROR}', error),
+          description: '```{ERROR}```'.replace('{ERROR}', error.stack),
         },
       ],
     })

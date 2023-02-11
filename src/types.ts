@@ -12,6 +12,11 @@ export type ResultProps = {
   error?: Error
 }
 
+const repeatLabels = ['week', 'month', 'season'] as const
+export type RepeatType = typeof repeatLabels[number]
+export const isRepeatType = (target: RepeatType | string | null): target is RepeatType =>
+  !!repeatLabels.find(v => v === target)
+
 export type JobProps = {
   clientId: string
   executeAt: number
@@ -26,10 +31,11 @@ export type JobProps = {
     messageId: string
   }
   retryTimes: number
+  repeat?: RepeatType
 }
 
 export const memberStatusLabels = ['reacted', 'absent', 'locked', 'irrelevant', 'leaved'] as const
-export type MemberStatus = typeof memberStatusLabels[number]
+export type MemberStatusType = typeof memberStatusLabels[number]
 
 export const isKeyValueProps = (
   target: any,
@@ -47,7 +53,7 @@ export const isKeyValueProps = (
   return true
 }
 
-const LOCALES = ['zh-TW', 'en-US'] as const
-export type LocaleType = typeof LOCALES[number]
+const localeLabels = ['zh-TW', 'en-US'] as const
+export type LocaleType = typeof localeLabels[number]
 export const isLocaleType = (target: LocaleType | string | null): target is LocaleType =>
-  !!LOCALES.find(locale => locale === target)
+  !!localeLabels.find(v => v === target)

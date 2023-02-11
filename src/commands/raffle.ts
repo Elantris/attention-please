@@ -7,7 +7,7 @@ import {
 } from 'discord.js'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
-import { CommandProps, JobProps, MemberStatus, ResultProps } from '../types'
+import { CommandProps, JobProps, MemberStatusType, ResultProps } from '../types'
 import cache, { database } from '../utils/cache'
 import fetchTargetMessage from '../utils/fetchTargetMessage'
 import getAllJobs from '../utils/getAllJobs'
@@ -163,7 +163,7 @@ export const getRaffleResult: (
   const guildId = message.guild.id
   const raffleAt = Date.now()
   const reactionStatus = await getReactionStatus(message)
-  const memberNames: Record<MemberStatus, string[]> = {
+  const memberNames: Record<MemberStatusType, string[]> = {
     reacted: [],
     absent: [],
     locked: [],

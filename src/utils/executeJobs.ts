@@ -1,7 +1,9 @@
 import { Client } from 'discord.js'
+import { DateTime } from 'luxon'
 import OpenColor from 'open-color'
 import { getCheckResult } from '../commands/check'
 import { getRaffleResult } from '../commands/raffle'
+import { JobProps } from '../types'
 import cache, { database } from './cache'
 import colorFormatter from './colorFormatter'
 import initGuild from './initGuild'
@@ -9,7 +11,6 @@ import sendLog from './sendLog'
 import { translate } from './translation'
 
 let lock = 0
-
 const executeJobs = async (client: Client) => {
   if (lock) {
     return
@@ -32,13 +33,18 @@ const executeJobs = async (client: Client) => {
       if (!targetGuild || !targetChannel?.isTextBased() || !commandChannel?.isTextBased()) {
         throw new Error('CHANNEL_NOT_FOUND')
       }
-      const targetMessage = await targetChannel.messages.fetch(job.target.messageId)
 
+      const targetMessage = await targetChannel.messages.fetch(job.target.messageId)
       const jobType = jobId.split('_')[0]
+      const repeatAt = job.repeat
+        ? DateTime.fromMillis(job.executeAt)
+            .plus(job.repeat === 'season' ? { month: 3 } : { [job.repeat]: 1 })
+            .toMillis()
+        : undefined
 
       const commandResult =
         jobType === 'check'
-          ? await getCheckResult(targetMessage)
+          ? await getCheckResult(targetMessage, { repeatAt })
           : jobType === 'raffle'
           ? await getRaffleResult(targetMessage, { count: job.command.raffleCount || 30 })
           : undefined
@@ -60,7 +66,19 @@ const executeJobs = async (client: Client) => {
           : undefined,
         files: commandResult.files,
       })
-      await database.ref(`/jobs/${jobId}`).remove()
+
+      if (repeatAt) {
+        const newJob: JobProps = {
+          ...job,
+          executeAt: repeatAt,
+          retryTimes: 0,
+        }
+        await database.ref(`/jobs/${jobId}`).set(newJob)
+        await targetMessage.reactions.removeAll()
+      } else {
+        await database.ref(`/jobs/${jobId}`).remove()
+      }
+
       await sendLog({
         command: {
           createdAt: executeAt,
