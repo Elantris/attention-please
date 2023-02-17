@@ -46,18 +46,17 @@ const builds: CommandProps['builds'] = [
     .addStringOption(option =>
       option
         .setName('time')
-        .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2022-09-01 01:23')
+        .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2023-01-02 03:04')
         .setDescriptionLocalizations({
-          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2022-09-01 01:23',
+          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2023-01-02 03:04',
         }),
     )
     .addStringOption(option =>
       option
         .setName('repeat')
-        .setDescription('Repeat check command in days.')
+        .setDescription('Set the interval of periodical check command.')
         .setDescriptionLocalizations({ 'zh-TW': '設定重複的結算週期' })
         .addChoices(
-          // { name: 'none', name_localizations: { 'zh-TW': '不重複' }, value: 'none' },
           { name: '1 week', name_localizations: { 'zh-TW': '一週（7 天後）' }, value: 'week' },
           { name: '1 month', name_localizations: { 'zh-TW': '一月（下個月的同一日期）' }, value: 'month' },
           { name: '1 season', name_localizations: { 'zh-TW': '一季（三個月後的同一日期）' }, value: 'season' },
@@ -68,9 +67,9 @@ const builds: CommandProps['builds'] = [
 ]
 
 const exec: CommandProps['exec'] = async interaction => {
-  const { guild, guildId, channelId } = interaction
+  const { guild, guildId, channel } = interaction
   const clientMember = guild?.members.cache.get(interaction.client.user.id)
-  if (!guildId || !guild || !channelId || !clientMember) {
+  if (!guildId || !guild || !channel || channel.isDMBased() || !clientMember) {
     return
   }
 
@@ -103,10 +102,10 @@ const exec: CommandProps['exec'] = async interaction => {
   }
 
   if (options.time) {
-    if (!options.target.channel.permissionsFor(clientMember).has('SendMessages')) {
+    if (!channel.permissionsFor(clientMember).has('SendMessages')) {
       throw new Error('NO_PERMISSION_IN_CHANNEL', {
         cause: {
-          CHANNEL_ID: options.target.channelId,
+          CHANNEL_ID: channel.id,
           PERMISSIONS: `1. ${translate('permission.label.SendMessages', { guildId })}`,
         },
       })
@@ -141,11 +140,11 @@ const exec: CommandProps['exec'] = async interaction => {
     }
 
     const job: JobProps = {
-      clientId: interaction.client.user?.id || '',
+      clientId: clientMember.id,
       executeAt: options.time,
       command: {
         guildId,
-        channelId,
+        channelId: channel.id,
         userId: interaction.user.id,
       },
       target: {

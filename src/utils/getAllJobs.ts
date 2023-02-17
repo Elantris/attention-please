@@ -35,7 +35,7 @@ const getAllJobs = (clientId: string, guild: Guild, type: 'check' | 'raffle' | '
           .replace('{TIME}', timeFormatter({ time: job.executeAt, guildId: guild.id, format: 'yyyy-MM-dd HH:mm' }))
           .replace('{FROM_NOW}', `<t:${Math.floor(job.executeAt / 1000)}:R>`),
       )
-      .join('\n'),
+      .join('\n') || translate('cancel.text.empty', { guildId: guild.id }),
   )
 }
 

@@ -30,7 +30,7 @@ const sendLog = async (options: {
       ...(options.result.embed ? [options.result.embed] : []),
       {
         color: options.error ? colorFormatter(OpenColor.red[5]) : undefined,
-        description: options.error ? '```{ERROR}```'.replace('{ERROR}', `${options.error.stack}`) : undefined,
+        description: options.error ? '```{ERROR}```'.replace('{ERROR}', `${options.error.stack || ''}`) : undefined,
         fields: [
           {
             name: 'Guild',

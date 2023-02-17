@@ -15,12 +15,14 @@ const handleReady = async (client: Client) => {
   const rest = new REST({ version: '10' }).setToken(appConfig.DISCORD.TOKEN)
   try {
     await rest.put(Routes.applicationCommands(appConfig.DISCORD.CLIENT_ID), { body: commandBuilds })
-  } catch (error: any) {
-    await logChannel.send(
-      '`{TIME}` Register slash commands error\n```{ERROR}```'
-        .replace('{TIME}', timeFormatter())
-        .replace('{ERROR}', error.stack),
-    )
+  } catch (error) {
+    if (error instanceof Error) {
+      await logChannel.send(
+        '`{TIME}` Register slash commands error\n```{ERROR}```'
+          .replace('{TIME}', timeFormatter())
+          .replace('{ERROR}', error.stack || ''),
+      )
+    }
   }
 
   logChannel.send(

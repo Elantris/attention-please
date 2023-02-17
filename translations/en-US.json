@@ -35,6 +35,7 @@
   "config.text.lengthUpdated": ":gear: **Length** is updated to **{LENGTH}**.",
   "cancel.text.allJobs": ":alarm_clock: All jobs:\n{ALL_JOBS}",
   "cancel.text.cancelJob": ":pushpin: **{GUILD_NAME}** canceled job `{JOB_ID}`.",
+  "cancel.text.empty": "(empty)",
   "raffle.text.raffleJobCreated": ":alarm_clock: **{GUILD_NAME}** Raffle job `{JOB_ID}` is created.",
   "raffle.text.raffleJobUpdated": ":alarm_clock: **{GUILD_NAME}** Raffle job `{JOB_ID}` is updated.",
   "raffle.text.raffleJobDetail": "Job: `{JOB_ID}`\nTime: `{TIME}` ({FROM_NOW})\nTarget: [Message]({TARGET_URL})\n\n{RAFFLE_JOBS}",

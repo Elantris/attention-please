@@ -13,7 +13,7 @@ const builds: CommandProps['builds'] = [
 ]
 
 const exec: CommandProps['exec'] = async interaction => {
-  const guildId = interaction.guildId
+  const { guildId } = interaction
   if (!guildId) {
     return
   }

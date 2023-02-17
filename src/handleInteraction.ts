@@ -15,19 +15,19 @@ import { isTranslateKey, translate } from './utils/translation'
 
 const handleInteraction = async (interaction: Interaction) => {
   if (interaction.isAutocomplete()) {
-    if (interaction.command?.name === 'cancel') {
-      const { guildId } = interaction
+    if (interaction.commandName === 'cancel') {
       await interaction.respond(
         Object.keys(cache.jobs)
           .filter(jobId => {
             const job = cache.jobs[jobId]
-            return job?.clientId === interaction.client.user.id && job.command.guildId === guildId
+            return job?.clientId === interaction.client.user.id && job.command.guildId === interaction.guildId
           })
           .map(jobId => ({
             name: `${jobId}`,
             value: jobId,
-          })),
+          })) || [],
       )
+      return
     }
     return
   }
@@ -52,19 +52,21 @@ const handleInteraction = async (interaction: Interaction) => {
 
   try {
     await initGuild(interaction.client, guildId)
-  } catch (error: any) {
-    cache.logChannel?.send({
-      content: '[`{TIME}`] Error: init guild {GUILD_ID}'
-        .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
-        .replace('{GUILD_ID}', guildId),
-      embeds: [
-        {
-          color: colorFormatter(OpenColor.red[5]),
-          description: '```{ERROR}```'.replace('{ERROR}', error),
-        },
-      ],
-    })
-    cache.isProcessing[guildId] = false
+  } catch (error) {
+    if (error instanceof Error) {
+      cache.logChannel?.send({
+        content: '[`{TIME}`] Error: init guild {GUILD_ID}'
+          .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
+          .replace('{GUILD_ID}', guildId),
+        embeds: [
+          {
+            color: colorFormatter(OpenColor.red[5]),
+            description: '```{ERROR}```'.replace('{ERROR}', error.stack || ''),
+          },
+        ],
+      })
+      cache.isProcessing[guildId] = false
+    }
     return
   }
 
@@ -73,7 +75,7 @@ const handleInteraction = async (interaction: Interaction) => {
       await interaction.deferReply()
     }
 
-    const commandResult = await handleCommand(interaction)
+    const commandResult = await executeCommand(interaction)
     if (!commandResult) {
       cache.isProcessing[guildId] = false
       return
@@ -94,10 +96,10 @@ const handleInteraction = async (interaction: Interaction) => {
         : undefined,
       files: commandResult.files,
     }
-    const responseMessage =
-      interaction.commandName === 'check' || interaction.commandName === 'raffle'
-        ? await interaction.editReply(responseOptions)
-        : await interaction.reply({ ...responseOptions, fetchReply: true })
+
+    interaction.commandName === 'check' || interaction.commandName === 'raffle'
+      ? await interaction.editReply(responseOptions)
+      : await interaction.reply({ ...responseOptions, fetchReply: true })
 
     await sendLog({
       command: {
@@ -121,23 +123,25 @@ const handleInteraction = async (interaction: Interaction) => {
       },
       error: commandResult.error,
     })
-  } catch (error: any) {
-    cache.logChannel?.send({
-      content: '[`{TIME}`] Error: `{COMMAND}`'
-        .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
-        .replace(
-          '{COMMAND}',
-          interaction.commandType === ApplicationCommandType.Message
-            ? `/${interaction.commandName} target:${interaction.targetMessage.url} (context menu)`
-            : `${interaction}`,
-        ),
-      embeds: [
-        {
-          color: colorFormatter(OpenColor.red[5]),
-          description: '```{ERROR}```'.replace('{ERROR}', error.stack),
-        },
-      ],
-    })
+  } catch (error) {
+    if (error instanceof Error) {
+      cache.logChannel?.send({
+        content: '[`{TIME}`] Error: `{COMMAND}`'
+          .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
+          .replace(
+            '{COMMAND}',
+            interaction.commandType === ApplicationCommandType.Message
+              ? `/${interaction.commandName} target:${interaction.targetMessage.url} (context menu)`
+              : `${interaction}`,
+          ),
+        embeds: [
+          {
+            color: colorFormatter(OpenColor.red[5]),
+            description: '```{ERROR}```'.replace('{ERROR}', error.stack || ''),
+          },
+        ],
+      })
+    }
   }
 
   cache.isProcessing[guildId] = false
@@ -147,17 +151,17 @@ const handleInteraction = async (interaction: Interaction) => {
   }, 5000)
 }
 
-const handleCommand: (
+const executeCommand: (
   interaction: ChatInputCommandInteraction | MessageContextMenuCommandInteraction,
 ) => Promise<ResultProps | void> = async interaction => {
-  const guildId = interaction.guildId
+  const { guildId } = interaction
   if (!guildId) {
     return
   }
 
   try {
     return await commands[interaction.commandName]?.exec(interaction)
-  } catch (error: any) {
+  } catch (error) {
     if (!(error instanceof Error)) {
       return
     }

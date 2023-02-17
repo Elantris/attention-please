@@ -54,8 +54,8 @@ const builds: CommandProps['builds'] = [
             })
             .setRequired(true)
             .addChoices(
-              { name: 'on', name_localizations: { 'zh-TW': '顯示' }, value: 'on' },
-              { name: 'off', name_localizations: { 'zh-TW': '隱藏' }, value: 'off' },
+              { name: 'show', name_localizations: { 'zh-TW': '顯示' }, value: 'show' },
+              { name: 'hidden', name_localizations: { 'zh-TW': '隱藏' }, value: 'hidden' },
             ),
         ),
     )
@@ -117,11 +117,6 @@ const builds: CommandProps['builds'] = [
 const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
   return [
     {
-      name: 'Offset',
-      value: `${cache.settings[guildId].offset ?? 8}`,
-      inline: true,
-    },
-    {
       name: 'Length',
       value: `${cache.settings[guildId].length ?? 100}`,
       inline: true,
@@ -129,6 +124,11 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
     {
       name: 'Locale',
       value: cache.settings[guildId].locale || 'zh-TW',
+      inline: true,
+    },
+    {
+      name: 'Offset',
+      value: `${cache.settings[guildId].offset ?? 8}`,
       inline: true,
     },
     {
@@ -148,8 +148,7 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
 }
 
 const exec: CommandProps['exec'] = async interaction => {
-  const guildId = interaction.guildId
-  const guild = interaction.guild
+  const { guildId, guild } = interaction
   if (!interaction.isChatInputCommand() || !guildId || !guild) {
     return
   }
@@ -163,25 +162,29 @@ const exec: CommandProps['exec'] = async interaction => {
         fields: getAllConfigs(guildId),
       },
     }
-  } else if (subcommand === 'list') {
+  }
+
+  if (subcommand === 'list') {
     const type = interaction.options.getString('type', true)
     const action = interaction.options.getString('action', true)
-    if (!isNameList(type) || (action !== 'on' && action !== 'off')) {
+    if (!isNameList(type) || (action !== 'show' && action !== 'hidden')) {
       return
     }
 
-    await database.ref(`/settings/${guildId}/${type}`).set(action === 'on')
-    cache.settings[guildId][type] = action === 'on'
+    await database.ref(`/settings/${guildId}/${type}`).set(action === 'show')
+    cache.settings[guildId][type] = action === 'show'
 
     return {
       content: translate('config.text.nameListUpdated', { guildId })
         .replace('{NAME_LIST}', translate(`config.label.${type}`, { guildId }))
-        .replace('{ACTION}', translate(`config.label.${action === 'on' ? 'show' : 'hidden'}`, { guildId })),
+        .replace('{ACTION}', translate(`config.label.${action === 'show' ? 'show' : 'hidden'}`, { guildId })),
       embed: {
         fields: getAllConfigs(guildId),
       },
     }
-  } else if (subcommand === 'offset') {
+  }
+
+  if (subcommand === 'offset') {
     const offset = interaction.options.getNumber('offset', true)
     if (offset < -12 || offset > 12) {
       throw new Error('INVALID_OFFSET')
@@ -199,7 +202,9 @@ const exec: CommandProps['exec'] = async interaction => {
         fields: getAllConfigs(guildId),
       },
     }
-  } else if (subcommand === 'locale') {
+  }
+
+  if (subcommand === 'locale') {
     const locale = interaction.options.getString('locale', true)
     if (!isLocaleType(locale)) {
       return
@@ -214,7 +219,9 @@ const exec: CommandProps['exec'] = async interaction => {
         fields: getAllConfigs(guildId),
       },
     }
-  } else if (subcommand === 'length') {
+  }
+
+  if (subcommand === 'length') {
     const length = interaction.options.getInteger('length', true)
     if (length < 0 || length > 300) {
       throw new Error('INVALID_LENGTH')
@@ -230,7 +237,6 @@ const exec: CommandProps['exec'] = async interaction => {
       },
     }
   }
-  return
 }
 
 const command: CommandProps = {

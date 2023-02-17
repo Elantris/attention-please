@@ -54,10 +54,9 @@ const builds: CommandProps['builds'] = [
 ]
 
 const exec: CommandProps['exec'] = async interaction => {
-  const clientId = interaction.client.user?.id
-  const guildId = interaction.guildId
-  const guild = interaction.guild
-  if (!clientId || !guildId || !guild || !interaction.channelId) {
+  const { guild, guildId, channel } = interaction
+  const clientMember = guild?.members.cache.get(interaction.client.user.id)
+  if (!guildId || !guild || !channel || channel.isDMBased() || !clientMember) {
     return
   }
 
@@ -76,7 +75,7 @@ const exec: CommandProps['exec'] = async interaction => {
     }
 
     options.target = await fetchTargetMessage({
-      guild: interaction.guild,
+      guild,
       search: interaction.options.getString('target', true),
     })
   } else if (interaction.isMessageContextMenuCommand()) {
@@ -91,6 +90,15 @@ const exec: CommandProps['exec'] = async interaction => {
   }
 
   if (options.time) {
+    if (!channel.permissionsFor(clientMember).has('SendMessages')) {
+      throw new Error('NO_PERMISSION_IN_CHANNEL', {
+        cause: {
+          CHANNEL_ID: channel.id,
+          PERMISSIONS: `1. ${translate('permission.label.SendMessages', { guildId })}`,
+        },
+      })
+    }
+
     if (options.time < interaction.createdTimestamp) {
       throw new Error('INVALID_RAFFLE_TIME', {
         cause: {
@@ -106,25 +114,25 @@ const exec: CommandProps['exec'] = async interaction => {
       let existedJobsCount = 0
       for (const jobId in cache.jobs) {
         const job = cache.jobs[jobId]
-        if (job && job.clientId === clientId && jobId.startsWith('raffle_') && job.command.guildId === guildId) {
+        if (job && job.clientId === clientMember.id && jobId.startsWith('raffle_') && job.command.guildId === guildId) {
           existedJobsCount += 1
         }
       }
       if (existedJobsCount > 4) {
         throw new Error('RAFFLE_JOB_LIMIT', {
           cause: {
-            RAFFLE_JOBS: getAllJobs(clientId, guild, 'raffle'),
+            RAFFLE_JOBS: getAllJobs(clientMember.id, guild, 'raffle'),
           },
         })
       }
     }
 
     const job: JobProps = {
-      clientId: interaction.client.user?.id || '',
+      clientId: clientMember.id,
       executeAt: options.time,
       command: {
         guildId,
-        channelId: interaction.channelId,
+        channelId: channel.id,
         userId: interaction.user.id,
         raffleCount: options.count,
       },
@@ -146,7 +154,7 @@ const exec: CommandProps['exec'] = async interaction => {
           .replace('{TIME}', timeFormatter({ time: options.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
           .replace('{FROM_NOW}', `<t:${Math.floor(options.time / 1000)}:R>`)
           .replace('{TARGET_URL}', options.target.url)
-          .replace('{RAFFLE_JOBS}', getAllJobs(clientId, guild, 'raffle')),
+          .replace('{RAFFLE_JOBS}', getAllJobs(clientMember.id, guild, 'raffle')),
       },
     }
   }

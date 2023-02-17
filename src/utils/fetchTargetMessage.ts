@@ -16,7 +16,7 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
     const [channelId, messageId] = search.split('/').slice(-2)
     target.channelId = channelId
     target.messageId = messageId
-  } else if (/^\d+\-\d+$/.test(search)) {
+  } else if (/^\d+-\d+$/.test(search)) {
     // channel id - message id
     const [channelId, messageId] = search.split('-')
     target.channelId = channelId

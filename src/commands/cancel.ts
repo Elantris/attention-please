@@ -25,9 +25,8 @@ const builds: CommandProps['builds'] = [
 ]
 
 const exec: CommandProps['exec'] = async interaction => {
-  const clientId = interaction.client.user?.id
-  const guildId = interaction.guildId
-  const guild = interaction.guild
+  const clientId = interaction.client.user.id
+  const { guildId, guild } = interaction
   if (!interaction.isChatInputCommand() || !clientId || !guildId || !guild) {
     return
   }

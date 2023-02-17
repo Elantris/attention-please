@@ -97,7 +97,7 @@ const executeJobs = async (client: Client) => {
           files: commandResult.files,
         },
       })
-    } catch (error: any) {
+    } catch (error) {
       if (job.retryTimes > 1) {
         const guild = client.guilds.cache.get(job.command.guildId)
         const commandChannel = guild?.channels.cache.get(job.command.channelId)
@@ -116,7 +116,7 @@ const executeJobs = async (client: Client) => {
             createdAt: Date.now(),
             content: 'Error to execute.',
           },
-          error,
+          error: error instanceof Error ? error : undefined,
         })
         await database.ref(`/jobs/${jobId}`).remove()
       } else {
