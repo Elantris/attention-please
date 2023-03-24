@@ -1,9 +1,4 @@
-import {
-  ApplicationCommandType,
-  ChatInputCommandInteraction,
-  Interaction,
-  MessageContextMenuCommandInteraction,
-} from 'discord.js'
+import { ChatInputCommandInteraction, Interaction, MessageContextMenuCommandInteraction } from 'discord.js'
 import OpenColor from 'open-color'
 import { isKeyValueProps, ResultProps } from './types'
 import cache, { commands } from './utils/cache'
@@ -20,7 +15,7 @@ const handleInteraction = async (interaction: Interaction) => {
         Object.keys(cache.jobs)
           .filter(jobId => {
             const job = cache.jobs[jobId]
-            return job?.clientId === interaction.client.user.id && job.command.guildId === interaction.guildId
+            return job?.clientId === interaction.client.user.id && job?.command.guildId === interaction.guildId
           })
           .map(jobId => ({
             name: `${jobId}`,
@@ -54,7 +49,7 @@ const handleInteraction = async (interaction: Interaction) => {
     await initGuild(interaction.client, guildId)
   } catch (error) {
     if (error instanceof Error) {
-      cache.logChannel?.send({
+      await cache.logChannel?.send({
         content: '[`{TIME}`] Error: init guild {GUILD_ID}'
           .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
           .replace('{GUILD_ID}', guildId),
@@ -65,8 +60,8 @@ const handleInteraction = async (interaction: Interaction) => {
           },
         ],
       })
-      cache.isProcessing[guildId] = false
     }
+    cache.isProcessing[guildId] = false
     return
   }
 
@@ -104,10 +99,9 @@ const handleInteraction = async (interaction: Interaction) => {
     await sendLog({
       command: {
         createdAt: createdTimestamp,
-        content:
-          interaction.commandType === ApplicationCommandType.Message
-            ? `/${interaction.commandName} target:${interaction.targetMessage.url}`
-            : `${interaction}`,
+        content: interaction.isMessageContextMenuCommand()
+          ? `/${interaction.commandName} target:${interaction.targetMessage.url} (context menu)`
+          : `${interaction}`,
         guildId,
         guildName: guild.name,
         channelId: interaction.channelId,
@@ -130,7 +124,7 @@ const handleInteraction = async (interaction: Interaction) => {
           .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
           .replace(
             '{COMMAND}',
-            interaction.commandType === ApplicationCommandType.Message
+            interaction.isMessageContextMenuCommand()
               ? `/${interaction.commandName} target:${interaction.targetMessage.url} (context menu)`
               : `${interaction}`,
           ),

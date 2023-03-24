@@ -11,10 +11,11 @@ import { writeFileSync } from 'fs'
 import { join } from 'path'
 import {
   CommandProps,
-  isRepeatType,
+  isInArray,
   JobProps,
   memberStatusLabels,
   MemberStatusType,
+  repeatLabels,
   RepeatType,
   ResultProps,
 } from '../types'
@@ -57,7 +58,8 @@ const builds: CommandProps['builds'] = [
         .setDescription('Set the interval of periodical check command.')
         .setDescriptionLocalizations({ 'zh-TW': '設定重複的結算週期' })
         .addChoices(
-          { name: '1 week', name_localizations: { 'zh-TW': '一週（7 天後）' }, value: 'week' },
+          { name: '1 day', name_localizations: { 'zh-TW': '一天（24 小時）' }, value: 'day' },
+          { name: '1 week', name_localizations: { 'zh-TW': '一週（7 天）' }, value: 'week' },
           { name: '1 month', name_localizations: { 'zh-TW': '一月（下個月的同一日期）' }, value: 'month' },
           { name: '1 season', name_localizations: { 'zh-TW': '一季（三個月後的同一日期）' }, value: 'season' },
         ),
@@ -87,8 +89,8 @@ const exec: CommandProps['exec'] = async interaction => {
       search: interaction.options.getString('target', true),
     })
 
-    const repeat = interaction.options.getString('repeat')
-    if (isRepeatType(repeat)) {
+    const repeat = interaction.options.getString('repeat') || ''
+    if (isInArray(repeat, repeatLabels)) {
       options.repeat = repeat
     }
   } else if (interaction.isMessageContextMenuCommand()) {
@@ -152,7 +154,9 @@ const exec: CommandProps['exec'] = async interaction => {
         channelId: options.target.channel.id,
       },
       retryTimes: 0,
-      repeat: options.repeat,
+    }
+    if (options.repeat) {
+      job.repeat = options.repeat
     }
     await database.ref(`/jobs/${jobId}`).set(job)
 

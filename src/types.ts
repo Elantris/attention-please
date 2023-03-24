@@ -1,5 +1,12 @@
 import { APIEmbed, Interaction, MessageCreateOptions, RESTPostAPIApplicationCommandsJSONBody } from 'discord.js'
 
+export const repeatLabels = ['day', 'week', 'month', 'season'] as const
+export const memberStatusLabels = ['reacted', 'absent', 'locked', 'irrelevant', 'leaved'] as const
+export const localeLabels = ['zh-TW', 'en-US'] as const
+export type RepeatType = typeof repeatLabels[number]
+export type MemberStatusType = typeof memberStatusLabels[number]
+export type LocaleType = typeof localeLabels[number]
+
 export type CommandProps = {
   builds: RESTPostAPIApplicationCommandsJSONBody[]
   exec: (interaction: Interaction) => Promise<ResultProps | void | undefined>
@@ -11,11 +18,6 @@ export type ResultProps = {
   files?: MessageCreateOptions['files']
   error?: Error
 }
-
-const repeatLabels = ['week', 'month', 'season'] as const
-export type RepeatType = typeof repeatLabels[number]
-export const isRepeatType = (target: RepeatType | string | null): target is RepeatType =>
-  !!repeatLabels.find(v => v === target)
 
 export type JobProps = {
   clientId: string
@@ -34,9 +36,6 @@ export type JobProps = {
   repeat?: RepeatType
 }
 
-export const memberStatusLabels = ['reacted', 'absent', 'locked', 'irrelevant', 'leaved'] as const
-export type MemberStatusType = typeof memberStatusLabels[number]
-
 export const isKeyValueProps = (
   target: any,
 ): target is {
@@ -53,7 +52,4 @@ export const isKeyValueProps = (
   return true
 }
 
-const localeLabels = ['zh-TW', 'en-US'] as const
-export type LocaleType = typeof localeLabels[number]
-export const isLocaleType = (target: LocaleType | string | null): target is LocaleType =>
-  !!localeLabels.find(v => v === target)
+export const isInArray = <T extends string>(str: string, arr: readonly T[]): str is T => arr.includes(str as T)

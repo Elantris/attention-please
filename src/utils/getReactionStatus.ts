@@ -46,10 +46,12 @@ const getReactionStatus: (message: Message<true>) => Promise<ReactionStatusProps
 
   const messageReactions = message.reactions.cache.values()
   for (const messageReaction of messageReactions) {
-    let lastUserId = ''
-    while (1) {
+    let lastUserId = '',
+      flag = true
+    while (flag) {
       const reactionUsers = await messageReaction.users.fetch({ limit: 100, after: lastUserId || undefined })
       if (reactionUsers.size < 100) {
+        flag = false
         break
       }
       lastUserId = reactionUsers.last()?.id || ''

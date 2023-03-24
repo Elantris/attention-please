@@ -1,5 +1,5 @@
 import { APIEmbed, escapeMarkdown, SlashCommandBuilder } from 'discord.js'
-import { CommandProps, isLocaleType, memberStatusLabels } from '../types'
+import { CommandProps, isInArray, localeLabels, memberStatusLabels } from '../types'
 import cache, { database } from '../utils/cache'
 import timeFormatter from '../utils/timeFormatter'
 import { translate } from '../utils/translation'
@@ -136,7 +136,7 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
       value: memberStatusLabels
         .map(
           memberStatus =>
-            `\`${translate(`config.label.${memberStatus}`, { guildId })}\` ${translate(
+            `${translate(`config.label.${memberStatus}`, { guildId })} ${translate(
               `config.label.${cache.settings[guildId][memberStatus] ? 'show' : 'hidden'}`,
               { guildId },
             )}`,
@@ -206,7 +206,7 @@ const exec: CommandProps['exec'] = async interaction => {
 
   if (subcommand === 'locale') {
     const locale = interaction.options.getString('locale', true)
-    if (!isLocaleType(locale)) {
+    if (!isInArray(locale, localeLabels)) {
       return
     }
 

@@ -12,7 +12,7 @@ const initGuild = async (client: Client, guildId: string) => {
     return
   }
 
-  await guild.members.fetch({ force: true })
+  await guild.members.fetch()
   await guild.roles.fetch()
   cache.settings[guildId] = (await database.ref(`/settings/${guildId}`).once('value')).val() || {}
   cache.isInit[guildId] = Date.now() + 600000

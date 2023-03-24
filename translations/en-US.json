@@ -16,6 +16,7 @@
   "check.text.checkResult": ":bar_chart: Reacted: {REACTED_COUNT} / {ALL_COUNT} (**{PERCENTAGE}%**)",
   "check.text.checkResultDetail": "Time: `{TIME}` ({FROM_NOW})\nTarget: [Message]({MESSAGE_URL})\nMentioned: {ALL_COUNT}\nReacted: {REACTED_COUNT}\nAbsent: {ABSENT_COUNT}\n\n{WARNINGS}",
   "check.label.noRepeat": "no repeat",
+  "check.label.day": "a day",
   "check.label.week": "a week",
   "check.label.month": "a month",
   "check.label.season": "three months",

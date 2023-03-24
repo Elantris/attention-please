@@ -74,7 +74,7 @@ const executeJobs = async (client: Client) => {
           retryTimes: 0,
         }
         await database.ref(`/jobs/${jobId}`).set(newJob)
-        await targetMessage.reactions.removeAll()
+        await targetMessage.reactions.removeAll().catch(() => null)
       } else {
         await database.ref(`/jobs/${jobId}`).remove()
       }
