@@ -8,6 +8,7 @@ import {
   SlashCommandBuilder,
 } from 'discord.js'
 import { writeFileSync } from 'fs'
+import { DateTime } from 'luxon'
 import { join } from 'path'
 import {
   CommandProps,
@@ -114,11 +115,17 @@ const exec: CommandProps['exec'] = async interaction => {
     }
 
     if (options.time < interaction.createdTimestamp) {
-      throw new Error('INVALID_CHECK_TIME', {
-        cause: {
-          TIMESTAMP: `${Math.floor(options.time / 1000)}`,
-        },
-      })
+      // 5 minutes
+      if (interaction.createdTimestamp - options.time < 300000) {
+        options.time = DateTime.now().plus({ minutes: 1 }).startOf('minute').toMillis()
+      } else {
+        throw new Error('INVALID_CHECK_TIME', {
+          cause: {
+            TIME: timeFormatter({ time: options.time, guildId, format: 'yyyy-MM-dd HH:mm' }),
+            TIMESTAMP: `${Math.floor(options.time / 1000)}`,
+          },
+        })
+      }
     }
 
     const jobId = `check_${options.target.id}`

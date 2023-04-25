@@ -7,10 +7,9 @@ const parseTime: (options: { guildId: string; time: string | null }) => number =
     return 0
   }
 
-  const offset = cache.settings[guildId].offset ?? 8
-
-  const targetTime = DateTime.fromFormat(`${time} ${offset >= 0 ? '+' : ''}${offset}`, 'yyyy-MM-dd HH:mm Z')
-  if (!targetTime.isValid) {
+  const numbers = time.match(/\d+/g)?.map(v => parseInt(v)) || []
+  const targetTime = new Date(numbers[0] ?? 0, (numbers[1] ?? 1) - 1, numbers[2] ?? 0, numbers[3] ?? 0, numbers[4] ?? 0)
+  if (!Number.isSafeInteger(targetTime.getTime())) {
     throw new Error('INVALID_TIME_FORMAT', {
       cause: {
         TIME: timeFormatter({ guildId, format: 'yyyy-MM-dd HH:mm' }),
@@ -19,7 +18,9 @@ const parseTime: (options: { guildId: string; time: string | null }) => number =
     })
   }
 
-  return targetTime.toMillis()
+  const offset = cache.settings[guildId].offset ?? 8
+  const diff = offset - 8
+  return DateTime.fromJSDate(targetTime).minus({ hour: diff }).toMillis()
 }
 
 export default parseTime

@@ -102,6 +102,7 @@ const exec: CommandProps['exec'] = async interaction => {
     if (options.time < interaction.createdTimestamp) {
       throw new Error('INVALID_RAFFLE_TIME', {
         cause: {
+          TIME: timeFormatter({ time: options.time, guildId, format: 'yyyy-MM-dd HH:mm' }),
           TIMESTAMP: `${Math.floor(options.time / 1000)}`,
         },
       })

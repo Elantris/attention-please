@@ -4,7 +4,7 @@ import cache, { commandBuilds } from './utils/cache'
 import executeJobs from './utils/executeJobs'
 import timeFormatter from './utils/timeFormatter'
 
-const handleReady = async (client: Client) => {
+const handleReady = async (client: Client<true>) => {
   const logChannel = client.channels.cache.get(appConfig.DISCORD.LOG_CHANNEL_ID)
   if (logChannel?.type !== ChannelType.GuildText) {
     process.exit(-1)
@@ -17,17 +17,11 @@ const handleReady = async (client: Client) => {
     await rest.put(Routes.applicationCommands(appConfig.DISCORD.CLIENT_ID), { body: commandBuilds })
   } catch (error) {
     if (error instanceof Error) {
-      await logChannel.send(
-        '`{TIME}` Register slash commands error\n```{ERROR}```'
-          .replace('{TIME}', timeFormatter())
-          .replace('{ERROR}', error.stack || ''),
-      )
+      await logChannel.send(`\`${timeFormatter()}\` Register slash commands error\n\`\`\`${error.stack || ''}\`\`\``)
     }
   }
 
-  logChannel.send(
-    '`{TIME}` {USER_TAG}'.replace('{TIME}', timeFormatter()).replace('{USER_TAG}', client.user?.tag || ''),
-  )
+  logChannel.send(`\`${timeFormatter()}\` ${client.user.tag}`)
 
   setInterval(() => {
     client.user?.setActivity(`on ${client.guilds.cache.size} guilds.`)
