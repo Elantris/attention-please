@@ -80,6 +80,7 @@ const exec: CommandProps['exec'] = async interaction => {
     target?: Message<true>
     time?: number
     repeat?: RepeatType
+    isTimeModified?: boolean
   } = {}
 
   if (interaction.isChatInputCommand()) {
@@ -118,6 +119,7 @@ const exec: CommandProps['exec'] = async interaction => {
       // 5 minutes
       if (interaction.createdTimestamp - options.time < 300000) {
         options.time = DateTime.now().plus({ minutes: 1 }).startOf('minute').toMillis()
+        options.isTimeModified = true
       } else {
         throw new Error('INVALID_CHECK_TIME', {
           cause: {
@@ -181,6 +183,7 @@ const exec: CommandProps['exec'] = async interaction => {
             '{REPEAT_PERIOD}',
             translate(options.repeat ? `check.label.${options.repeat}` : 'check.label.noRepeat', { guildId }),
           )
+          .replace('{WARNINGS}', options.isTimeModified ? translate('check.text.isTimeModifiedWarning') : '')
           .replace('{CHECK_JOBS}', getAllJobs(clientMember.id, guild, 'check')),
       },
     }
