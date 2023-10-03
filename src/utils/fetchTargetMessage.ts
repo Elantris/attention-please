@@ -59,7 +59,7 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
           cause: {
             CHANNEL_ID: target.channelId,
             PERMISSIONS: ['ViewChannel', 'ReadMessageHistory']
-              .map((v, i) => `${i + 1}. ${translate(`permission.label.${v}`, { guildId: targetGuild.id })}`)
+              .map((v, i) => `${i + 1}. ${translate(`permission.label.${v}`, { guildId: guild.id })}`)
               .join('\n'),
           },
         })

@@ -61,7 +61,7 @@ const cache: {
   banned: {},
   settings: {},
   jobs: {},
-  footer: 'Version 2023-05-07',
+  footer: 'Version 2023-08-22',
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {

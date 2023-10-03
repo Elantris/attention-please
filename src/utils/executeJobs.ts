@@ -9,6 +9,7 @@ import colorFormatter from './colorFormatter'
 import initGuild from './initGuild'
 import sendLog from './sendLog'
 import { translate } from './translation'
+import fetchTargetMessage from './fetchTargetMessage'
 
 let lock = 0
 const executeJobs = async (client: Client) => {
@@ -34,7 +35,10 @@ const executeJobs = async (client: Client) => {
         throw new Error('CHANNEL_NOT_FOUND')
       }
 
-      const targetMessage = await targetChannel.messages.fetch(job.target.messageId)
+      const targetMessage = await fetchTargetMessage({
+        guild: targetGuild,
+        search: `${targetChannel.id}-${job.target.messageId}`,
+      })
       const jobType = jobId.split('_')[0]
       const repeatAt = job.repeat
         ? DateTime.fromMillis(job.executeAt)
@@ -44,7 +48,7 @@ const executeJobs = async (client: Client) => {
 
       const commandResult =
         jobType === 'check'
-          ? await getCheckResult(targetMessage, { repeatAt })
+          ? await getCheckResult(targetMessage, { repeatAt, retryTimes: job.retryTimes })
           : jobType === 'raffle'
           ? await getRaffleResult(targetMessage, { count: job.command.raffleCount || 30 })
           : undefined
@@ -67,11 +71,12 @@ const executeJobs = async (client: Client) => {
         files: commandResult.files,
       })
 
-      if (repeatAt) {
+      const newRetryTimes = commandResult.meta?.isReactionEmpty ? job.retryTimes + 1 : 0
+      if (repeatAt && newRetryTimes < 3) {
         const newJob: JobProps = {
           ...job,
           executeAt: repeatAt,
-          retryTimes: 0,
+          retryTimes: newRetryTimes,
         }
         await database.ref(`/jobs/${jobId}`).set(newJob)
         await targetMessage.reactions.removeAll().catch(() => null)
@@ -114,7 +119,7 @@ const executeJobs = async (client: Client) => {
           },
           result: {
             createdAt: Date.now(),
-            content: 'Error to execute.',
+            content: 'Error to execute job.',
           },
           error: error instanceof Error ? error : undefined,
         })

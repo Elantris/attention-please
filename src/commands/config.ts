@@ -4,10 +4,6 @@ import cache, { database } from '../utils/cache'
 import timeFormatter from '../utils/timeFormatter'
 import { translate } from '../utils/translation'
 
-const nameLists = ['reacted', 'absent', 'locked'] as const
-type NameListType = typeof nameLists[number]
-const isNameList = (target: string): target is NameListType => !!nameLists.find(v => v === target)
-
 const builds: CommandProps['builds'] = [
   new SlashCommandBuilder()
     .setName('config')
@@ -93,24 +89,6 @@ const builds: CommandProps['builds'] = [
             .setRequired(true),
         ),
     )
-    .addSubcommand(subcommand =>
-      subcommand
-        .setName('locale')
-        .setDescription('Set locale of bot.')
-        .setNameLocalizations({
-          'zh-TW': '設定機器人語言',
-        })
-        .addStringOption(option =>
-          option
-            .setName('locale')
-            .setDescription('Locale')
-            .setDescriptionLocalizations({
-              'zh-TW': '語言環境',
-            })
-            .setRequired(true)
-            .setChoices({ name: 'zh-TW', value: 'zh-TW' }, { name: 'en-US', value: 'en-US' }),
-        ),
-    )
     .toJSON(),
 ]
 
@@ -119,11 +97,6 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
     {
       name: 'Length',
       value: `${cache.settings[guildId].length ?? 100}`,
-      inline: true,
-    },
-    {
-      name: 'Locale',
-      value: cache.settings[guildId].locale || 'zh-TW',
       inline: true,
     },
     {
@@ -142,7 +115,6 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
             )}`,
         )
         .join('\n'),
-      inline: true,
     },
   ]
 }
@@ -167,7 +139,7 @@ const exec: CommandProps['exec'] = async interaction => {
   if (subcommand === 'list') {
     const type = interaction.options.getString('type', true)
     const action = interaction.options.getString('action', true)
-    if (!isNameList(type) || (action !== 'show' && action !== 'hidden')) {
+    if (!isInArray(type, memberStatusLabels) || (action !== 'show' && action !== 'hidden')) {
       return
     }
 

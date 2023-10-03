@@ -119,7 +119,7 @@ const exec: CommandProps['exec'] = async interaction => {
           existedJobsCount += 1
         }
       }
-      if (existedJobsCount > 4) {
+      if (existedJobsCount > 2) {
         throw new Error('RAFFLE_JOB_LIMIT', {
           cause: {
             RAFFLE_JOBS: getAllJobs(clientMember.id, guild, 'raffle'),
@@ -150,12 +150,10 @@ const exec: CommandProps['exec'] = async interaction => {
         .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
         .replace('{JOB_ID}', jobId),
       embed: {
-        description: translate('raffle.text.raffleJobDetail', { guildId })
-          .replace('{JOB_ID}', jobId)
-          .replace('{TIME}', timeFormatter({ time: options.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
-          .replace('{FROM_NOW}', `<t:${Math.floor(options.time / 1000)}:R>`)
-          .replace('{TARGET_URL}', options.target.url)
-          .replace('{RAFFLE_JOBS}', getAllJobs(clientMember.id, guild, 'raffle')),
+        description: translate('raffle.text.raffleJobDetail', { guildId }).replace(
+          '{RAFFLE_JOBS}',
+          getAllJobs(clientMember.id, guild, 'raffle'),
+        ),
       },
     }
   }

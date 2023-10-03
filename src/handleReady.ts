@@ -17,7 +17,7 @@ const handleReady = async (client: Client<true>) => {
     await rest.put(Routes.applicationCommands(appConfig.DISCORD.CLIENT_ID), { body: commandBuilds })
   } catch (error) {
     if (error instanceof Error) {
-      await logChannel.send(`\`${timeFormatter()}\` Register slash commands error\n\`\`\`${error.stack || ''}\`\`\``)
+      await logChannel.send(`\`${timeFormatter()}\` Register slash commands error\n\`\`\`${error.stack}\`\`\``)
     }
   }
 

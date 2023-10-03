@@ -3,9 +3,9 @@ import { APIEmbed, Interaction, MessageCreateOptions, RESTPostAPIApplicationComm
 export const repeatLabels = ['day', 'week', 'month', 'season'] as const
 export const memberStatusLabels = ['reacted', 'absent', 'locked', 'irrelevant', 'leaved'] as const
 export const localeLabels = ['zh-TW', 'en-US'] as const
-export type RepeatType = typeof repeatLabels[number]
-export type MemberStatusType = typeof memberStatusLabels[number]
-export type LocaleType = typeof localeLabels[number]
+export type RepeatType = (typeof repeatLabels)[number]
+export type MemberStatusType = (typeof memberStatusLabels)[number]
+export type LocaleType = (typeof localeLabels)[number]
 
 export type CommandProps = {
   builds: RESTPostAPIApplicationCommandsJSONBody[]
@@ -17,6 +17,9 @@ export type ResultProps = {
   embed?: APIEmbed
   files?: MessageCreateOptions['files']
   error?: Error
+  meta?: {
+    isReactionEmpty: boolean
+  }
 }
 
 export type JobProps = {

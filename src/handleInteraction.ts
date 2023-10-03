@@ -56,7 +56,7 @@ const handleInteraction = async (interaction: Interaction) => {
         embeds: [
           {
             color: colorFormatter(OpenColor.red[5]),
-            description: '```{ERROR}```'.replace('{ERROR}', error.stack || ''),
+            description: `\`\`\`${error.stack}\`\`\``,
           },
         ],
       })
@@ -118,24 +118,25 @@ const handleInteraction = async (interaction: Interaction) => {
       error: commandResult.error,
     })
   } catch (error) {
-    if (error instanceof Error) {
-      cache.logChannel?.send({
-        content: '[`{TIME}`] Error: `{COMMAND}`'
-          .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
-          .replace(
-            '{COMMAND}',
-            interaction.isMessageContextMenuCommand()
-              ? `/${interaction.commandName} target:${interaction.targetMessage.url} (context menu)`
-              : `${interaction}`,
-          ),
-        embeds: [
-          {
-            color: colorFormatter(OpenColor.red[5]),
-            description: '```{ERROR}```'.replace('{ERROR}', error.stack || ''),
-          },
-        ],
-      })
-    }
+    await sendLog({
+      command: {
+        createdAt: createdTimestamp,
+        content: interaction.isMessageContextMenuCommand()
+          ? `/${interaction.commandName} target:${interaction.targetMessage.url} (context menu)`
+          : `${interaction}`,
+        guildId,
+        guildName: guild.name,
+        channelId: interaction.channelId,
+        channelName: channel.name,
+        userId: interaction.user.id,
+        userName: interaction.user.tag,
+      },
+      result: {
+        createdAt: Date.now(),
+        content: 'Error to handle interaction',
+      },
+      error: error instanceof Error ? error : undefined,
+    })
   }
 
   cache.isProcessing[guildId] = false

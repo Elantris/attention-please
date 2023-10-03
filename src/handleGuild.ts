@@ -65,7 +65,7 @@ export const handleGuildDelete = (guild: Guild) => {
       {
         description: 'Guild: `{GUILD_ID}` {GUILD_NAME} ({GUILD_COUNT})'
           .replace('{GUILD_ID}', guild.id)
-          .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
+          .replace('{GUILD_NAME}', escapeMarkdown(guild?.name || guild.id))
           .replace('{GUILD_COUNT}', `${guild.client.guilds.cache.size}`),
       },
     ],

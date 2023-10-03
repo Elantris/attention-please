@@ -33,7 +33,7 @@ const exec: CommandProps['exec'] = async interaction => {
 
   const jobId = interaction.options.getString('id', true)
   const job = cache.jobs[jobId]
-  if (!job) {
+  if (!job || job.command.guildId !== guildId) {
     throw new Error('JOB_NOT_FOUND', {
       cause: {
         ALL_JOBS: getAllJobs(clientId, guild, 'all'),

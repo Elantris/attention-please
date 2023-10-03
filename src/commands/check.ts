@@ -141,7 +141,7 @@ const exec: CommandProps['exec'] = async interaction => {
           existedJobsCount += 1
         }
       }
-      if (existedJobsCount > 4) {
+      if (existedJobsCount > 2) {
         throw new Error('CHECK_JOB_LIMIT', {
           cause: {
             CHECK_JOBS: getAllJobs(clientMember.id, guild, 'check'),
@@ -175,14 +175,6 @@ const exec: CommandProps['exec'] = async interaction => {
         .replace('{JOB_ID}', jobId),
       embed: {
         description: translate('check.text.checkJobDetail', { guildId })
-          .replace('{JOB_ID}', jobId)
-          .replace('{TIME}', timeFormatter({ time: options.time, guildId, format: 'yyyy-MM-dd HH:mm' }))
-          .replace('{FROM_NOW}', `<t:${Math.floor(options.time / 1000)}:R>`)
-          .replace('{TARGET_URL}', options.target.url)
-          .replace(
-            '{REPEAT_PERIOD}',
-            translate(options.repeat ? `check.label.${options.repeat}` : 'check.label.noRepeat', { guildId }),
-          )
           .replace('{WARNINGS}', options.isTimeModified ? translate('check.text.isTimeModifiedWarning') : '')
           .replace('{CHECK_JOBS}', getAllJobs(clientMember.id, guild, 'check')),
       },
@@ -196,6 +188,7 @@ export const getCheckResult: (
   message: Message<true>,
   options?: {
     repeatAt?: number
+    retryTimes?: number
   },
 ) => Promise<ResultProps | void> = async (message, options) => {
   const guildId = message.guild.id
@@ -288,7 +281,9 @@ export const getCheckResult: (
       translate('check.text.leavedMembersWarning', { guildId }).replace('{COUNT}', `${memberNames.leaved.length}`),
     )
   }
-  if (options?.repeatAt) {
+  if ((options?.retryTimes ?? 0) > 1 && memberNames.reacted.length === 0) {
+    warnings.push(translate('check.text.jobIsRemoved', { guildId }))
+  } else if (options?.repeatAt) {
     warnings.push(
       translate('check.text.newRepeatedJob', { guildId }).replace(
         '{REPEAT_AT}',
@@ -316,6 +311,9 @@ export const getCheckResult: (
       fields,
     },
     files,
+    meta: {
+      isReactionEmpty: memberNames.reacted.length === 0,
+    },
   }
 }
 
