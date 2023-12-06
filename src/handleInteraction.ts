@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, Interaction, MessageContextMenuCommandInteraction } from 'discord.js'
 import OpenColor from 'open-color'
-import { isKeyValueProps, ResultProps } from './types'
+import { ResultProps, isKeyValueProps } from './types'
 import cache, { commands } from './utils/cache'
 import colorFormatter from './utils/colorFormatter'
 import initGuild from './utils/initGuild'
@@ -48,19 +48,17 @@ const handleInteraction = async (interaction: Interaction) => {
   try {
     await initGuild(interaction.client, guildId)
   } catch (error) {
-    if (error instanceof Error) {
-      await cache.logChannel?.send({
-        content: '[`{TIME}`] Error: init guild {GUILD_ID}'
-          .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
-          .replace('{GUILD_ID}', guildId),
-        embeds: [
-          {
-            color: colorFormatter(OpenColor.red[5]),
-            description: `\`\`\`${error.stack}\`\`\``,
-          },
-        ],
-      })
-    }
+    await cache.logChannel?.send({
+      content: '[`{TIME}`] Error: init guild {GUILD_ID}'
+        .replace('{TIME}', timeFormatter({ time: interaction.createdTimestamp }))
+        .replace('{GUILD_ID}', guildId),
+      embeds: [
+        {
+          color: colorFormatter(OpenColor.red[5]),
+          description: `\`\`\`${error instanceof Error ? error.stack : error}\`\`\``,
+        },
+      ],
+    })
     cache.isProcessing[guildId] = false
     return
   }
@@ -135,7 +133,7 @@ const handleInteraction = async (interaction: Interaction) => {
         createdAt: Date.now(),
         content: 'Error to handle interaction',
       },
-      error: error instanceof Error ? error : undefined,
+      error: error as Error,
     })
   }
 
@@ -157,11 +155,7 @@ const executeCommand: (
   try {
     return await commands[interaction.commandName]?.exec(interaction)
   } catch (error) {
-    if (!(error instanceof Error)) {
-      return
-    }
-
-    if (isTranslateKey(`error.text.${error.message}`)) {
+    if (error instanceof Error && isTranslateKey(`error.text.${error.message}`)) {
       let errorHelp = isTranslateKey(`error.help.${error.message}`)
         ? translate(`error.help.${error.message}`, { guildId })
         : ''
@@ -179,7 +173,7 @@ const executeCommand: (
       return {
         content: translate('error.text.UNKNOWN_ERROR', { guildId }),
         embed: { description: translate('error.help.UNKNOWN_ERROR', { guildId }) },
-        error,
+        error: error as Error,
       }
     }
   }

@@ -21,7 +21,7 @@ const builds: CommandProps['builds'] = [
         .setRequired(true)
         .setAutocomplete(true),
     )
-    .toJSON(),
+    .setDMPermission(false),
 ]
 
 const exec: CommandProps['exec'] = async interaction => {

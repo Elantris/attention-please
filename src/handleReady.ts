@@ -1,6 +1,6 @@
 import { ChannelType, Client, REST, Routes } from 'discord.js'
 import appConfig from './appConfig'
-import cache, { commandBuilds } from './utils/cache'
+import cache, { commandBuildData } from './utils/cache'
 import executeJobs from './utils/executeJobs'
 import timeFormatter from './utils/timeFormatter'
 
@@ -14,11 +14,13 @@ const handleReady = async (client: Client<true>) => {
   // register commands
   const rest = new REST({ version: '10' }).setToken(appConfig.DISCORD.TOKEN)
   try {
-    await rest.put(Routes.applicationCommands(appConfig.DISCORD.CLIENT_ID), { body: commandBuilds })
+    await rest.put(Routes.applicationCommands(appConfig.DISCORD.CLIENT_ID), { body: commandBuildData })
   } catch (error) {
-    if (error instanceof Error) {
-      await logChannel.send(`\`${timeFormatter()}\` Register slash commands error\n\`\`\`${error.stack}\`\`\``)
-    }
+    await logChannel.send(
+      `\`${timeFormatter()}\` Register slash commands error\n\`\`\`${
+        error instanceof Error ? error.stack : error
+      }\`\`\``,
+    )
   }
 
   logChannel.send(`\`${timeFormatter()}\` ${client.user.tag}`)

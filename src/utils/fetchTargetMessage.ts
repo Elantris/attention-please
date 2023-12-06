@@ -1,7 +1,6 @@
 import { Guild, GuildTextBasedChannel, Message } from 'discord.js'
 import appConfig from '../appConfig'
 import initGuild from './initGuild'
-import { translate } from './translation'
 
 const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise<Message<true>> = async ({
   guild,
@@ -58,9 +57,6 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
         throw new Error('NO_PERMISSION_IN_CHANNEL', {
           cause: {
             CHANNEL_ID: target.channelId,
-            PERMISSIONS: ['ViewChannel', 'ReadMessageHistory']
-              .map((v, i) => `${i + 1}. ${translate(`permission.label.${v}`, { guildId: guild.id })}`)
-              .join('\n'),
           },
         })
       }
@@ -79,6 +75,9 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
         guildChannels.push(channel)
       }
     })
+    if (guildChannels.length > 10) {
+      throw new Error('TOO_MANY_TEXT_CHANNELS')
+    }
     for (const channel of guildChannels) {
       try {
         target.message = await channel.messages.fetch({

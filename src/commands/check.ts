@@ -65,8 +65,8 @@ const builds: CommandProps['builds'] = [
           { name: '1 season', name_localizations: { 'zh-TW': '一季（三個月後的同一日期）' }, value: 'season' },
         ),
     )
-    .toJSON(),
-  new ContextMenuCommandBuilder().setName('check').setType(ApplicationCommandType.Message),
+    .setDMPermission(false),
+  new ContextMenuCommandBuilder().setName('check').setType(ApplicationCommandType.Message).setDMPermission(false),
 ]
 
 const exec: CommandProps['exec'] = async interaction => {
@@ -110,7 +110,6 @@ const exec: CommandProps['exec'] = async interaction => {
       throw new Error('NO_PERMISSION_IN_CHANNEL', {
         cause: {
           CHANNEL_ID: channel.id,
-          PERMISSIONS: `1. ${translate('permission.label.SendMessages', { guildId })}`,
         },
       })
     }
@@ -142,9 +141,9 @@ const exec: CommandProps['exec'] = async interaction => {
         }
       }
       if (existedJobsCount > 2) {
-        throw new Error('CHECK_JOB_LIMIT', {
+        throw new Error('MAX_JOB_LIMIT', {
           cause: {
-            CHECK_JOBS: getAllJobs(clientMember.id, guild, 'check'),
+            ALL_JOBS: getAllJobs(clientMember.id, guild, 'all'),
           },
         })
       }
@@ -176,7 +175,8 @@ const exec: CommandProps['exec'] = async interaction => {
       embed: {
         description: translate('check.text.checkJobDetail', { guildId })
           .replace('{WARNINGS}', options.isTimeModified ? translate('check.text.isTimeModifiedWarning') : '')
-          .replace('{CHECK_JOBS}', getAllJobs(clientMember.id, guild, 'check')),
+          .replace('{CHECK_JOBS}', getAllJobs(clientMember.id, guild, 'check'))
+          .trim(),
       },
     }
   }
@@ -239,8 +239,9 @@ export const getCheckResult: (
         .replace('{ABSENT_MEMBERS}', memberNames.absent.join('\r\n'))
         .replace('{LOCKED_MEMBERS}', memberNames.locked.join('\r\n'))
         .replace('{IRRELEVANT_MEMBERS}', memberNames.irrelevant.join('\r\n'))
-        .replace('{LEAVED_MEMBERS}', memberNames.leaved.join('\r\n')),
-      { encoding: 'utf8' },
+        .replace('{LEAVED_MEMBERS}', memberNames.leaved.join('\r\n'))
+        .trim(),
+      'utf8',
     )
     files.push({
       attachment: filePath,
@@ -252,9 +253,9 @@ export const getCheckResult: (
         continue
       }
       splitMessage(memberNames[memberStatus].map(name => escapeMarkdown(name)).join('\n'), { length: 1000 }).forEach(
-        (content, index) => {
+        content => {
           fields.push({
-            name: translate(`check.text.${memberStatus}MembersList`, { guildId }).replace('{PAGE}', `${index + 1}`),
+            name: translate(`check.text.${memberStatus}MembersList`, { guildId }),
             value: content.replace(/\n/g, '、'),
           })
         },
@@ -263,24 +264,6 @@ export const getCheckResult: (
   }
 
   const warnings: string[] = []
-  if (memberNames.locked.length && cache.settings[guildId].locked) {
-    warnings.push(
-      translate('check.text.lockedMembersWarning', { guildId }).replace('{COUNT}', `${memberNames.locked.length}`),
-    )
-  }
-  if (memberNames.irrelevant.length && cache.settings[guildId].irrelevant) {
-    warnings.push(
-      translate('check.text.irrelevantMembersWarning', { guildId }).replace(
-        '{COUNT}',
-        `${memberNames.irrelevant.length}`,
-      ),
-    )
-  }
-  if (memberNames.leaved.length && cache.settings[guildId].leaved) {
-    warnings.push(
-      translate('check.text.leavedMembersWarning', { guildId }).replace('{COUNT}', `${memberNames.leaved.length}`),
-    )
-  }
   if ((options?.retryTimes ?? 0) > 1 && memberNames.reacted.length === 0) {
     warnings.push(translate('check.text.jobIsRemoved', { guildId }))
   } else if (options?.repeatAt) {
@@ -302,10 +285,14 @@ export const getCheckResult: (
       description: translate('check.text.checkResultDetail', { guildId })
         .replace('{TIME}', timeFormatter({ time: checkAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
         .replace('{FROM_NOW}', `<t:${Math.floor(checkAt / 1000)}:R>`)
+        .replace('{CHANNEL_NAME}', message.channel.name)
         .replace('{MESSAGE_URL}', message.url)
         .replace('{ALL_COUNT}', `${allMembersCount}`)
         .replace('{REACTED_COUNT}', `${memberNames.reacted.length}`)
         .replace('{ABSENT_COUNT}', `${memberNames.absent.length}`)
+        .replace('{LOCKED_COUNT}', `${memberNames.locked.length}`)
+        .replace('{IRRELEVANT_COUNT}', `${memberNames.irrelevant.length}`)
+        .replace('{LEAVED_COUNT}', `${memberNames.leaved.length}`)
         .replace('{WARNINGS}', warnings.join('\n'))
         .trim(),
       fields,

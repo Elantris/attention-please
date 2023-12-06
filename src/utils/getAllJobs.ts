@@ -30,11 +30,10 @@ const getAllJobs = (clientId: string, guild: Guild, type: 'check' | 'raffle' | '
 
   jobs.sort((a, b) => a.executeAt - b.executeAt)
 
-  return translate('cancel.text.allJobs', { guildId: guild.id }).replace(
-    '{ALL_JOBS}',
+  return (
     jobs
       .map(job =>
-        '預約 ID：`{JOB_ID}`\n執行時間：`{TIME}` ({FROM_NOW})\n目標訊息：[訊息連結]({TARGET_URL})\n重複週期：{REPEAT_PERIOD}'
+        translate('cancel.text.job', { guildId: guild.id })
           .replace('{JOB_ID}', job.id)
           .replace('{TIME}', timeFormatter({ time: job.executeAt, guildId: guild.id, format: 'yyyy-MM-dd HH:mm' }))
           .replace('{FROM_NOW}', `<t:${Math.floor(job.executeAt / 1000)}:R>`)
@@ -44,7 +43,7 @@ const getAllJobs = (clientId: string, guild: Guild, type: 'check' | 'raffle' | '
             translate(job.repeat ? `check.label.${job.repeat}` : 'check.label.noRepeat', { guildId: guild.id }),
           ),
       )
-      .join('\n\n') || translate('cancel.text.empty', { guildId: guild.id }),
+      .join('\n\n') || translate('cancel.text.empty', { guildId: guild.id })
   )
 }
 

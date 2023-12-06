@@ -1,4 +1,4 @@
-import { APIEmbed, Interaction, MessageCreateOptions, RESTPostAPIApplicationCommandsJSONBody } from 'discord.js'
+import { APIEmbed, ContextMenuCommandBuilder, Interaction, MessageCreateOptions, SlashCommandBuilder } from 'discord.js'
 
 export const repeatLabels = ['day', 'week', 'month', 'season'] as const
 export const memberStatusLabels = ['reacted', 'absent', 'locked', 'irrelevant', 'leaved'] as const
@@ -8,7 +8,7 @@ export type MemberStatusType = (typeof memberStatusLabels)[number]
 export type LocaleType = (typeof localeLabels)[number]
 
 export type CommandProps = {
-  builds: RESTPostAPIApplicationCommandsJSONBody[]
+  builds: (SlashCommandBuilder | ContextMenuCommandBuilder)[]
   exec: (interaction: Interaction) => Promise<ResultProps | void | undefined>
 }
 

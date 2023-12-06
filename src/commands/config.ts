@@ -89,7 +89,7 @@ const builds: CommandProps['builds'] = [
             .setRequired(true),
         ),
     )
-    .toJSON(),
+    .setDMPermission(false),
 ]
 
 const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {

@@ -9,7 +9,7 @@ const builds: CommandProps['builds'] = [
     .setDescriptionLocalizations({
       'zh-TW': 'Attention Please 使用說明',
     })
-    .toJSON(),
+    .setDMPermission(false),
 ]
 
 const exec: CommandProps['exec'] = async interaction => {

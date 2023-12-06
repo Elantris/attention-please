@@ -61,7 +61,7 @@ const cache: {
   banned: {},
   settings: {},
   jobs: {},
-  footer: 'Version 2023-08-22',
+  footer: 'Version 2023-12-06',
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {
@@ -86,7 +86,7 @@ database.ref('/jobs').on('child_removed', removeCache)
 
 // load commands
 export const commands: { [CommandName in string]?: CommandProps } = {}
-export const commandBuilds: RESTPostAPIApplicationCommandsJSONBody[] = []
+export const commandBuildData: RESTPostAPIApplicationCommandsJSONBody[] = []
 
 readdirSync(join(__dirname, '../commands')).forEach(async filename => {
   if (!filename.endsWith('.js') && !filename.endsWith('.ts')) {
@@ -95,7 +95,7 @@ readdirSync(join(__dirname, '../commands')).forEach(async filename => {
   const commandName = filename.split('.')[0]
   const { default: command }: { default: CommandProps } = await import(join(__dirname, '../commands', filename))
   commands[commandName] = command
-  commandBuilds.push(...command.builds)
+  command.builds.forEach(build => commandBuildData.push(build.toJSON()))
 })
 
 export default cache

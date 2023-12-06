@@ -8,9 +8,9 @@
     "pm2": "pm2 start build/main.js --name attention-please --restart-delay 60000 && pm2 monit",
     "build": "rm -rf ./build/* && ./node_modules/.bin/tsc",
     "restart": "pm2 stop attention-please && pm2 reset attention-please && pm2 start attention-please && pm2 monit",
-    "dev": "NODE_ENV=development ts-node src/main.ts",
+    "dev": "NODE_ENV=development bun run src/main.ts",
     "push:gcp": "rsync -arvz --delete build package.json pnpm-lock.yaml translations elantris@gcp:/home/elantris/projects/attention-please",
-    "push:aws": "rsync -arvz --delete build package.json pnpm-lock.yaml translations ec2-user@aws:/home/ec2-user/projects/attention-please",
+    "push:embpr": "rsync -arvz --delete build package.json pnpm-lock.yaml translations elantris@embpr:/Users/elantris/Project/attention-please",
     "push": "npm run push:gcp"
   },
   "repository": {
@@ -25,17 +25,17 @@
   },
   "homepage": "https://github.com/Elantris/attention-please#readme",
   "dependencies": {
-    "discord.js": "^14.13.0",
-    "firebase-admin": "^11.10.1",
-    "luxon": "^3.4.0",
+    "discord.js": "^14.14.1",
+    "firebase-admin": "^11.11.1",
+    "luxon": "^3.4.4",
     "open-color": "^1.9.1",
     "@firebase/app-types": "^0.9.0",
-    "@types/luxon": "^3.3.1",
-    "@types/node": "^20.5.2",
-    "@types/ws": "^8.5.5",
-    "@typescript-eslint/eslint-plugin": "^6.4.1",
-    "@typescript-eslint/parser": "^6.4.1",
-    "eslint": "^8.47.0",
-    "typescript": "^5.1.6"
+    "@types/luxon": "^3.3.7",
+    "@types/node": "^20.10.3",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "eslint": "^8.55.0",
+    "typescript": "^5.3.2"
   }
 }
