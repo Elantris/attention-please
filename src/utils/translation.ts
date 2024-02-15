@@ -9,7 +9,7 @@ const translations: {
   }
 } = {}
 
-readdirSync(join(__dirname, '../../translations')).forEach(filename => {
+readdirSync(join(__dirname, '../../translations')).forEach((filename) => {
   if (!filename.endsWith('.json')) {
     return
   }

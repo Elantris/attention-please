@@ -12,16 +12,14 @@ const builds: CommandProps['builds'] = [
     .setDMPermission(false),
 ]
 
-const exec: CommandProps['exec'] = async interaction => {
+const exec: CommandProps['exec'] = async (interaction) => {
   const { guildId } = interaction
   if (!guildId) {
     return
   }
 
   return {
-    content: translate('help.text.summary', { guildId })
-      .replace('{MANUAL}', 'https://hackmd.io/@eelayntris/attention-please')
-      .replace('{DISCORD}', 'https://discord.gg/Ctwz4BB'),
+    content: translate('help.text.summary', { guildId }),
   }
 }
 

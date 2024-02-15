@@ -13,12 +13,9 @@ const handleInteraction = async (interaction: Interaction) => {
     if (interaction.commandName === 'cancel') {
       await interaction.respond(
         Object.keys(cache.jobs)
-          .filter(jobId => {
-            const job = cache.jobs[jobId]
-            return job?.clientId === interaction.client.user.id && job?.command.guildId === interaction.guildId
-          })
-          .map(jobId => ({
-            name: `${jobId}`,
+          .filter((jobId) => cache.jobs[jobId]?.command.guildId === interaction.guildId)
+          .map((jobId) => ({
+            name: jobId,
             value: jobId,
           })) || [],
       )
@@ -146,7 +143,7 @@ const handleInteraction = async (interaction: Interaction) => {
 
 const executeCommand: (
   interaction: ChatInputCommandInteraction | MessageContextMenuCommandInteraction,
-) => Promise<ResultProps | void> = async interaction => {
+) => Promise<ResultProps | void> = async (interaction) => {
   const { guildId } = interaction
   if (!guildId) {
     return

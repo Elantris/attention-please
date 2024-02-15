@@ -7,7 +7,7 @@ const parseTime: (options: { guildId: string; time: string | null }) => number =
     return 0
   }
 
-  const numbers = time.match(/\d+/g)?.map(v => parseInt(v)) || []
+  const numbers = time.match(/\d+/g)?.map((v) => parseInt(v)) || []
   const targetTime = new Date(numbers[0] ?? 0, (numbers[1] ?? 1) - 1, numbers[2] ?? 0, numbers[3] ?? 0, numbers[4] ?? 0)
   if (!Number.isSafeInteger(targetTime.getTime()) || numbers[0] < 2023) {
     throw new Error('INVALID_TIME_FORMAT', {

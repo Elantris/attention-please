@@ -11,7 +11,7 @@ const builds: CommandProps['builds'] = [
     .setDescriptionLocalizations({
       'zh-TW': '取消預約結算',
     })
-    .addStringOption(option =>
+    .addStringOption((option) =>
       option
         .setName('id')
         .setDescription('Job ID')
@@ -24,7 +24,7 @@ const builds: CommandProps['builds'] = [
     .setDMPermission(false),
 ]
 
-const exec: CommandProps['exec'] = async interaction => {
+const exec: CommandProps['exec'] = async (interaction) => {
   const clientId = interaction.client.user.id
   const { guildId, guild } = interaction
   if (!interaction.isChatInputCommand() || !clientId || !guildId || !guild) {
@@ -36,7 +36,7 @@ const exec: CommandProps['exec'] = async interaction => {
   if (!job || job.command.guildId !== guildId) {
     throw new Error('JOB_NOT_FOUND', {
       cause: {
-        ALL_JOBS: getAllJobs(clientId, guild, 'all'),
+        ALL_JOBS: getAllJobs(clientId, guild),
       },
     })
   }
@@ -47,7 +47,7 @@ const exec: CommandProps['exec'] = async interaction => {
       .replace('{GUILD_NAME}', escapeMarkdown(guild.name))
       .replace('{JOB_ID}', jobId),
     embed: {
-      description: getAllJobs(clientId, guild, 'all'),
+      description: getAllJobs(clientId, guild),
     },
   }
 }

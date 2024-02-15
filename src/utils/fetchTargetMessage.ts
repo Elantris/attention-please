@@ -70,7 +70,7 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
     }
   } else {
     const guildChannels: GuildTextBasedChannel[] = []
-    targetGuild.channels.cache.forEach(channel => {
+    targetGuild.channels.cache.forEach((channel) => {
       if (channel.isTextBased()) {
         guildChannels.push(channel)
       }

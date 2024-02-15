@@ -12,7 +12,7 @@ const splitMessage = (
   let chunk: string[] = []
   let currentChunkLength = 0
 
-  content.split(separator).forEach(words => {
+  content.split(separator).forEach((words) => {
     if (currentChunkLength + words.length > maxLength) {
       results.push(chunk.join(separator))
       chunk = [words]

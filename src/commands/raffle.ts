@@ -23,7 +23,7 @@ const builds: CommandProps['builds'] = [
     .setDescriptionLocalizations({
       'zh-TW': '從一則訊息中被標記的人當中抽出有點選表情回應的成員',
     })
-    .addStringOption(option =>
+    .addStringOption((option) =>
       option
         .setName('target')
         .setDescription('Link or ID of target message.')
@@ -32,7 +32,7 @@ const builds: CommandProps['builds'] = [
         })
         .setRequired(true),
     )
-    .addIntegerOption(option =>
+    .addIntegerOption((option) =>
       option
         .setName('count')
         .setDescription('The count of picked members.')
@@ -41,7 +41,7 @@ const builds: CommandProps['builds'] = [
         })
         .setRequired(true),
     )
-    .addStringOption(option =>
+    .addStringOption((option) =>
       option
         .setName('time')
         .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2022-09-01 01:23')
@@ -53,7 +53,7 @@ const builds: CommandProps['builds'] = [
   new ContextMenuCommandBuilder().setName('raffle').setType(ApplicationCommandType.Message).setDMPermission(false),
 ]
 
-const exec: CommandProps['exec'] = async interaction => {
+const exec: CommandProps['exec'] = async (interaction) => {
   const { guild, guildId, channel } = interaction
   const clientMember = guild?.members.cache.get(interaction.client.user.id)
   if (!guildId || !guild || !channel || channel.isDMBased() || !clientMember) {
@@ -114,14 +114,14 @@ const exec: CommandProps['exec'] = async interaction => {
       let existedJobsCount = 0
       for (const jobId in cache.jobs) {
         const job = cache.jobs[jobId]
-        if (job && job.clientId === clientMember.id && jobId.startsWith('raffle_') && job.command.guildId === guildId) {
+        if (job && job.clientId === clientMember.id && job.command.guildId === guildId) {
           existedJobsCount += 1
         }
       }
       if (existedJobsCount > 2) {
         throw new Error('MAX_JOB_LIMIT', {
           cause: {
-            ALL_JOBS: getAllJobs(clientMember.id, guild, 'all'),
+            ALL_JOBS: getAllJobs(clientMember.id, guild),
           },
         })
       }
@@ -151,7 +151,7 @@ const exec: CommandProps['exec'] = async interaction => {
       embed: {
         description: translate('raffle.text.raffleJobDetail', { guildId }).replace(
           '{RAFFLE_JOBS}',
-          getAllJobs(clientMember.id, guild, 'raffle'),
+          getAllJobs(clientMember.id, guild),
         ),
       },
     }

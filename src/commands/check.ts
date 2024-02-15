@@ -36,7 +36,7 @@ const builds: CommandProps['builds'] = [
     .setDescriptionLocalizations({
       'zh-TW': '查看一則訊息中被標記的成員是否有按表情回應',
     })
-    .addStringOption(option =>
+    .addStringOption((option) =>
       option
         .setName('target')
         .setDescription('Link or ID of the target message.')
@@ -45,7 +45,7 @@ const builds: CommandProps['builds'] = [
         })
         .setRequired(true),
     )
-    .addStringOption(option =>
+    .addStringOption((option) =>
       option
         .setName('time')
         .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2023-01-02 03:04')
@@ -53,7 +53,7 @@ const builds: CommandProps['builds'] = [
           'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2023-01-02 03:04',
         }),
     )
-    .addStringOption(option =>
+    .addStringOption((option) =>
       option
         .setName('repeat')
         .setDescription('Set the interval of periodical check command.')
@@ -69,7 +69,7 @@ const builds: CommandProps['builds'] = [
   new ContextMenuCommandBuilder().setName('check').setType(ApplicationCommandType.Message).setDMPermission(false),
 ]
 
-const exec: CommandProps['exec'] = async interaction => {
+const exec: CommandProps['exec'] = async (interaction) => {
   const { guild, guildId, channel } = interaction
   const clientMember = guild?.members.cache.get(interaction.client.user.id)
   if (!guildId || !guild || !channel || channel.isDMBased() || !clientMember) {
@@ -136,14 +136,14 @@ const exec: CommandProps['exec'] = async interaction => {
       let existedJobsCount = 0
       for (const jobId in cache.jobs) {
         const job = cache.jobs[jobId]
-        if (job && job.clientId === clientMember.id && jobId.startsWith('check_') && job.command.guildId === guildId) {
+        if (job && job.clientId === clientMember.id && job.command.guildId === guildId) {
           existedJobsCount += 1
         }
       }
       if (existedJobsCount > 2) {
         throw new Error('MAX_JOB_LIMIT', {
           cause: {
-            ALL_JOBS: getAllJobs(clientMember.id, guild, 'all'),
+            ALL_JOBS: getAllJobs(clientMember.id, guild),
           },
         })
       }
@@ -175,7 +175,7 @@ const exec: CommandProps['exec'] = async interaction => {
       embed: {
         description: translate('check.text.checkJobDetail', { guildId })
           .replace('{WARNINGS}', options.isTimeModified ? translate('check.text.isTimeModifiedWarning') : '')
-          .replace('{CHECK_JOBS}', getAllJobs(clientMember.id, guild, 'check'))
+          .replace('{CHECK_JOBS}', getAllJobs(clientMember.id, guild))
           .trim(),
       },
     }
@@ -252,8 +252,8 @@ export const getCheckResult: (
       if (cache.settings[guildId]?.[memberStatus] === false || !memberNames[memberStatus].length) {
         continue
       }
-      splitMessage(memberNames[memberStatus].map(name => escapeMarkdown(name)).join('\n'), { length: 1000 }).forEach(
-        content => {
+      splitMessage(memberNames[memberStatus].map((name) => escapeMarkdown(name)).join('\n'), { length: 1000 }).forEach(
+        (content) => {
           fields.push({
             name: translate(`check.text.${memberStatus}MembersList`, { guildId }),
             value: content.replace(/\n/g, '、'),

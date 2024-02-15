@@ -11,19 +11,19 @@ const builds: CommandProps['builds'] = [
     .setDescriptionLocalizations({
       'zh-TW': '偏好設定',
     })
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand.setName('all').setDescription('Show all configs.').setDescriptionLocalizations({
         'zh-TW': '查看當前所有設定',
       }),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('list')
         .setDescription('Set visibility of name list.')
         .setDescriptionLocalizations({
           'zh-TW': '設定顯示名單',
         })
-        .addStringOption(option =>
+        .addStringOption((option) =>
           option
             .setName('type')
             .setDescription('Name list type.')
@@ -32,7 +32,7 @@ const builds: CommandProps['builds'] = [
             })
             .setRequired(true)
             .addChoices(
-              ...memberStatusLabels.map(memberStatus => ({
+              ...memberStatusLabels.map((memberStatus) => ({
                 name: memberStatus,
                 name_localizations: {
                   'zh-TW': translate(`config.label.${memberStatus}`, { locale: 'zh-TW' }),
@@ -41,7 +41,7 @@ const builds: CommandProps['builds'] = [
               })),
             ),
         )
-        .addStringOption(option =>
+        .addStringOption((option) =>
           option
             .setName('action')
             .setDescription('Display or not.')
@@ -55,14 +55,14 @@ const builds: CommandProps['builds'] = [
             ),
         ),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('offset')
         .setDescription('Set time offset.')
         .setDescriptionLocalizations({
           'zh-TW': '設定時間偏移量',
         })
-        .addNumberOption(option =>
+        .addNumberOption((option) =>
           option
             .setName('offset')
             .setDescription('A number in range of -12 ~ 12. Example: GMT+8, enter 8.')
@@ -72,14 +72,14 @@ const builds: CommandProps['builds'] = [
             .setRequired(true),
         ),
     )
-    .addSubcommand(subcommand =>
+    .addSubcommand((subcommand) =>
       subcommand
         .setName('length')
         .setDescription('Set the length of name list in check result.')
         .setDescriptionLocalizations({
           'zh-TW': '設定結算的名單長度',
         })
-        .addIntegerOption(option =>
+        .addIntegerOption((option) =>
           option
             .setName('length')
             .setDescription('A number between 0 and 300. Set the members count in a response with name lists.')
@@ -92,7 +92,7 @@ const builds: CommandProps['builds'] = [
     .setDMPermission(false),
 ]
 
-const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
+const getAllConfigs: (guildId: string) => APIEmbed['fields'] = (guildId) => {
   return [
     {
       name: 'Length',
@@ -108,7 +108,7 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
       name: 'List',
       value: memberStatusLabels
         .map(
-          memberStatus =>
+          (memberStatus) =>
             `${translate(`config.label.${memberStatus}`, { guildId })} ${translate(
               `config.label.${cache.settings[guildId][memberStatus] ? 'show' : 'hidden'}`,
               { guildId },
@@ -119,7 +119,7 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = guildId => {
   ]
 }
 
-const exec: CommandProps['exec'] = async interaction => {
+const exec: CommandProps['exec'] = async (interaction) => {
   const { guildId, guild } = interaction
   if (!interaction.isChatInputCommand() || !guildId || !guild) {
     return

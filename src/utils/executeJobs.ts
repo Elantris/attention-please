@@ -6,10 +6,10 @@ import { getRaffleResult } from '../commands/raffle'
 import { JobProps } from '../types'
 import cache, { database } from './cache'
 import colorFormatter from './colorFormatter'
+import fetchTargetMessage from './fetchTargetMessage'
 import initGuild from './initGuild'
 import sendLog from './sendLog'
 import { translate } from './translation'
-import fetchTargetMessage from './fetchTargetMessage'
 
 let lock = 0
 const executeJobs = async (client: Client) => {

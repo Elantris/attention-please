@@ -8,10 +8,10 @@ type ReactionStatusProps = {
   }
 }
 
-const getReactionStatus: (message: Message<true>) => Promise<ReactionStatusProps> = async message => {
+const getReactionStatus: (message: Message<true>) => Promise<ReactionStatusProps> = async (message) => {
   const reactionStatus: ReactionStatusProps = {}
   if (message.mentions.everyone) {
-    message.guild.members.cache.each(member => {
+    message.guild.members.cache.each((member) => {
       if (!member.user.bot) {
         reactionStatus[member.id] = {
           name: member.displayName,
@@ -20,7 +20,7 @@ const getReactionStatus: (message: Message<true>) => Promise<ReactionStatusProps
       }
     })
   } else {
-    message.mentions.members?.each(member => {
+    message.mentions.members?.each((member) => {
       if (!member.user.bot) {
         reactionStatus[member.id] = {
           name: member.displayName,
@@ -29,8 +29,8 @@ const getReactionStatus: (message: Message<true>) => Promise<ReactionStatusProps
       }
     })
 
-    message.mentions.roles.each(role => {
-      role.members.each(member => {
+    message.mentions.roles.each((role) => {
+      role.members.each((member) => {
         if (!member.user.bot) {
           reactionStatus[member.id] = {
             name: member.displayName,

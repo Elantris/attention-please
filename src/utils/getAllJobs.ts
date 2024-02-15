@@ -4,9 +4,10 @@ import cache from './cache'
 import timeFormatter from './timeFormatter'
 import { translate } from './translation'
 
-const getAllJobs = (clientId: string, guild: Guild, type: 'check' | 'raffle' | 'all') => {
+const getAllJobs = (clientId: string, guild: Guild) => {
   const jobs: {
     id: string
+    channelName: string
     targetMessageUrl: string
     repeat?: RepeatType
     executeAt: number
@@ -17,12 +18,16 @@ const getAllJobs = (clientId: string, guild: Guild, type: 'check' | 'raffle' | '
     if (!job || job.clientId !== clientId || job.command.guildId !== guild.id) {
       continue
     }
-    if (type !== 'all' && !jobId.startsWith(type)) {
+
+    const channel = guild.channels.cache.get(job.target.channelId)
+    if (!channel) {
       continue
     }
+
     jobs.push({
       id: jobId,
-      targetMessageUrl: `https://https://discord.com/channels/${guild.id}/${job.target.channelId}/${job.target.messageId}`,
+      channelName: channel.name,
+      targetMessageUrl: `https://discord.com/channels/${guild.id}/${job.target.channelId}/${job.target.messageId}`,
       executeAt: job.executeAt,
       repeat: job.repeat,
     })
@@ -32,11 +37,12 @@ const getAllJobs = (clientId: string, guild: Guild, type: 'check' | 'raffle' | '
 
   return (
     jobs
-      .map(job =>
+      .map((job) =>
         translate('cancel.text.job', { guildId: guild.id })
           .replace('{JOB_ID}', job.id)
           .replace('{TIME}', timeFormatter({ time: job.executeAt, guildId: guild.id, format: 'yyyy-MM-dd HH:mm' }))
           .replace('{FROM_NOW}', `<t:${Math.floor(job.executeAt / 1000)}:R>`)
+          .replace('{CHANNEL_NAME}', job.channelName)
           .replace('{TARGET_URL}', job.targetMessageUrl)
           .replace(
             '{REPEAT_PERIOD}',
