@@ -18,7 +18,7 @@ export type ResultProps = {
   files?: MessageCreateOptions['files']
   error?: Error
   meta?: {
-    isReactionEmpty: boolean
+    isReactionEmpty?: boolean
   }
 }
 

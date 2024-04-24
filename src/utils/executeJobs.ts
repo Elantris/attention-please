@@ -9,6 +9,7 @@ import colorFormatter from './colorFormatter'
 import fetchTargetMessage from './fetchTargetMessage'
 import initGuild from './initGuild'
 import sendLog from './sendLog'
+import timeFormatter from './timeFormatter'
 import { translate } from './translation'
 
 let lock = 0
@@ -40,21 +41,54 @@ const executeJobs = async (client: Client) => {
         search: `${targetChannel.id}-${job.target.messageId}`,
       })
       const jobType = jobId.split('_')[0]
-      const repeatAt = job.repeat
-        ? DateTime.fromMillis(job.executeAt)
-            .plus(job.repeat === 'season' ? { month: 3 } : { [job.repeat]: 1 })
-            .toMillis()
-        : undefined
-
       const commandResult =
         jobType === 'check'
-          ? await getCheckResult(targetMessage, { repeatAt, retryTimes: job.retryTimes })
+          ? await getCheckResult(targetMessage)
           : jobType === 'raffle'
-          ? await getRaffleResult(targetMessage, { count: job.command.raffleCount || 30 })
-          : undefined
+            ? await getRaffleResult(targetMessage, { count: job.command.raffleCount || 100 })
+            : undefined
       if (!commandResult) {
         throw new Error('NO_COMMAND_RESULT')
       }
+
+      const warnings: string[] = []
+
+      if (job.repeat) {
+        const newRetryTimes = commandResult.meta?.isReactionEmpty ? job.retryTimes + 1 : 0
+        if (newRetryTimes >= 3) {
+          warnings.push(translate('check.text.jobIsRemovedWarning', { guildId: job.command.guildId }))
+          await database.ref(`/jobs/${jobId}`).remove()
+        } else {
+          const repeatAt = DateTime.fromMillis(job.executeAt)
+            .plus(job.repeat === 'season' ? { month: 3 } : { [job.repeat]: 1 })
+            .toMillis()
+          const newJob: JobProps = {
+            ...job,
+            executeAt: repeatAt,
+            retryTimes: newRetryTimes,
+          }
+          try {
+            await targetMessage.reactions.removeAll()
+            await database.ref(`/jobs/${jobId}`).set(newJob)
+            warnings.push(
+              translate('check.text.newRepeatedJob', { guildId: job.command.guildId }).replace(
+                '{REPEAT_AT}',
+                timeFormatter({ time: repeatAt, guildId: job.command.guildId, format: 'yyyy-MM-dd HH:mm' }),
+              ),
+            )
+          } catch {
+            warnings.push(translate('check.text.jobRenewFailedWarning', { guildId: job.command.guildId }))
+            await database.ref(`/jobs/${jobId}`).remove()
+          }
+        }
+      } else {
+        await database.ref(`/jobs/${jobId}`).remove()
+      }
+
+      if (warnings.length && commandResult.embed?.description) {
+        commandResult.embed.description += `\n${warnings.join('\n')}`
+      }
+
       const responseMessage = await commandChannel.send({
         content: commandResult.content,
         embeds: commandResult.embed
@@ -70,19 +104,6 @@ const executeJobs = async (client: Client) => {
           : undefined,
         files: commandResult.files,
       })
-
-      const newRetryTimes = commandResult.meta?.isReactionEmpty ? job.retryTimes + 1 : 0
-      if (repeatAt && newRetryTimes < 3) {
-        const newJob: JobProps = {
-          ...job,
-          executeAt: repeatAt,
-          retryTimes: newRetryTimes,
-        }
-        await database.ref(`/jobs/${jobId}`).set(newJob)
-        await targetMessage.reactions.removeAll().catch(() => null)
-      } else {
-        await database.ref(`/jobs/${jobId}`).remove()
-      }
 
       await sendLog({
         command: {

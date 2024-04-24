@@ -174,7 +174,7 @@ const exec: CommandProps['exec'] = async (interaction) => {
         .replace('{JOB_ID}', jobId),
       embed: {
         description: translate('check.text.checkJobDetail', { guildId })
-          .replace('{WARNINGS}', options.isTimeModified ? translate('check.text.isTimeModifiedWarning') : '')
+          .replace('{WARNINGS}', options.isTimeModified ? translate('check.text.jobTimeModifiedWarning') : '')
           .replace('{CHECK_JOBS}', getAllJobs(clientMember.id, guild))
           .trim(),
       },
@@ -184,13 +184,7 @@ const exec: CommandProps['exec'] = async (interaction) => {
   return await getCheckResult(options.target)
 }
 
-export const getCheckResult: (
-  message: Message<true>,
-  options?: {
-    repeatAt?: number
-    retryTimes?: number
-  },
-) => Promise<ResultProps | void> = async (message, options) => {
+export const getCheckResult: (message: Message<true>) => Promise<ResultProps | void> = async (message) => {
   const guildId = message.guild.id
   const checkAt = Date.now()
   const reactionStatus = await getReactionStatus(message)
@@ -263,18 +257,6 @@ export const getCheckResult: (
     }
   }
 
-  const warnings: string[] = []
-  if ((options?.retryTimes ?? 0) > 1 && memberNames.reacted.length === 0) {
-    warnings.push(translate('check.text.jobIsRemoved', { guildId }))
-  } else if (options?.repeatAt) {
-    warnings.push(
-      translate('check.text.newRepeatedJob', { guildId }).replace(
-        '{REPEAT_AT}',
-        timeFormatter({ time: options.repeatAt, guildId, format: 'yyyy-MM-dd HH:mm' }),
-      ),
-    )
-  }
-
   return {
     content: translate('check.text.checkResult', { guildId })
       .replace('{REACTED_COUNT}', `${memberNames.reacted.length}`)
@@ -293,7 +275,6 @@ export const getCheckResult: (
         .replace('{LOCKED_COUNT}', `${memberNames.locked.length}`)
         .replace('{IRRELEVANT_COUNT}', `${memberNames.irrelevant.length}`)
         .replace('{LEAVED_COUNT}', `${memberNames.leaved.length}`)
-        .replace('{WARNINGS}', warnings.join('\n'))
         .trim(),
       fields,
     },
