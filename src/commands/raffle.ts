@@ -44,9 +44,9 @@ const builds: CommandProps['builds'] = [
     .addStringOption((option) =>
       option
         .setName('time')
-        .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2022-09-01 01:23')
+        .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2025-01-23 12:34')
         .setDescriptionLocalizations({
-          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2022-09-01 01:23',
+          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2025-01-23 12:34',
         }),
     )
     .setDMPermission(false),
@@ -168,6 +168,7 @@ export const getRaffleResult: (
 ) => Promise<ResultProps | void> = async (message, options) => {
   const guildId = message.guild.id
   const raffleAt = Date.now()
+
   const reactionStatus = await getReactionStatus(message)
   const memberNames: Record<MemberStatusType, string[]> = {
     reacted: [],
@@ -198,8 +199,8 @@ export const getRaffleResult: (
     }
   }
 
-  for (let i = 0; i < reactedMemberCount - 1; i++) {
-    const choose = Math.floor(Math.random() * i)
+  for (let i = memberNames.reacted.length - 1; i !== -1; i--) {
+    const choose = Math.floor(Math.random() * (i + 1))
     ;[memberNames.reacted[i], memberNames.reacted[choose]] = [memberNames.reacted[choose], memberNames.reacted[i]]
   }
   const raffleCount = options?.count || 100
@@ -222,12 +223,12 @@ export const getRaffleResult: (
       .replace('{IRRELEVANT_COUNT}', `${memberNames.irrelevant.length}`)
       .replace('{LEAVED_COUNT}', `${memberNames.leaved.length}`)
       .replace('{PERCENTAGE}', ((reactedMemberCount * 100) / allMembersCount).toFixed(2))
-      .replace('{LUCKY_MEMBERS}', luckyMemberNames.map((v, i) => `${i + 1}. ${v}`).join('\n'))
-      .replace('{REACTED_MEMBERS}', memberNames.reacted.map((v, i) => `${i + 1}. ${v}`).join('\n'))
-      .replace('{ABSENT_MEMBERS}', memberNames.absent.join('\r\n'))
-      .replace('{LOCKED_MEMBERS}', memberNames.locked.join('\r\n'))
-      .replace('{IRRELEVANT_MEMBERS}', memberNames.irrelevant.join('\r\n'))
-      .replace('{LEAVED_MEMBERS}', memberNames.leaved.join('\r\n'))
+      .replace('{LUCKY_MEMBERS}', luckyMemberNames.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{REACTED_MEMBERS}', memberNames.reacted.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{ABSENT_MEMBERS}', memberNames.absent.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{LOCKED_MEMBERS}', memberNames.locked.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{IRRELEVANT_MEMBERS}', memberNames.irrelevant.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{LEAVED_MEMBERS}', memberNames.leaved.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
       .trim(),
     'utf8',
   )
