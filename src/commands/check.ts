@@ -4,7 +4,6 @@ import {
   ContextMenuCommandBuilder,
   escapeMarkdown,
   Message,
-  MessageCreateOptions,
   SlashCommandBuilder,
 } from 'discord.js'
 import { writeFileSync } from 'fs'
@@ -209,7 +208,10 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
 
   const checkLength = cache.settings[guildId].length ?? 100
   const fields: APIEmbed['fields'] = []
-  const files: MessageCreateOptions['files'] = []
+  const files: {
+    attachment: string
+    name: string
+  }[] = []
   for (const memberStatus of memberStatusLabels) {
     memberNames[memberStatus].sort((a, b) => a.localeCompare(b))
   }

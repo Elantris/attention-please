@@ -5,14 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "npm run build && node build/main.js",
-    "pm2": "pm2 start build/main.js --name attention-please --restart-delay 60000 && pm2 monit",
-    "build": "rm -rf ./build/* && ./node_modules/.bin/tsc",
-    "restart": "pm2 stop attention-please && pm2 reset attention-please && pm2 start attention-please && pm2 monit",
     "dev": "NODE_ENV=development bun run src/main.ts",
-    "format": "./node_modules/.bin/prettier src/**/*.ts --write",
-    "push:gcp": "rsync -arvz --delete build package.json pnpm-lock.yaml translations elantris@gcp:/home/elantris/projects/attention-please",
-    "push:embpr": "rsync -arvz --delete build package.json pnpm-lock.yaml translations elantris@embpr:/Users/elantris/Project/attention-please",
-    "push": "npm run push:gcp"
+    "format": "prettier --write src",
+    "build": "rm -rf ./build/* && ./node_modules/.bin/tsc",
+    "pm2": "pm2 start build/main.js --name attention-please --restart-delay 60000 && pm2 monit",
+    "restart": "pm2 stop attention-please && pm2 reset attention-please && pm2 start attention-please && pm2 monit"
   },
   "repository": {
     "type": "git",
@@ -26,18 +23,19 @@
   },
   "homepage": "https://github.com/Elantris/attention-please#readme",
   "dependencies": {
-    "@firebase/app-types": "^0.9.1",
+    "@firebase/app-types": "^0.9.2",
     "@types/luxon": "^3.4.2",
-    "@types/node": "^20.12.7",
+    "@types/node": "^20.14.2",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
-    "@typescript-eslint/parser": "^7.7.1",
-    "discord.js": "^14.14.1",
-    "eslint": "^9.1.1",
-    "firebase-admin": "^12.1.0",
+    "@typescript-eslint/eslint-plugin": "^7.12.0",
+    "@typescript-eslint/parser": "^7.12.0",
+    "discord.js": "^14.15.3",
+    "eslint": "^8.57.0",
+    "firebase-admin": "^12.1.1",
     "luxon": "^3.4.4",
     "open-color": "^1.9.1",
-    "prettier": "^3.2.5",
+    "prettier": "^3.3.1",
+    "prettier-plugin-organize-imports": "^3.2.4",
     "typescript": "^5.4.5"
   }
 }

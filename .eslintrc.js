@@ -5,6 +5,6 @@ module.exports = {
   root: true,
   rules: {
     'no-empty': 'off',
-    "@typescript-eslint/no-explicit-any": "off"
+    '@typescript-eslint/no-explicit-any': 'off',
   },
 }
