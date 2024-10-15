@@ -46,7 +46,7 @@
   "error.text.UNKNOWN_ERROR": ":fire: 好像發生了一點小問題，請稍後再嘗試看看",
   "error.help.UNKNOWN_ERROR": "如果狀況還是沒有改善，請加入 [客服群組](https://discord.gg/Ctwz4BB) 回報問題",
   "error.text.INVALID_MESSAGE_FORMAT": ":x: 訊息格式錯誤",
-  "error.help.INVALID_MESSAGE_FORMAT": "指定訊息 target 參數請填入以下支援的格式：\n1. 複製訊息連結\n2. 複製訊息 ID",
+  "error.help.INVALID_MESSAGE_FORMAT": "請先複製訊息連結並在 target 參數內貼上",
   "error.text.UNKNOWN_MESSAGE": ":question: 未知的訊息",
   "error.help.UNKNOWN_MESSAGE": "找不到連結或 ID 為 `{USER_INPUT}` 的訊息\n\n1. 請確認輸入的目標訊息是否為有支援的格式\n2. 是否給予 Attention Please 機器人正確的檢視權限\n3. 檢查這則訊息是否屬於當前伺服器",
   "error.text.NO_MENTIONED_MEMBER": ":x: 這則訊息沒有標記的成員",

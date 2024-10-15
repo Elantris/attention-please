@@ -24,12 +24,9 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
     const [channelId, messageId] = search.split('-')
     target.channelId = channelId
     target.messageId = messageId
-  } else if (/^\d+$/.test(search)) {
-    // message id
-    target.messageId = search
   }
 
-  if (!target.messageId) {
+  if (!target.channelId || !target.messageId) {
     throw new Error('INVALID_MESSAGE_FORMAT')
   }
 

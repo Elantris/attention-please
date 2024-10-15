@@ -1,7 +1,7 @@
 import {
-  ApplicationCommandType,
   ContextMenuCommandBuilder,
   escapeMarkdown,
+  InteractionContextType,
   Message,
   SlashCommandBuilder,
 } from 'discord.js'
@@ -49,8 +49,8 @@ const builds: CommandProps['builds'] = [
           'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2025-01-23 12:34',
         }),
     )
-    .setDMPermission(false),
-  new ContextMenuCommandBuilder().setName('raffle').setType(ApplicationCommandType.Message).setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
+  new ContextMenuCommandBuilder().setName('raffle').setType(3).setContexts(InteractionContextType.Guild),
 ]
 
 const exec: CommandProps['exec'] = async (interaction) => {

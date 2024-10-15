@@ -1,8 +1,8 @@
 import {
   APIEmbed,
-  ApplicationCommandType,
   ContextMenuCommandBuilder,
   escapeMarkdown,
+  InteractionContextType,
   Message,
   SlashCommandBuilder,
 } from 'discord.js'
@@ -38,9 +38,9 @@ const builds: CommandProps['builds'] = [
     .addStringOption((option) =>
       option
         .setName('target')
-        .setDescription('Link or ID of the target message.')
+        .setDescription('Target Message Link.')
         .setDescriptionLocalizations({
-          'zh-TW': '目標訊息，複製訊息連結或 ID',
+          'zh-TW': '請貼上目標訊息連結',
         })
         .setRequired(true),
     )
@@ -49,7 +49,7 @@ const builds: CommandProps['builds'] = [
         .setName('time')
         .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2023-01-02 03:04')
         .setDescriptionLocalizations({
-          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2023-01-02 03:04',
+          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2024-10-16 12:34',
         }),
     )
     .addStringOption((option) =>
@@ -64,8 +64,8 @@ const builds: CommandProps['builds'] = [
           { name: '1 season', name_localizations: { 'zh-TW': '一季（三個月後的同一日期）' }, value: 'season' },
         ),
     )
-    .setDMPermission(false),
-  new ContextMenuCommandBuilder().setName('check').setType(ApplicationCommandType.Message).setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
+  new ContextMenuCommandBuilder().setName('check').setType(3).setContexts(InteractionContextType.Guild),
 ]
 
 const exec: CommandProps['exec'] = async (interaction) => {

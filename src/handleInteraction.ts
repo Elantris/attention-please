@@ -9,21 +9,6 @@ import timeFormatter from './utils/timeFormatter'
 import { isTranslateKey, translate } from './utils/translation'
 
 const handleInteraction = async (interaction: Interaction) => {
-  if (interaction.isAutocomplete()) {
-    if (interaction.commandName === 'cancel') {
-      await interaction.respond(
-        Object.keys(cache.jobs)
-          .filter((jobId) => cache.jobs[jobId]?.command.guildId === interaction.guildId)
-          .map((jobId) => ({
-            name: jobId,
-            value: jobId,
-          })) || [],
-      )
-      return
-    }
-    return
-  }
-
   if (!interaction.isChatInputCommand() && !interaction.isMessageContextMenuCommand()) {
     return
   }

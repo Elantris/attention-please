@@ -1,4 +1,4 @@
-import { escapeMarkdown, SlashCommandBuilder } from 'discord.js'
+import { escapeMarkdown, InteractionContextType, SlashCommandBuilder } from 'discord.js'
 import { CommandProps } from '../types'
 import cache, { database } from '../utils/cache'
 import getAllJobs from '../utils/getAllJobs'
@@ -18,10 +18,9 @@ const builds: CommandProps['builds'] = [
         .setDescriptionLocalizations({
           'zh-TW': '預約 ID',
         })
-        .setRequired(true)
-        .setAutocomplete(true),
+        .setRequired(true),
     )
-    .setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
 ]
 
 const exec: CommandProps['exec'] = async (interaction) => {

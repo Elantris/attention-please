@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js'
+import { InteractionContextType, SlashCommandBuilder } from 'discord.js'
 import { CommandProps } from '../types'
 import { translate } from '../utils/translation'
 
@@ -9,7 +9,7 @@ const builds: CommandProps['builds'] = [
     .setDescriptionLocalizations({
       'zh-TW': 'Attention Please 使用說明',
     })
-    .setDMPermission(false),
+    .setContexts(InteractionContextType.Guild),
 ]
 
 const exec: CommandProps['exec'] = async (interaction) => {
