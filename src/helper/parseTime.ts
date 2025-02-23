@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
-import cache from './cache'
-import timeFormatter from './timeFormatter'
+import timeFormatter from '../utils/timeFormatter.js'
+import cache from './cache.js'
 
 const parseTime: (options: { guildId: string; time: string | null }) => number = ({ time, guildId }) => {
   if (!time) {

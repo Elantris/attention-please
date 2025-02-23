@@ -1,8 +1,8 @@
 import { Client, Events, GatewayIntentBits } from 'discord.js'
-import appConfig from './appConfig'
-import { handleGuildCreate, handleGuildDelete } from './handleGuild'
-import handleInteraction from './handleInteraction'
-import handleReady from './handleReady'
+import appConfig from './appConfig.js'
+import { handleGuildCreate, handleGuildDelete } from './handleGuild.js'
+import handleInteraction from './handleInteraction.js'
+import handleReady from './handleReady.js'
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],

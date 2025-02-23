@@ -9,6 +9,9 @@ import {
 import { writeFileSync } from 'fs'
 import { DateTime } from 'luxon'
 import { join } from 'path'
+import cache, { database } from '../helper/cache.js'
+import getAllJobs from '../helper/getAllJobs.js'
+import parseTime from '../helper/parseTime.js'
 import {
   CommandProps,
   isInArray,
@@ -18,15 +21,12 @@ import {
   repeatLabels,
   RepeatType,
   ResultProps,
-} from '../types'
-import cache, { database } from '../utils/cache'
-import fetchTargetMessage from '../utils/fetchTargetMessage'
-import getAllJobs from '../utils/getAllJobs'
-import getReactionStatus from '../utils/getReactionStatus'
-import parseTime from '../utils/parseTime'
-import splitMessage from '../utils/splitMessage'
-import timeFormatter from '../utils/timeFormatter'
-import { translate } from '../utils/translation'
+} from '../types.js'
+import fetchTargetMessage from '../utils/fetchTargetMessage.js'
+import getReactionStatus from '../utils/getReactionStatus.js'
+import splitMessage from '../utils/splitMessage.js'
+import timeFormatter from '../utils/timeFormatter.js'
+import { translate } from '../utils/translation.js'
 
 const builds: CommandProps['builds'] = [
   new SlashCommandBuilder()
@@ -216,7 +216,7 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
     memberNames[memberStatus].sort((a, b) => a.localeCompare(b))
   }
   if (allMembersCount > checkLength) {
-    const filePath = join(__dirname, '../../files/', `check-${message.id}.txt`)
+    const filePath = join(import.meta.dirname, '../../files/', `check-${message.id}.txt`)
     writeFileSync(
       filePath,
       translate('check.text.checkResultFile', { guildId })

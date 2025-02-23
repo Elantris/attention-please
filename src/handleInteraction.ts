@@ -1,12 +1,12 @@
 import { ChatInputCommandInteraction, Interaction, MessageContextMenuCommandInteraction } from 'discord.js'
-import OpenColor from 'open-color'
-import { ResultProps, isKeyValueProps } from './types'
-import cache, { commands } from './utils/cache'
-import colorFormatter from './utils/colorFormatter'
-import initGuild from './utils/initGuild'
-import sendLog from './utils/sendLog'
-import timeFormatter from './utils/timeFormatter'
-import { isTranslateKey, translate } from './utils/translation'
+import OpenColor from 'open-color' with { type: 'json' }
+import cache, { commands } from './helper/cache.js'
+import initGuild from './helper/initGuild.js'
+import sendLog from './helper/sendLog.js'
+import { ResultProps, isKeyValueProps } from './types.js'
+import colorFormatter from './utils/colorFormatter.js'
+import timeFormatter from './utils/timeFormatter.js'
+import { isTranslateKey, translate } from './utils/translation.js'
 
 const handleInteraction = async (interaction: Interaction) => {
   if (!interaction.isChatInputCommand() && !interaction.isMessageContextMenuCommand()) {

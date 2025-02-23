@@ -1,16 +1,16 @@
 import { Client } from 'discord.js'
 import { DateTime } from 'luxon'
-import OpenColor from 'open-color'
-import { getCheckResult } from '../commands/check'
-import { getRaffleResult } from '../commands/raffle'
-import { JobProps } from '../types'
-import cache, { database } from './cache'
-import colorFormatter from './colorFormatter'
-import fetchTargetMessage from './fetchTargetMessage'
-import initGuild from './initGuild'
-import sendLog from './sendLog'
-import timeFormatter from './timeFormatter'
-import { translate } from './translation'
+import OpenColor from 'open-color' with { type: 'json' }
+import { getCheckResult } from '../commands/check.js'
+import { getRaffleResult } from '../commands/raffle.js'
+import { JobProps } from '../types.js'
+import colorFormatter from '../utils/colorFormatter.js'
+import fetchTargetMessage from '../utils/fetchTargetMessage.js'
+import timeFormatter from '../utils/timeFormatter.js'
+import { translate } from '../utils/translation.js'
+import cache, { database } from './cache.js'
+import initGuild from './initGuild.js'
+import sendLog from './sendLog.js'
 
 let lock = 0
 const executeJobs = async (client: Client) => {

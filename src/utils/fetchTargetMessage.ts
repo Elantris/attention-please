@@ -1,6 +1,6 @@
 import { Guild, GuildTextBasedChannel, Message } from 'discord.js'
-import appConfig from '../appConfig'
-import initGuild from './initGuild'
+import appConfig from '../appConfig.js'
+import initGuild from '../helper/initGuild.js'
 
 const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise<Message<true>> = async ({
   guild,

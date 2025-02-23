@@ -1,6 +1,6 @@
 import { InteractionContextType, SlashCommandBuilder } from 'discord.js'
-import { CommandProps } from '../types'
-import { translate } from '../utils/translation'
+import { CommandProps } from '../types.js'
+import { translate } from '../utils/translation.js'
 
 const builds: CommandProps['builds'] = [
   new SlashCommandBuilder()

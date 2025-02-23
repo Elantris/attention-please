@@ -1,8 +1,8 @@
 import { ChannelType, Client, REST, Routes } from 'discord.js'
-import appConfig from './appConfig'
-import cache, { commandBuildData } from './utils/cache'
-import executeJobs from './utils/executeJobs'
-import timeFormatter from './utils/timeFormatter'
+import appConfig from './appConfig.js'
+import cache, { commandBuildData } from './helper/cache.js'
+import executeJobs from './helper/executeJobs.js'
+import timeFormatter from './utils/timeFormatter.js'
 
 const handleReady = async (client: Client<true>) => {
   const logChannel = client.channels.cache.get(appConfig.DISCORD.LOG_CHANNEL_ID)

@@ -1,6 +1,6 @@
 import { Client } from 'discord.js'
-import { memberStatusLabels } from '../types'
-import cache, { database } from './cache'
+import { memberStatusLabels } from '../types.js'
+import cache, { database } from './cache.js'
 
 const initGuild = async (client: Client, guildId: string) => {
   if (Date.now() < (cache.isInit[guildId] || 0)) {

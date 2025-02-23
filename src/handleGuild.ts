@@ -1,6 +1,6 @@
 import { escapeMarkdown, Guild } from 'discord.js'
-import cache from './utils/cache'
-import timeFormatter from './utils/timeFormatter'
+import cache from './helper/cache.js'
+import timeFormatter from './utils/timeFormatter.js'
 
 export const handleGuildCreate = async (guild: Guild) => {
   if (!cache.isReady) {

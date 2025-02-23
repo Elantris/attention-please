@@ -2,8 +2,8 @@ import { RESTPostAPIApplicationCommandsJSONBody, TextChannel } from 'discord.js'
 import admin from 'firebase-admin'
 import { readdirSync } from 'fs'
 import { join } from 'path'
-import appConfig from '../appConfig'
-import { CommandProps, JobProps, LocaleType } from '../types'
+import appConfig from '../appConfig.js'
+import { CommandProps, JobProps, LocaleType } from '../types.js'
 
 admin.initializeApp({
   databaseURL: appConfig.FIREBASE.databaseURL,
@@ -88,12 +88,14 @@ database.ref('/jobs').on('child_removed', removeCache)
 export const commands: { [CommandName in string]?: CommandProps } = {}
 export const commandBuildData: RESTPostAPIApplicationCommandsJSONBody[] = []
 
-readdirSync(join(__dirname, '../commands')).forEach(async (filename) => {
+readdirSync(join(import.meta.dirname, '../commands')).forEach(async (filename) => {
   if (!filename.endsWith('.js') && !filename.endsWith('.ts')) {
     return
   }
   const commandName = filename.split('.')[0]
-  const { default: command }: { default: CommandProps } = await import(join(__dirname, '../commands', filename))
+  const { default: command }: { default: CommandProps } = await import(
+    join(import.meta.dirname, '../commands', filename)
+  )
   commands[commandName] = command
   command.builds.forEach((build) => commandBuildData.push(build.toJSON()))
 })

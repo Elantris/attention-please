@@ -1,8 +1,8 @@
 import { escapeMarkdown, InteractionContextType, SlashCommandBuilder } from 'discord.js'
-import { CommandProps } from '../types'
-import cache, { database } from '../utils/cache'
-import getAllJobs from '../utils/getAllJobs'
-import { translate } from '../utils/translation'
+import cache, { database } from '../helper/cache.js'
+import getAllJobs from '../helper/getAllJobs.js'
+import { CommandProps } from '../types.js'
+import { translate } from '../utils/translation.js'
 
 const builds: CommandProps['builds'] = [
   new SlashCommandBuilder()

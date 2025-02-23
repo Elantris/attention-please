@@ -1,8 +1,8 @@
 import { Guild } from 'discord.js'
-import { RepeatType } from '../types'
-import cache from './cache'
-import timeFormatter from './timeFormatter'
-import { translate } from './translation'
+import { RepeatType } from '../types.js'
+import timeFormatter from '../utils/timeFormatter.js'
+import { translate } from '../utils/translation.js'
+import cache from './cache.js'
 
 const getAllJobs = (clientId: string, guild: Guild) => {
   const jobs: {

@@ -1,9 +1,9 @@
 import { escapeMarkdown } from 'discord.js'
-import OpenColor from 'open-color'
-import { ResultProps } from '../types'
-import cache from './cache'
-import colorFormatter from './colorFormatter'
-import timeFormatter from './timeFormatter'
+import OpenColor from 'open-color' with { type: 'json' }
+import { ResultProps } from '../types.js'
+import colorFormatter from '../utils/colorFormatter.js'
+import timeFormatter from '../utils/timeFormatter.js'
+import cache from './cache.js'
 
 const sendLog = async (options: {
   command: {

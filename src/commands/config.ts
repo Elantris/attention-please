@@ -1,8 +1,8 @@
 import { APIEmbed, escapeMarkdown, InteractionContextType, SlashCommandBuilder } from 'discord.js'
-import { CommandProps, isInArray, localeLabels, memberStatusLabels } from '../types'
-import cache, { database } from '../utils/cache'
-import timeFormatter from '../utils/timeFormatter'
-import { translate } from '../utils/translation'
+import cache, { database } from '../helper/cache.js'
+import { CommandProps, isInArray, localeLabels, memberStatusLabels } from '../types.js'
+import timeFormatter from '../utils/timeFormatter.js'
+import { translate } from '../utils/translation.js'
 
 const builds: CommandProps['builds'] = [
   new SlashCommandBuilder()
