@@ -26,18 +26,18 @@
   "dependencies": {
     "@firebase/app-types": "^0.9.3",
     "@tsconfig/node-lts": "^22.0.1",
-    "@types/luxon": "^3.4.2",
-    "@types/node": "^22.13.5",
-    "@types/ws": "^8.5.14",
-    "@typescript-eslint/eslint-plugin": "^8.24.1",
-    "@typescript-eslint/parser": "^8.24.1",
-    "discord.js": "^14.18.0",
-    "eslint": "^9.21.0",
-    "firebase-admin": "^13.1.0",
-    "luxon": "^3.5.0",
+    "@types/luxon": "^3.6.2",
+    "@types/node": "^22.15.21",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.32.1",
+    "discord.js": "^14.19.3",
+    "eslint": "^9.27.0",
+    "firebase-admin": "^13.4.0",
+    "luxon": "^3.6.1",
     "open-color": "^1.9.1",
-    "prettier": "^3.5.2",
+    "prettier": "^3.5.3",
     "prettier-plugin-organize-imports": "^4.1.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.8.3"
   }
 }

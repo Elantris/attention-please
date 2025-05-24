@@ -20,7 +20,9 @@ const handleInteraction = async (interaction: Interaction) => {
     !channel ||
     channel.isDMBased() ||
     cache.isCooling[guildId] ||
-    cache.isProcessing[guildId]
+    cache.isProcessing[guildId] ||
+    cache.ban[guildId] ||
+    cache.ban[interaction.user.id]
   ) {
     return
   }

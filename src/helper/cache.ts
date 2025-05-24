@@ -28,7 +28,7 @@ const cache: {
   isProcessing: {
     [GuildID in string]?: boolean
   }
-  banned: {
+  ban: {
     [ID in string]?: number
   }
   settings: {
@@ -58,7 +58,7 @@ const cache: {
   isInit: {},
   isCooling: {},
   isProcessing: {},
-  banned: {},
+  ban: {},
   settings: {},
   jobs: {},
   footer: 'Version 2024-10-16',
@@ -77,9 +77,9 @@ const removeCache = (snapshot: admin.database.DataSnapshot) => {
   }
 }
 
-database.ref('/banned').on('child_added', updateCache)
-database.ref('/banned').on('child_changed', updateCache)
-database.ref('/banned').on('child_removed', removeCache)
+database.ref('/ban').on('child_added', updateCache)
+database.ref('/ban').on('child_changed', updateCache)
+database.ref('/ban').on('child_removed', removeCache)
 database.ref('/jobs').on('child_added', updateCache)
 database.ref('/jobs').on('child_changed', updateCache)
 database.ref('/jobs').on('child_removed', removeCache)

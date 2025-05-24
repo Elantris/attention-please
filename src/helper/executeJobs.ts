@@ -19,7 +19,9 @@ const executeJobs = async (client: Client) => {
   }
   lock = 1
 
-  for (const jobId in cache.jobs) {
+  const jobIds = Object.keys(cache.jobs)
+
+  for (const jobId of jobIds) {
     const executeAt = Date.now()
     const job = cache.jobs[jobId]
     if (!job || job.clientId !== client.user?.id || job.executeAt > executeAt) {

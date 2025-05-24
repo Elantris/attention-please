@@ -8,9 +8,9 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
 })
 
-client.on(Events.InteractionCreate, (interaction) => handleInteraction(interaction))
-client.on(Events.ClientReady, (client) => handleReady(client))
-client.on(Events.GuildCreate, (guild) => handleGuildCreate(guild))
-client.on(Events.GuildDelete, (guild) => handleGuildDelete(guild))
+client.on(Events.InteractionCreate, handleInteraction)
+client.on(Events.ClientReady, handleReady)
+client.on(Events.GuildCreate, handleGuildCreate)
+client.on(Events.GuildDelete, handleGuildDelete)
 
 client.login(appConfig.DISCORD.TOKEN)
