@@ -51,7 +51,7 @@ const cache: {
   jobs: {
     [JobID in string]?: JobProps
   }
-  footer: string
+  version: string
 } = {
   logChannel: null,
   isReady: false,
@@ -61,7 +61,7 @@ const cache: {
   ban: {},
   settings: {},
   jobs: {},
-  footer: 'Version 2024-10-16',
+  version: '2025-06-05',
 }
 
 const updateCache = (snapshot: admin.database.DataSnapshot) => {

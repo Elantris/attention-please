@@ -95,18 +95,6 @@ const fetchTargetMessage: (options: { guild: Guild; search: string }) => Promise
     })
   }
 
-  if (
-    !target.message.mentions.everyone &&
-    !target.message.mentions.roles.size &&
-    !target.message.mentions.members?.size
-  ) {
-    throw new Error('NO_MENTIONED_MEMBER', {
-      cause: {
-        MESSAGE_LINK: target.message.url,
-      },
-    })
-  }
-
   return target.message
 }
 

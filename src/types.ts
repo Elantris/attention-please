@@ -8,10 +8,10 @@ import {
 } from 'discord.js'
 
 export const repeatLabels = ['day', 'week', 'month', 'season'] as const
-export const memberStatusLabels = ['reacted', 'absent', 'locked', 'irrelevant', 'leaved'] as const
+export const reactionStatusLabels = ['reacted', 'absent', 'locked', 'irrelevant', 'leaved'] as const
 export const localeLabels = ['zh-TW', 'en-US'] as const
 export type RepeatType = (typeof repeatLabels)[number]
-export type MemberStatusType = (typeof memberStatusLabels)[number]
+export type ReactionStatusType = (typeof reactionStatusLabels)[number]
 export type LocaleType = (typeof localeLabels)[number]
 
 export type CommandProps = {

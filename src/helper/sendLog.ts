@@ -36,21 +36,21 @@ const sendLog = async (options: {
             name: 'Guild',
             value: '{ID}\n{NAME}'
               .replace('{ID}', options.command.guildId)
-              .replace('{NAME}', escapeMarkdown(options.command.guildName || '--')),
+              .replace('{NAME}', escapeMarkdown(options.command.guildName || '(--)')),
             inline: true,
           },
           {
             name: 'Channel',
             value: '{ID}\n{NAME}'
               .replace('{ID}', options.command.channelId)
-              .replace('{NAME}', escapeMarkdown(options.command.channelName || '--')),
+              .replace('{NAME}', escapeMarkdown(options.command.channelName || '(--)')),
             inline: true,
           },
           {
             name: 'User',
             value: '{ID}\n{NAME}'
               .replace('{ID}', options.command.userId)
-              .replace('{NAME}', escapeMarkdown(options.command.userName || '--')),
+              .replace('{NAME}', escapeMarkdown(options.command.userName || '(--)')),
             inline: true,
           },
         ],

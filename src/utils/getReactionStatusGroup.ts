@@ -1,14 +1,16 @@
 import { Message } from 'discord.js'
-import { MemberStatusType } from '../types.js'
+import { ReactionStatusType } from '../types.js'
 
 type ReactionStatusProps = {
   [MemberID: string]: {
     name: string
-    status: MemberStatusType
+    status: ReactionStatusType
   }
 }
 
-const getReactionStatus: (message: Message<true>) => Promise<ReactionStatusProps> = async (message) => {
+const getReactionStatusGroup: (message: Message<true>) => Promise<Record<ReactionStatusType, string[]>> = async (
+  message,
+) => {
   const reactionStatus: ReactionStatusProps = {}
   if (message.mentions.everyone) {
     message.guild.members.cache.each((member) => {
@@ -39,9 +41,6 @@ const getReactionStatus: (message: Message<true>) => Promise<ReactionStatusProps
         }
       })
     })
-  }
-  if (Object.keys(reactionStatus).length === 0) {
-    return {}
   }
 
   const messageReactions = message.reactions.cache.values()
@@ -93,7 +92,18 @@ const getReactionStatus: (message: Message<true>) => Promise<ReactionStatusProps
     }
   }
 
-  return reactionStatus
+  const memberNames: Record<ReactionStatusType, string[]> = {
+    reacted: [],
+    absent: [],
+    locked: [],
+    irrelevant: [],
+    leaved: [],
+  }
+  for (const memberId in reactionStatus) {
+    memberNames[reactionStatus[memberId].status].push(reactionStatus[memberId].name)
+  }
+
+  return memberNames
 }
 
-export default getReactionStatus
+export default getReactionStatusGroup

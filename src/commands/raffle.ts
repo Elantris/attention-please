@@ -10,10 +10,11 @@ import { join } from 'path'
 import cache, { database } from '../helper/cache.js'
 import getAllJobs from '../helper/getAllJobs.js'
 import parseTime from '../helper/parseTime.js'
-import { CommandProps, JobProps, MemberStatusType, ResultProps } from '../types.js'
+import { CommandProps, JobProps, reactionStatusLabels, ResultProps } from '../types.js'
 import fetchTargetMessage from '../utils/fetchTargetMessage.js'
-import getReactionStatus from '../utils/getReactionStatus.js'
+import getReactionStatusGroup from '../utils/getReactionStatusGroup.js'
 import timeFormatter from '../utils/timeFormatter.js'
+import toPercentage from '../utils/toPercentage.js'
 import { translate } from '../utils/translation.js'
 
 const builds: CommandProps['builds'] = [
@@ -42,12 +43,9 @@ const builds: CommandProps['builds'] = [
         .setRequired(true),
     )
     .addStringOption((option) =>
-      option
-        .setName('time')
-        .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2025-01-23 12:34')
-        .setDescriptionLocalizations({
-          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2025-01-23 12:34',
-        }),
+      option.setName('time').setDescription('Time in format: YYYY-MM-DD HH:mm').setDescriptionLocalizations({
+        'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm',
+      }),
     )
     .setContexts(InteractionContextType.Guild),
   new ContextMenuCommandBuilder().setName('raffle').setType(3).setContexts(InteractionContextType.Guild),
@@ -169,42 +167,23 @@ export const getRaffleResult: (
   const guildId = message.guild.id
   const raffleAt = Date.now()
 
-  const reactionStatus = await getReactionStatus(message)
-  const memberNames: Record<MemberStatusType, string[]> = {
-    reacted: [],
-    absent: [],
-    locked: [],
-    irrelevant: [],
-    leaved: [],
-  }
-  for (const memberId in reactionStatus) {
-    memberNames[reactionStatus[memberId].status].push(reactionStatus[memberId].name)
-  }
-  const allMembersCount = memberNames.reacted.length + memberNames.absent.length + memberNames.locked.length
-  if (allMembersCount === 0) {
-    throw new Error('NO_MENTIONED_MEMBER', {
-      cause: {
-        MESSAGE_LINK: message.url,
-      },
-    })
-  }
+  const reactionStatusGroup = await getReactionStatusGroup(message)
+  const allMembersCount =
+    reactionStatusGroup.reacted.length + reactionStatusGroup.absent.length + reactionStatusGroup.locked.length
+  const reactedMemberCount = reactionStatusGroup.reacted.length
 
-  const reactedMemberCount = memberNames.reacted.length
-  if (reactedMemberCount === 0) {
-    return {
-      content: translate('error.text.NO_RAFFLE_PARTICIPANT', { guildId }),
-      embed: {
-        description: translate('error.help.NO_RAFFLE_PARTICIPANT', { guildId }),
-      },
+  for (const reactionStatus of reactionStatusLabels) {
+    for (let i = reactionStatusGroup[reactionStatus].length - 1; i !== -1; i--) {
+      const choose = Math.floor(Math.random() * (i + 1))
+      ;[reactionStatusGroup[reactionStatus][i], reactionStatusGroup[reactionStatus][choose]] = [
+        reactionStatusGroup[reactionStatus][choose],
+        reactionStatusGroup[reactionStatus][i],
+      ]
     }
   }
 
-  for (let i = memberNames.reacted.length - 1; i !== -1; i--) {
-    const choose = Math.floor(Math.random() * (i + 1))
-    ;[memberNames.reacted[i], memberNames.reacted[choose]] = [memberNames.reacted[choose], memberNames.reacted[i]]
-  }
   const raffleCount = options?.count || 100
-  const luckyMemberNames = memberNames.reacted.splice(0, raffleCount)
+  const luckyMemberNames = reactionStatusGroup.reacted.splice(0, raffleCount)
 
   const filePath = join(import.meta.dirname, '../../files/', `raffle-${message.id}.txt`)
   writeFileSync(
@@ -217,18 +196,18 @@ export const getRaffleResult: (
       .replace('{ALL_COUNT}', `${allMembersCount}`)
       .replace('{REACTED_COUNT}', `${reactedMemberCount}`)
       .replace('{LUCKY_COUNT}', `${luckyMemberNames.length}`)
-      .replace('{MISSED_COUNT}', `${memberNames.reacted.length}`)
-      .replace('{ABSENT_COUNT}', `${memberNames.absent.length}`)
-      .replace('{LOCKED_COUNT}', `${memberNames.locked.length}`)
-      .replace('{IRRELEVANT_COUNT}', `${memberNames.irrelevant.length}`)
-      .replace('{LEAVED_COUNT}', `${memberNames.leaved.length}`)
-      .replace('{PERCENTAGE}', ((reactedMemberCount * 100) / allMembersCount).toFixed(2))
+      .replace('{MISSED_COUNT}', `${reactionStatusGroup.reacted.length}`)
+      .replace('{ABSENT_COUNT}', `${reactionStatusGroup.absent.length}`)
+      .replace('{LOCKED_COUNT}', `${reactionStatusGroup.locked.length}`)
+      .replace('{IRRELEVANT_COUNT}', `${reactionStatusGroup.irrelevant.length}`)
+      .replace('{LEAVED_COUNT}', `${reactionStatusGroup.leaved.length}`)
+      .replace('{PERCENTAGE}', toPercentage(reactedMemberCount / allMembersCount))
       .replace('{LUCKY_MEMBERS}', luckyMemberNames.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
-      .replace('{REACTED_MEMBERS}', memberNames.reacted.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
-      .replace('{ABSENT_MEMBERS}', memberNames.absent.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
-      .replace('{LOCKED_MEMBERS}', memberNames.locked.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
-      .replace('{IRRELEVANT_MEMBERS}', memberNames.irrelevant.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
-      .replace('{LEAVED_MEMBERS}', memberNames.leaved.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{REACTED_MEMBERS}', reactionStatusGroup.reacted.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{ABSENT_MEMBERS}', reactionStatusGroup.absent.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{LOCKED_MEMBERS}', reactionStatusGroup.locked.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{IRRELEVANT_MEMBERS}', reactionStatusGroup.irrelevant.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
+      .replace('{LEAVED_MEMBERS}', reactionStatusGroup.leaved.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
       .trim(),
     'utf8',
   )
@@ -237,7 +216,7 @@ export const getRaffleResult: (
     content: translate('raffle.text.raffleResult', { guildId })
       .replace('{REACTED_COUNT}', `${reactedMemberCount}`)
       .replace('{ALL_COUNT}', `${allMembersCount}`)
-      .replace('{PERCENTAGE}', ((reactedMemberCount * 100) / allMembersCount).toFixed(2))
+      .replace('{PERCENTAGE}', toPercentage(reactedMemberCount / allMembersCount))
       .trim(),
     embed: {
       description: translate('raffle.text.raffleResultDetail', { guildId })
@@ -249,11 +228,11 @@ export const getRaffleResult: (
         .replace('{ALL_COUNT}', `${allMembersCount}`)
         .replace('{REACTED_COUNT}', `${reactedMemberCount}`)
         .replace('{LUCKY_COUNT}', `${luckyMemberNames.length}`)
-        .replace('{MISSED_COUNT}', `${memberNames.reacted.length}`)
-        .replace('{ABSENT_COUNT}', `${memberNames.absent.length}`)
-        .replace('{LOCKED_COUNT}', `${memberNames.locked.length}`)
-        .replace('{IRRELEVANT_COUNT}', `${memberNames.irrelevant.length}`)
-        .replace('{LEAVED_COUNT}', `${memberNames.leaved.length}`)
+        .replace('{MISSED_COUNT}', `${reactionStatusGroup.reacted.length}`)
+        .replace('{ABSENT_COUNT}', `${reactionStatusGroup.absent.length}`)
+        .replace('{LOCKED_COUNT}', `${reactionStatusGroup.locked.length}`)
+        .replace('{IRRELEVANT_COUNT}', `${reactionStatusGroup.irrelevant.length}`)
+        .replace('{LEAVED_COUNT}', `${reactionStatusGroup.leaved.length}`)
         .trim(),
     },
     files: [

@@ -1,5 +1,6 @@
 import {
   APIEmbed,
+  ApplicationCommandType,
   ContextMenuCommandBuilder,
   escapeMarkdown,
   InteractionContextType,
@@ -16,16 +17,16 @@ import {
   CommandProps,
   isInArray,
   JobProps,
-  memberStatusLabels,
-  MemberStatusType,
+  reactionStatusLabels,
   repeatLabels,
   RepeatType,
   ResultProps,
 } from '../types.js'
 import fetchTargetMessage from '../utils/fetchTargetMessage.js'
-import getReactionStatus from '../utils/getReactionStatus.js'
+import getReactionStatus from '../utils/getReactionStatusGroup.js'
 import splitMessage from '../utils/splitMessage.js'
 import timeFormatter from '../utils/timeFormatter.js'
+import toPercentage from '../utils/toPercentage.js'
 import { translate } from '../utils/translation.js'
 
 const builds: CommandProps['builds'] = [
@@ -45,12 +46,9 @@ const builds: CommandProps['builds'] = [
         .setRequired(true),
     )
     .addStringOption((option) =>
-      option
-        .setName('time')
-        .setDescription('Time in format: YYYY-MM-DD HH:mm. Example: 2023-01-02 03:04')
-        .setDescriptionLocalizations({
-          'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm，例如 2024-10-16 12:34',
-        }),
+      option.setName('time').setDescription('Time in format: YYYY-MM-DD HH:mm').setDescriptionLocalizations({
+        'zh-TW': '指定結算時間，格式為 YYYY-MM-DD HH:mm',
+      }),
     )
     .addStringOption((option) =>
       option
@@ -65,7 +63,10 @@ const builds: CommandProps['builds'] = [
         ),
     )
     .setContexts(InteractionContextType.Guild),
-  new ContextMenuCommandBuilder().setName('check').setType(3).setContexts(InteractionContextType.Guild),
+  new ContextMenuCommandBuilder()
+    .setName('check')
+    .setType(ApplicationCommandType.Message)
+    .setContexts(InteractionContextType.Guild),
 ]
 
 const exec: CommandProps['exec'] = async (interaction) => {
@@ -186,25 +187,9 @@ const exec: CommandProps['exec'] = async (interaction) => {
 export const getCheckResult: (message: Message<true>) => Promise<ResultProps | void> = async (message) => {
   const guildId = message.guild.id
   const checkAt = Date.now()
-  const reactionStatus = await getReactionStatus(message)
-  const memberNames: Record<MemberStatusType, string[]> = {
-    reacted: [],
-    absent: [],
-    locked: [],
-    irrelevant: [],
-    leaved: [],
-  }
-  for (const memberId in reactionStatus) {
-    memberNames[reactionStatus[memberId].status].push(reactionStatus[memberId].name)
-  }
-  const allMembersCount = memberNames.reacted.length + memberNames.absent.length + memberNames.locked.length
-  if (allMembersCount === 0) {
-    throw new Error('NO_MENTIONED_MEMBER', {
-      cause: {
-        MESSAGE_LINK: message.url,
-      },
-    })
-  }
+  const reactionStatusGroup = await getReactionStatus(message)
+  const allMembersCount =
+    reactionStatusGroup.reacted.length + reactionStatusGroup.absent.length + reactionStatusGroup.locked.length
 
   const checkLength = cache.settings[guildId].length ?? 100
   const fields: APIEmbed['fields'] = []
@@ -212,8 +197,8 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
     attachment: string
     name: string
   }[] = []
-  for (const memberStatus of memberStatusLabels) {
-    memberNames[memberStatus].sort((a, b) => a.localeCompare(b))
+  for (const reactionStatus of reactionStatusLabels) {
+    reactionStatusGroup[reactionStatus].sort((a, b) => a.localeCompare(b))
   }
   if (allMembersCount > checkLength) {
     const filePath = join(import.meta.dirname, '../../files/', `check-${message.id}.txt`)
@@ -225,17 +210,17 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
         .replace('{TIME}', timeFormatter({ time: checkAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
         .replace('{MESSAGE_URL}', message.url)
         .replace('{ALL_COUNT}', `${allMembersCount}`)
-        .replace('{REACTED_COUNT}', `${memberNames.reacted.length}`)
-        .replace('{ABSENT_COUNT}', `${memberNames.absent.length}`)
-        .replace('{LOCKED_COUNT}', `${memberNames.locked.length}`)
-        .replace('{IRRELEVANT_COUNT}', `${memberNames.irrelevant.length}`)
-        .replace('{LEAVED_COUNT}', `${memberNames.leaved.length}`)
-        .replace('{PERCENTAGE}', ((memberNames.reacted.length * 100) / allMembersCount).toFixed(2))
-        .replace('{REACTED_MEMBERS}', memberNames.reacted.join('\r\n'))
-        .replace('{ABSENT_MEMBERS}', memberNames.absent.join('\r\n'))
-        .replace('{LOCKED_MEMBERS}', memberNames.locked.join('\r\n'))
-        .replace('{IRRELEVANT_MEMBERS}', memberNames.irrelevant.join('\r\n'))
-        .replace('{LEAVED_MEMBERS}', memberNames.leaved.join('\r\n'))
+        .replace('{REACTED_COUNT}', `${reactionStatusGroup.reacted.length}`)
+        .replace('{ABSENT_COUNT}', `${reactionStatusGroup.absent.length}`)
+        .replace('{LOCKED_COUNT}', `${reactionStatusGroup.locked.length}`)
+        .replace('{IRRELEVANT_COUNT}', `${reactionStatusGroup.irrelevant.length}`)
+        .replace('{LEAVED_COUNT}', `${reactionStatusGroup.leaved.length}`)
+        .replace('{PERCENTAGE}', toPercentage(reactionStatusGroup.reacted.length / allMembersCount))
+        .replace('{REACTED_MEMBERS}', reactionStatusGroup.reacted.join('\r\n'))
+        .replace('{ABSENT_MEMBERS}', reactionStatusGroup.absent.join('\r\n'))
+        .replace('{LOCKED_MEMBERS}', reactionStatusGroup.locked.join('\r\n'))
+        .replace('{IRRELEVANT_MEMBERS}', reactionStatusGroup.irrelevant.join('\r\n'))
+        .replace('{LEAVED_MEMBERS}', reactionStatusGroup.leaved.join('\r\n'))
         .trim(),
       'utf8',
     )
@@ -244,26 +229,26 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
       name: `check-${message.id}.txt`,
     })
   } else {
-    for (const memberStatus of memberStatusLabels) {
-      if (cache.settings[guildId]?.[memberStatus] === false || !memberNames[memberStatus].length) {
+    for (const reactionStatus of reactionStatusLabels) {
+      if (cache.settings[guildId]?.[reactionStatus] === false || !reactionStatusGroup[reactionStatus].length) {
         continue
       }
-      splitMessage(memberNames[memberStatus].map((name) => escapeMarkdown(name)).join('\n'), { length: 1000 }).forEach(
-        (content) => {
-          fields.push({
-            name: translate(`check.text.${memberStatus}MembersList`, { guildId }),
-            value: content.replace(/\n/g, '、'),
-          })
-        },
-      )
+      splitMessage(reactionStatusGroup[reactionStatus].map((name) => escapeMarkdown(name)).join('\n'), {
+        length: 1000,
+      }).forEach((content) => {
+        fields.push({
+          name: translate(`check.text.${reactionStatus}MembersList`, { guildId }),
+          value: content.replace(/\n/g, '、'),
+        })
+      })
     }
   }
 
   return {
     content: translate('check.text.checkResult', { guildId })
-      .replace('{REACTED_COUNT}', `${memberNames.reacted.length}`)
+      .replace('{REACTED_COUNT}', `${reactionStatusGroup.reacted.length}`)
       .replace('{ALL_COUNT}', `${allMembersCount}`)
-      .replace('{PERCENTAGE}', ((memberNames.reacted.length * 100) / allMembersCount).toFixed(2))
+      .replace('{PERCENTAGE}', toPercentage(reactionStatusGroup.reacted.length / allMembersCount))
       .trim(),
     embed: {
       description: translate('check.text.checkResultDetail', { guildId })
@@ -272,17 +257,17 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
         .replace('{CHANNEL_NAME}', message.channel.name)
         .replace('{MESSAGE_URL}', message.url)
         .replace('{ALL_COUNT}', `${allMembersCount}`)
-        .replace('{REACTED_COUNT}', `${memberNames.reacted.length}`)
-        .replace('{ABSENT_COUNT}', `${memberNames.absent.length}`)
-        .replace('{LOCKED_COUNT}', `${memberNames.locked.length}`)
-        .replace('{IRRELEVANT_COUNT}', `${memberNames.irrelevant.length}`)
-        .replace('{LEAVED_COUNT}', `${memberNames.leaved.length}`)
+        .replace('{REACTED_COUNT}', `${reactionStatusGroup.reacted.length}`)
+        .replace('{ABSENT_COUNT}', `${reactionStatusGroup.absent.length}`)
+        .replace('{LOCKED_COUNT}', `${reactionStatusGroup.locked.length}`)
+        .replace('{IRRELEVANT_COUNT}', `${reactionStatusGroup.irrelevant.length}`)
+        .replace('{LEAVED_COUNT}', `${reactionStatusGroup.leaved.length}`)
         .trim(),
       fields,
     },
     files,
     meta: {
-      isReactionEmpty: memberNames.reacted.length === 0,
+      isReactionEmpty: reactionStatusGroup.reacted.length === 0,
     },
   }
 }

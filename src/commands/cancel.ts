@@ -9,7 +9,7 @@ const builds: CommandProps['builds'] = [
     .setName('cancel')
     .setDescription('Cancel check job.')
     .setDescriptionLocalizations({
-      'zh-TW': '取消預約結算',
+      'zh-TW': '取消預約結算或預約抽獎',
     })
     .addStringOption((option) =>
       option

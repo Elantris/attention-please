@@ -1,6 +1,6 @@
 import { APIEmbed, escapeMarkdown, InteractionContextType, SlashCommandBuilder } from 'discord.js'
 import cache, { database } from '../helper/cache.js'
-import { CommandProps, isInArray, localeLabels, memberStatusLabels } from '../types.js'
+import { CommandProps, isInArray, localeLabels, reactionStatusLabels } from '../types.js'
 import timeFormatter from '../utils/timeFormatter.js'
 import { translate } from '../utils/translation.js'
 
@@ -32,12 +32,12 @@ const builds: CommandProps['builds'] = [
             })
             .setRequired(true)
             .addChoices(
-              ...memberStatusLabels.map((memberStatus) => ({
-                name: memberStatus,
+              ...reactionStatusLabels.map((reactionStatus) => ({
+                name: reactionStatus,
                 name_localizations: {
-                  'zh-TW': translate(`config.label.${memberStatus}`, { locale: 'zh-TW' }),
+                  'zh-TW': translate(`config.label.${reactionStatus}`, { locale: 'zh-TW' }),
                 },
-                value: memberStatus,
+                value: reactionStatus,
               })),
             ),
         )
@@ -65,9 +65,9 @@ const builds: CommandProps['builds'] = [
         .addNumberOption((option) =>
           option
             .setName('offset')
-            .setDescription('A number in range of -12 ~ 12. Example: GMT+8, enter 8.')
+            .setDescription('A number in range of -12 ~ 12. Example: UTC+8, enter 8.')
             .setDescriptionLocalizations({
-              'zh-TW': '介於 -12 ~ 12 之間的數字，例如 GMT+8 則輸入 8',
+              'zh-TW': '介於 -12 ~ 12 之間的數字，例如 UTC+8 則輸入 8',
             })
             .setRequired(true),
         ),
@@ -106,11 +106,11 @@ const getAllConfigs: (guildId: string) => APIEmbed['fields'] = (guildId) => {
     },
     {
       name: 'List',
-      value: memberStatusLabels
+      value: reactionStatusLabels
         .map(
-          (memberStatus) =>
-            `${translate(`config.label.${memberStatus}`, { guildId })} ${translate(
-              `config.label.${cache.settings[guildId][memberStatus] ? 'show' : 'hidden'}`,
+          (reactionStatus) =>
+            `${translate(`config.label.${reactionStatus}`, { guildId })} ${translate(
+              `config.label.${cache.settings[guildId][reactionStatus] ? 'show' : 'hidden'}`,
               { guildId },
             )}`,
         )
@@ -139,7 +139,7 @@ const exec: CommandProps['exec'] = async (interaction) => {
   if (subcommand === 'list') {
     const type = interaction.options.getString('type', true)
     const action = interaction.options.getString('action', true)
-    if (!isInArray(type, memberStatusLabels) || (action !== 'show' && action !== 'hidden')) {
+    if (!isInArray(type, reactionStatusLabels) || (action !== 'show' && action !== 'hidden')) {
       return
     }
 

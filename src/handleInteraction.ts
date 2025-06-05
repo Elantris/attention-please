@@ -66,7 +66,7 @@ const handleInteraction = async (interaction: Interaction) => {
               color: colorFormatter(OpenColor.orange[5]),
               title: translate('system.text.support', { guildId }),
               url: 'https://discord.gg/Ctwz4BB',
-              footer: { text: cache.footer },
+              footer: { text: `Version ${cache.version}` },
               ...commandResult.embed,
             },
           ]
@@ -76,7 +76,7 @@ const handleInteraction = async (interaction: Interaction) => {
 
     interaction.commandName === 'check' || interaction.commandName === 'raffle'
       ? await interaction.editReply(responseOptions)
-      : await interaction.reply({ ...responseOptions, fetchReply: true })
+      : await interaction.reply(responseOptions)
 
     await sendLog({
       command: {

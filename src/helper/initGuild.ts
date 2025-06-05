@@ -1,5 +1,5 @@
 import { Client } from 'discord.js'
-import { memberStatusLabels } from '../types.js'
+import { reactionStatusLabels } from '../types.js'
 import cache, { database } from './cache.js'
 
 const initGuild = async (client: Client, guildId: string) => {
@@ -17,8 +17,8 @@ const initGuild = async (client: Client, guildId: string) => {
   cache.settings[guildId] = (await database.ref(`/settings/${guildId}`).once('value')).val() || {}
   cache.isInit[guildId] = Date.now() + 600000
 
-  for (const memberStatus of memberStatusLabels) {
-    cache.settings[guildId][memberStatus] = cache.settings[guildId][memberStatus] ?? true
+  for (const reactionStatus of reactionStatusLabels) {
+    cache.settings[guildId][reactionStatus] = cache.settings[guildId][reactionStatus] ?? true
   }
 }
 

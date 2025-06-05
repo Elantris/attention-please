@@ -61,12 +61,12 @@ const executeJobs = async (client: Client) => {
           warnings.push(translate('check.text.jobIsRemovedWarning', { guildId: job.command.guildId }))
           await database.ref(`/jobs/${jobId}`).remove()
         } else {
-          const repeatAt = DateTime.fromMillis(job.executeAt)
+          const newExecuteAt = DateTime.fromMillis(job.executeAt)
             .plus(job.repeat === 'season' ? { month: 3 } : { [job.repeat]: 1 })
             .toMillis()
           const newJob: JobProps = {
             ...job,
-            executeAt: repeatAt,
+            executeAt: newExecuteAt,
             retryTimes: newRetryTimes,
           }
           try {
@@ -75,7 +75,7 @@ const executeJobs = async (client: Client) => {
             warnings.push(
               translate('check.text.newRepeatedJob', { guildId: job.command.guildId }).replace(
                 '{REPEAT_AT}',
-                timeFormatter({ time: repeatAt, guildId: job.command.guildId, format: 'yyyy-MM-dd HH:mm' }),
+                timeFormatter({ time: newExecuteAt, guildId: job.command.guildId, format: 'yyyy-MM-dd HH:mm' }),
               ),
             )
           } catch {
@@ -99,7 +99,7 @@ const executeJobs = async (client: Client) => {
                 color: colorFormatter(OpenColor.orange[5]),
                 title: translate('system.text.support', { guildId: job.command.guildId }),
                 url: 'https://discord.gg/Ctwz4BB',
-                footer: { text: cache.footer },
+                footer: { text: `Version ${cache.version}` },
                 ...commandResult.embed,
               },
             ]
