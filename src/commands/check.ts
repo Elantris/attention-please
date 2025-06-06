@@ -188,7 +188,8 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
   const guildId = message.guild.id
   const checkAt = Date.now()
   const reactionStatusGroup = await getReactionStatus(message)
-  const allMembersCount =
+  const allMembersCount = Object.values(reactionStatusGroup).reduce((a, b) => a + b.length, 0)
+  const targetMembersCount =
     reactionStatusGroup.reacted.length + reactionStatusGroup.absent.length + reactionStatusGroup.locked.length
 
   const checkLength = cache.settings[guildId].length ?? 100
@@ -209,13 +210,13 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
         .replace('{CHANNEL_NAME}', message.channel.name)
         .replace('{TIME}', timeFormatter({ time: checkAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
         .replace('{MESSAGE_URL}', message.url)
-        .replace('{ALL_COUNT}', `${allMembersCount}`)
+        .replace('{ALL_COUNT}', `${targetMembersCount}`)
         .replace('{REACTED_COUNT}', `${reactionStatusGroup.reacted.length}`)
         .replace('{ABSENT_COUNT}', `${reactionStatusGroup.absent.length}`)
         .replace('{LOCKED_COUNT}', `${reactionStatusGroup.locked.length}`)
         .replace('{IRRELEVANT_COUNT}', `${reactionStatusGroup.irrelevant.length}`)
         .replace('{LEAVED_COUNT}', `${reactionStatusGroup.leaved.length}`)
-        .replace('{PERCENTAGE}', toPercentage(reactionStatusGroup.reacted.length / allMembersCount))
+        .replace('{PERCENTAGE}', toPercentage(reactionStatusGroup.reacted.length / targetMembersCount))
         .replace('{REACTED_MEMBERS}', reactionStatusGroup.reacted.join('\r\n'))
         .replace('{ABSENT_MEMBERS}', reactionStatusGroup.absent.join('\r\n'))
         .replace('{LOCKED_MEMBERS}', reactionStatusGroup.locked.join('\r\n'))
@@ -247,8 +248,8 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
   return {
     content: translate('check.text.checkResult', { guildId })
       .replace('{REACTED_COUNT}', `${reactionStatusGroup.reacted.length}`)
-      .replace('{ALL_COUNT}', `${allMembersCount}`)
-      .replace('{PERCENTAGE}', toPercentage(reactionStatusGroup.reacted.length / allMembersCount))
+      .replace('{ALL_COUNT}', `${targetMembersCount}`)
+      .replace('{PERCENTAGE}', toPercentage(reactionStatusGroup.reacted.length / targetMembersCount))
       .trim(),
     embed: {
       description: translate('check.text.checkResultDetail', { guildId })
@@ -256,7 +257,7 @@ export const getCheckResult: (message: Message<true>) => Promise<ResultProps | v
         .replace('{FROM_NOW}', `<t:${Math.floor(checkAt / 1000)}:R>`)
         .replace('{CHANNEL_NAME}', message.channel.name)
         .replace('{MESSAGE_URL}', message.url)
-        .replace('{ALL_COUNT}', `${allMembersCount}`)
+        .replace('{ALL_COUNT}', `${targetMembersCount}`)
         .replace('{REACTED_COUNT}', `${reactionStatusGroup.reacted.length}`)
         .replace('{ABSENT_COUNT}', `${reactionStatusGroup.absent.length}`)
         .replace('{LOCKED_COUNT}', `${reactionStatusGroup.locked.length}`)

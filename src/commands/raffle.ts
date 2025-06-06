@@ -168,7 +168,7 @@ export const getRaffleResult: (
   const raffleAt = Date.now()
 
   const reactionStatusGroup = await getReactionStatusGroup(message)
-  const allMembersCount =
+  const targetMembersCount =
     reactionStatusGroup.reacted.length + reactionStatusGroup.absent.length + reactionStatusGroup.locked.length
   const reactedMemberCount = reactionStatusGroup.reacted.length
 
@@ -193,7 +193,7 @@ export const getRaffleResult: (
       .replace('{CHANNEL_NAME}', message.channel.name)
       .replace('{TIME}', timeFormatter({ time: raffleAt, guildId, format: 'yyyy-MM-dd HH:mm' }))
       .replace('{MESSAGE_URL}', message.url)
-      .replace('{ALL_COUNT}', `${allMembersCount}`)
+      .replace('{ALL_COUNT}', `${targetMembersCount}`)
       .replace('{REACTED_COUNT}', `${reactedMemberCount}`)
       .replace('{LUCKY_COUNT}', `${luckyMemberNames.length}`)
       .replace('{MISSED_COUNT}', `${reactionStatusGroup.reacted.length}`)
@@ -201,7 +201,7 @@ export const getRaffleResult: (
       .replace('{LOCKED_COUNT}', `${reactionStatusGroup.locked.length}`)
       .replace('{IRRELEVANT_COUNT}', `${reactionStatusGroup.irrelevant.length}`)
       .replace('{LEAVED_COUNT}', `${reactionStatusGroup.leaved.length}`)
-      .replace('{PERCENTAGE}', toPercentage(reactedMemberCount / allMembersCount))
+      .replace('{PERCENTAGE}', toPercentage(reactedMemberCount / targetMembersCount))
       .replace('{LUCKY_MEMBERS}', luckyMemberNames.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
       .replace('{REACTED_MEMBERS}', reactionStatusGroup.reacted.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
       .replace('{ABSENT_MEMBERS}', reactionStatusGroup.absent.map((v, i) => `${i + 1}. ${v}`).join('\r\n'))
@@ -215,8 +215,8 @@ export const getRaffleResult: (
   return {
     content: translate('raffle.text.raffleResult', { guildId })
       .replace('{REACTED_COUNT}', `${reactedMemberCount}`)
-      .replace('{ALL_COUNT}', `${allMembersCount}`)
-      .replace('{PERCENTAGE}', toPercentage(reactedMemberCount / allMembersCount))
+      .replace('{ALL_COUNT}', `${targetMembersCount}`)
+      .replace('{PERCENTAGE}', toPercentage(reactedMemberCount / targetMembersCount))
       .trim(),
     embed: {
       description: translate('raffle.text.raffleResultDetail', { guildId })
@@ -225,7 +225,7 @@ export const getRaffleResult: (
         .replace('{CHANNEL_NAME}', message.channel.name)
         .replace('{MESSAGE_URL}', message.url)
         .replace('{RAFFLE_COUNT}', `${options?.count ?? 100}`)
-        .replace('{ALL_COUNT}', `${allMembersCount}`)
+        .replace('{ALL_COUNT}', `${targetMembersCount}`)
         .replace('{REACTED_COUNT}', `${reactedMemberCount}`)
         .replace('{LUCKY_COUNT}', `${luckyMemberNames.length}`)
         .replace('{MISSED_COUNT}', `${reactionStatusGroup.reacted.length}`)
